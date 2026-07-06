@@ -1,0 +1,14 @@
+# Core API server — fast to install, no GPU stack needed.
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.8
+pydantic-settings>=2.3
+httpx>=0.27
+python-multipart>=0.0.9
+pillow>=10.3
+numpy>=1.26
+psutil>=5.9
+# NVIDIA telemetry (provides the pynvml module); harmless on AMD where we
+# shell out to amd-smi instead.
+nvidia-ml-py>=12.555
+python-dotenv>=1.0

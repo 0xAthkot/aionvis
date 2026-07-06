@@ -1,0 +1,3 @@
+https://www.ultralytics.com/annotate
+https://roboflow.com/annotate
+https://lablab.ai/ai-hackathons/amd-developer-hackathon-act-ii

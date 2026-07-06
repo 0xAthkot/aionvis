@@ -1,0 +1,24 @@
+# Node / Next.js
+node_modules/
+.next/
+next-env.d.ts
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Backend runtime state & artifacts (datasets, weights, run workdirs)
+backend/data/
+backend/*.pt
+
+# Env files (examples are committed)
+.env
+.env.local
+
+# Misc
+.DS_Store
+Thumbs.db
+
+# Claude Code local settings
+.claude/settings.local.json

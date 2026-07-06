@@ -1,0 +1,19 @@
+# Heavy ML stack for the real agents (Synthesis / Vision / MLOps).
+#
+# Local NVIDIA dev box (RTX 4060):
+#   pip install -r requirements-ml.txt --extra-index-url https://download.pytorch.org/whl/cu126
+#
+# AMD MI300X (ROCm, Linux):
+#   pip install -r requirements-ml.txt --extra-index-url https://download.pytorch.org/whl/rocm6.2
+torch>=2.5
+torchvision>=0.20
+diffusers>=0.31
+# transformers 5.x mis-sizes SDXL's OpenCLIP-bigG text encoder under
+# diffusers 0.39 (every weight "MISMATCH ... 1280 vs 512"); 4.57+ has SAM 3.
+transformers>=4.57,<5
+accelerate>=1.0
+safetensors>=0.4
+ultralytics>=8.3
+opencv-python>=4.10
+onnx>=1.16
+onnxruntime>=1.19

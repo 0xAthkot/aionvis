@@ -1,0 +1,63 @@
+"""WebSocket endpoints (`wsEndpoints` in the frontend contract) + sampler."""
+
+import asyncio
+import contextlib
+
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
+from . import telemetry
+from .events import bus
+
+ws_router = APIRouter(prefix="/ws/v1")
+
+
+async def _pump(ws: WebSocket, queue: asyncio.Queue) -> None:
+    """Forward bus messages to the socket until the client goes away."""
+    receive = asyncio.create_task(ws.receive_text())  # detect disconnects
+    try:
+        while True:
+            send = asyncio.create_task(queue.get())
+            done, _ = await asyncio.wait(
+                {send, receive}, return_when=asyncio.FIRST_COMPLETED
+            )
+            if receive in done:
+                send.cancel()
+                break
+            await ws.send_json(send.result())
+    finally:
+        receive.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await receive
+
+
+@ws_router.websocket("/runs/{run_id}/events")
+async def run_events(ws: WebSocket, run_id: str) -> None:
+    await ws.accept()
+    queue = bus.subscribe_run(run_id)
+    try:
+        await _pump(ws, queue)
+    except WebSocketDisconnect:
+        pass
+    finally:
+        bus.unsubscribe_run(run_id, queue)
+
+
+@ws_router.websocket("/hardware/{node_id}/telemetry")
+async def node_telemetry(ws: WebSocket, node_id: str) -> None:
+    await ws.accept()
+    queue = bus.subscribe_telemetry()
+    try:
+        await _pump(ws, queue)
+    except WebSocketDisconnect:
+        pass
+    finally:
+        bus.unsubscribe_telemetry(queue)
+
+
+async def telemetry_sampler() -> None:
+    """1 Hz GPU sampling — nvml/amd-smi calls run off-loop to keep it smooth."""
+    loop = asyncio.get_running_loop()
+    while True:
+        sample = await loop.run_in_executor(None, telemetry.sample)
+        bus.publish_telemetry(sample)
+        await asyncio.sleep(1.0)

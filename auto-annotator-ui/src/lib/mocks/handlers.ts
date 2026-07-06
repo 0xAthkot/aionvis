@@ -1,0 +1,372 @@
+/**
+ * MSW request handlers — the mock implementation of the API contract.
+ * Every route in `src/lib/api/endpoints.ts` is implemented here, 1:1.
+ */
+import { http, HttpResponse, delay } from "msw";
+import { API_BASE } from "@/lib/api/endpoints";
+import type {
+  AnnotatedImage,
+  CostEstimate,
+  CreateRunRequest,
+  CurateImageRequest,
+  ExpandPromptRequest,
+  ExpandPromptResponse,
+  Paginated,
+  PipelineRun,
+} from "@/lib/api/types";
+import { db, nextId } from "./db";
+import { getSimulatedAgents } from "./simulator";
+
+/** Small realistic latency so loading skeletons are actually visible. */
+const lag = () => delay(Math.round(150 + Math.random() * 250));
+
+const notFound = (code: string, message: string) =>
+  HttpResponse.json({ status: 404, code, message }, { status: 404 });
+
+function paginate<T>(items: T[], url: string): Paginated<T> {
+  const params = new URL(url).searchParams;
+  const page = Number(params.get("page") ?? 1);
+  const pageSize = Number(params.get("pageSize") ?? 50);
+  return {
+    items: items.slice((page - 1) * pageSize, page * pageSize),
+    total: items.length,
+    page,
+    pageSize,
+  };
+}
+
+export const handlers = [
+  // -- Dashboard ------------------------------------------------------------
+  http.get(`${API_BASE}/dashboard/stats`, async () => {
+    await lag();
+    return HttpResponse.json(db.dashboardStats);
+  }),
+
+  // -- Tenancy --------------------------------------------------------------
+  http.get(`${API_BASE}/organizations`, async () => {
+    await lag();
+    return HttpResponse.json(db.organizations);
+  }),
+
+  http.get(`${API_BASE}/organizations/:orgId/members`, async ({ params }) => {
+    await lag();
+    return HttpResponse.json(
+      db.members.filter((m) => m.orgId === params.orgId),
+    );
+  }),
+
+  http.get(`${API_BASE}/projects`, async () => {
+    await lag();
+    return HttpResponse.json(db.projects);
+  }),
+
+  http.get(`${API_BASE}/projects/:id`, async ({ params }) => {
+    await lag();
+    const project = db.projects.find((p) => p.id === params.id);
+    return project
+      ? HttpResponse.json(project)
+      : notFound("project_not_found", `No project ${params.id}`);
+  }),
+
+  // -- Runs -----------------------------------------------------------------
+  http.get(`${API_BASE}/runs`, async ({ request }) => {
+    await lag();
+    return HttpResponse.json(paginate(db.runs, request.url));
+  }),
+
+  http.post(`${API_BASE}/runs`, async ({ request }) => {
+    await lag();
+    const body = (await request.json()) as CreateRunRequest;
+    const run: PipelineRun = {
+      id: nextId("run"),
+      orgId: db.organizations[0].id,
+      projectId: body.projectId,
+      name: body.name,
+      path: body.source.path,
+      status: "queued",
+      stage: "queued",
+      source: body.source,
+      training: body.training,
+      targetClasses: body.targetClasses,
+      progress: {
+        pct: 0,
+        imagesGenerated: 0,
+        imagesTotal: body.source.path === "synthetic"
+          ? body.source.randomization.imageCount
+          : body.source.imageCount,
+        masksAccepted: 0,
+        masksRejected: 0,
+        currentEpoch: 0,
+        totalEpochs: body.training.epochs,
+      },
+      createdBy: db.members[0].id,
+      createdAt: new Date().toISOString(),
+    };
+    db.runs.unshift(run);
+    db.dashboardStats.queuedRuns += 1;
+    return HttpResponse.json(run, { status: 201 });
+  }),
+
+  http.get(`${API_BASE}/runs/:id`, async ({ params }) => {
+    await lag();
+    const run = db.runs.find((r) => r.id === params.id);
+    return run
+      ? HttpResponse.json(run)
+      : notFound("run_not_found", `No run ${params.id}`);
+  }),
+
+  http.post(`${API_BASE}/runs/:id/cancel`, async ({ params }) => {
+    await lag();
+    const run = db.runs.find((r) => r.id === params.id);
+    if (!run) return notFound("run_not_found", `No run ${params.id}`);
+    run.status = "cancelled";
+    run.finishedAt = new Date().toISOString();
+    return HttpResponse.json(run);
+  }),
+
+  http.get(`${API_BASE}/runs/:id/agents`, async ({ params }) => {
+    await lag();
+    const run = db.runs.find((r) => r.id === params.id);
+    if (!run) return notFound("run_not_found", `No run ${params.id}`);
+    // If a simulator is animating this run, report its live agent states.
+    const simulated = getSimulatedAgents(String(params.id));
+    if (simulated) return HttpResponse.json(simulated.map((a) => ({ ...a })));
+    const roster = [
+      { kind: "prompt", displayName: "Prompt Agent", model: "Gemma 4", provider: "Fireworks AI" },
+      { kind: "synthesis", displayName: "Synthesis Agent", model: "SDXL", provider: "MI300X · local" },
+      { kind: "vision", displayName: "Vision Agent", model: "SAM 3", provider: "MI300X · local" },
+      { kind: "critic", displayName: "Critic Agent", model: "Gemma 4 + OpenCV", provider: "Fireworks AI" },
+      { kind: "mlops", displayName: "MLOps Agent", model: "YOLOv10 · PyTorch", provider: "MI300X · ROCm" },
+    ] as const;
+    const active = run.path === "byod"
+      ? roster.filter((a) => a.kind !== "prompt" && a.kind !== "synthesis")
+      : roster;
+    return HttpResponse.json(
+      active.map((a) => ({
+        id: `${run.id}_${a.kind}`,
+        runId: run.id,
+        state:
+          run.status !== "running" ? "idle"
+          : a.kind === "vision" ? "working"
+          : a.kind === "critic" ? "thinking"
+          : "idle",
+        currentTask:
+          run.status === "running" && a.kind === "vision"
+            ? "Segmenting batch 14/39 (SAM 3 zero-shot)"
+            : undefined,
+        ...a,
+      })),
+    );
+  }),
+
+  http.get(`${API_BASE}/runs/:id/logs`, async ({ params }) => {
+    await lag();
+    return HttpResponse.json(db.runLogs.filter((l) => l.runId === params.id));
+  }),
+
+  http.post(`${API_BASE}/runs/estimate`, async ({ request }) => {
+    await lag();
+    const body = (await request.json()) as CreateRunRequest;
+    const images = body.source.path === "synthetic"
+      ? body.source.randomization.imageCount
+      : body.source.imageCount;
+    const synthesisMin = body.source.path === "synthetic" ? images * 0.03 : 0;
+    const segmentationMin = images * 0.012;
+    const trainingMin = body.training.epochs * (images / 1000) * 0.9;
+    const estimate: CostEstimate = {
+      gpuMinutes: Math.round(synthesisMin + segmentationMin + trainingMin),
+      estimatedUsd: +((synthesisMin + segmentationMin + trainingMin) * 0.33).toFixed(2),
+      breakdown: [
+        ...(body.source.path === "synthetic"
+          ? [
+              { stage: "prompt_expansion", minutes: 2 },
+              { stage: "synthesis", minutes: Math.round(synthesisMin) },
+            ] as CostEstimate["breakdown"]
+          : []),
+        { stage: "segmentation", minutes: Math.round(segmentationMin) },
+        { stage: "critic_review", minutes: Math.round(segmentationMin * 0.4) },
+        { stage: "training", minutes: Math.round(trainingMin) },
+      ],
+    };
+    return HttpResponse.json(estimate);
+  }),
+
+  // -- Foundry ----------------------------------------------------------------
+  http.post(`${API_BASE}/foundry/expand-prompt`, async ({ request }) => {
+    // A bit slower than CRUD — "Gemma is thinking".
+    await delay(900 + Math.random() * 600);
+    const body = (await request.json()) as ExpandPromptRequest;
+    const r = body.randomization;
+
+    const lighting = [
+      "under harsh industrial overhead lighting",
+      "in dim warehouse lighting with strong shadows",
+      "under diffuse overcast daylight",
+      "with warm low-angle evening light",
+      "under flickering fluorescent light",
+      "backlit by a bright inspection lamp",
+    ];
+    const angles = [
+      "top-down orthographic view",
+      "45-degree oblique angle",
+      "low side angle close-up",
+      "slightly tilted handheld perspective",
+      "wide shot from a fixed mount",
+    ];
+    const backgrounds = [
+      "on a cluttered workbench",
+      "on a clean conveyor belt",
+      "against an out-of-focus factory floor",
+      "surrounded by tools and cabling",
+      "on an anti-static mat",
+    ];
+    const conditions = [
+      "with light dust on the surface",
+      "partially occluded by a worker's glove",
+      "with minor motion blur",
+      "in pristine condition",
+      "with visible wear and fingerprints",
+    ];
+
+    const pick = <T,>(arr: T[], i: number, intensity: number) =>
+      arr[Math.floor(i * (1 + intensity * 7)) % arr.length];
+
+    const count = Math.min(body.previewCount ?? 8, 12);
+    const scenarios = Array.from({ length: count }, (_, i) => {
+      const parts = [
+        body.basePrompt.trim().replace(/\.$/, ""),
+        pick(angles, i + 1, r.cameraAngleVariation),
+        pick(lighting, i + 2, r.lightingVariation),
+        pick(backgrounds, i + 3, r.backgroundDiversity),
+      ];
+      if (r.occlusionRate > 0.15) parts.push(pick(conditions, i + 4, r.occlusionRate));
+      return `${parts.join(", ")}, photorealistic, 8k detail`;
+    });
+
+    const response: ExpandPromptResponse = {
+      scenarios,
+      totalScenarios: r.scenarioCount,
+      model: "Gemma 4",
+      provider: "Fireworks AI",
+    };
+    return HttpResponse.json(response);
+  }),
+
+  // -- Datasets ---------------------------------------------------------------
+  http.get(`${API_BASE}/datasets`, async () => {
+    await lag();
+    return HttpResponse.json(db.datasets);
+  }),
+
+  http.get(`${API_BASE}/datasets/:id`, async ({ params }) => {
+    await lag();
+    const dataset = db.datasets.find((d) => d.id === params.id);
+    return dataset
+      ? HttpResponse.json(dataset)
+      : notFound("dataset_not_found", `No dataset ${params.id}`);
+  }),
+
+  http.get(`${API_BASE}/datasets/:id/images`, async ({ params, request }) => {
+    await lag();
+    const images = db.annotatedImages.filter(
+      (img) => img.datasetId === params.id,
+    );
+    return HttpResponse.json(paginate(images, request.url));
+  }),
+
+  http.patch(
+    `${API_BASE}/datasets/:datasetId/images/:imageId`,
+    async ({ params, request }) => {
+      await lag();
+      const body = (await request.json()) as CurateImageRequest;
+      const image = db.annotatedImages.find(
+        (img) => img.id === params.imageId && img.datasetId === params.datasetId,
+      );
+      if (!image) return notFound("image_not_found", `No image ${params.imageId}`);
+      image.curationState = body.curationState;
+      return HttpResponse.json(image satisfies AnnotatedImage);
+    },
+  ),
+
+  http.post(`${API_BASE}/datasets/upload`, async ({ request }) => {
+    await lag();
+    const body = (await request.json()) as { archiveName: string; sizeMb: number };
+    const dataset = {
+      id: nextId("ds"),
+      orgId: db.organizations[0].id,
+      name: body.archiveName.replace(/\.zip$/i, ""),
+      origin: "byod" as const,
+      status: "unlabeled" as const,
+      imageCount: Math.max(50, Math.round(body.sizeMb * 0.36)),
+      labeledCount: 0,
+      classes: [],
+      sizeMb: body.sizeMb,
+      createdAt: new Date().toISOString(),
+    };
+    db.datasets.unshift(dataset);
+    return HttpResponse.json(dataset, { status: 201 });
+  }),
+
+  // -- Models -----------------------------------------------------------------
+  http.get(`${API_BASE}/models`, async () => {
+    await lag();
+    return HttpResponse.json(db.models);
+  }),
+
+  http.get(`${API_BASE}/models/:id`, async ({ params }) => {
+    await lag();
+    const model = db.models.find((m) => m.id === params.id);
+    return model
+      ? HttpResponse.json(model)
+      : notFound("model_not_found", `No model ${params.id}`);
+  }),
+
+  http.post(`${API_BASE}/models/:id/export`, async ({ params, request }) => {
+    await lag();
+    const model = db.models.find((m) => m.id === params.id);
+    if (!model) return notFound("model_not_found", `No model ${params.id}`);
+    const body = (await request.json()) as { format: "pt" | "onnx" };
+    return HttpResponse.json({
+      downloadUrl: `/downloads/${model.fileName.replace(/\.pt$/, `.${body.format}`)}`,
+    });
+  }),
+
+  // -- Hardware -----------------------------------------------------------------
+  http.get(`${API_BASE}/hardware/nodes`, async () => {
+    await lag();
+    return HttpResponse.json(db.hardwareNodes);
+  }),
+
+  http.get(`${API_BASE}/hardware/nodes/:nodeId/telemetry`, async ({ params }) => {
+    await lag();
+    const { telemetryHistory } = await import("./fixtures/seed");
+    return HttpResponse.json(telemetryHistory(String(params.nodeId)));
+  }),
+
+  // -- Settings -------------------------------------------------------------
+  http.get(`${API_BASE}/settings/api-keys`, async () => {
+    await lag();
+    return HttpResponse.json(db.apiKeys);
+  }),
+
+  http.post(`${API_BASE}/settings/api-keys`, async ({ request }) => {
+    await lag();
+    const body = (await request.json()) as { name: string };
+    const key = {
+      id: nextId("key"),
+      name: body.name,
+      prefix: `aa_live_${Math.random().toString(36).slice(2, 6)}…`,
+      createdAt: new Date().toISOString(),
+    };
+    db.apiKeys.push(key);
+    return HttpResponse.json(key, { status: 201 });
+  }),
+
+  http.delete(`${API_BASE}/settings/api-keys/:id`, async ({ params }) => {
+    await lag();
+    const idx = db.apiKeys.findIndex((k) => k.id === params.id);
+    if (idx === -1) return notFound("key_not_found", `No API key ${params.id}`);
+    db.apiKeys.splice(idx, 1);
+    return new HttpResponse(null, { status: 204 });
+  }),
+];
