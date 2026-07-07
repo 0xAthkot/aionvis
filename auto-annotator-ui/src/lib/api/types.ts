@@ -343,6 +343,29 @@ export interface ModelArtifact {
   modelCard?: string;
 }
 
+/**
+ * A hard case flagged from the inference playground. The next run in the
+ * same project feeds these to the Prompt Agent so new synthetic data covers
+ * the observed failures (active learning).
+ */
+export interface FoundryFeedback {
+  id: string;
+  projectId: string;
+  modelId: string;
+  note: string;
+  /** Detections the model produced when the case was flagged. */
+  detections: number;
+  createdAt: ISODateString;
+  /** Set once a later run consumed this feedback. */
+  consumedByRunId?: string;
+}
+
+export interface CreateFeedbackRequest {
+  modelId: string;
+  note: string;
+  detections: number;
+}
+
 /** Result of live inference with a trained model (`POST /models/{id}/predict`). */
 export interface PredictionResult {
   /** classId indexes into ModelArtifact.classes. */

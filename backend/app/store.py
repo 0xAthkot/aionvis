@@ -20,6 +20,7 @@ from .schemas import (
     AnnotatedImage,
     ApiKey,
     Dataset,
+    FoundryFeedback,
     LogEvent,
     Member,
     ModelArtifact,
@@ -46,6 +47,7 @@ class Store:
         self.images: dict[str, list[AnnotatedImage]] = {}  # datasetId -> images
         self.models: dict[str, ModelArtifact] = {}
         self.api_keys: dict[str, ApiKey] = {}
+        self.feedback: dict[str, FoundryFeedback] = {}
         self.gpu_seconds_used: float = 0.0
         self._counters: dict[str, count] = {}
         self._save_lock = threading.Lock()
@@ -86,6 +88,7 @@ class Store:
             "images": {did: dump(imgs) for did, imgs in self.images.items()},
             "models": dump(self.models.values()),
             "apiKeys": dump(self.api_keys.values()),
+            "feedback": dump(self.feedback.values()),
             "gpuSecondsUsed": self.gpu_seconds_used,
         }
         with self._save_lock:
@@ -116,6 +119,9 @@ class Store:
         }
         self.models = {m.id: m for m in parse(ModelArtifact, raw.get("models", []))}
         self.api_keys = {k.id: k for k in parse(ApiKey, raw.get("apiKeys", []))}
+        self.feedback = {
+            f.id: f for f in parse(FoundryFeedback, raw.get("feedback", []))
+        }
         self.gpu_seconds_used = float(raw.get("gpuSecondsUsed", 0.0))
         self._reseed_counters()
         # A crash/restart mid-run leaves orphaned "running" runs; mark them.

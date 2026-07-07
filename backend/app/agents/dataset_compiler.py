@@ -56,10 +56,13 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
         (yolo_dir / "images" / split).mkdir(parents=True, exist_ok=True)
         (yolo_dir / "labels" / split).mkdir(parents=True, exist_ok=True)
 
-    # --- deterministic split: ~85/15 with at least one val image
+    # --- deterministic split: ~85/15 with at least one val image, and never
+    # an empty train set (a single-image dataset trains and validates on it).
     order = list(range(len(usable)))
     random.Random(42).shuffle(order)
     n_val = max(1, round(len(usable) * 0.15))
+    if n_val >= len(usable):
+        n_val = 0  # too few images to hold any out; val reuses train below
     val_idx = set(order[:n_val])
 
     records: list[AnnotatedImage] = []
@@ -103,7 +106,8 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
     names = [c.replace("_", " ") for c in run.target_classes]
     (yolo_dir / "data.yaml").write_text(yaml.safe_dump({
         "path": str(yolo_dir).replace("\\", "/"),
-        "train": "images/train", "val": "images/val",
+        "train": "images/train",
+        "val": "images/val" if n_val else "images/train",
         "names": {i: n for i, n in enumerate(names)},
     }), encoding="utf-8")
 

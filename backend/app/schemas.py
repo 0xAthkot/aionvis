@@ -455,3 +455,21 @@ class PredictionResult(ApiModel):
 
 class CreateApiKeyRequest(ApiModel):
     name: str
+
+
+class FoundryFeedback(ApiModel):
+    """A hard case flagged from the playground; seeds the next run's scenarios."""
+
+    id: str
+    project_id: str
+    model_id: str
+    note: str
+    detections: int
+    created_at: str
+    consumed_by_run_id: Optional[str] = None
+
+
+class CreateFeedbackRequest(ApiModel):
+    model_id: str
+    note: str
+    detections: int = 0

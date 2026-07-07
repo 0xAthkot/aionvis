@@ -7,10 +7,12 @@ import { API_BASE } from "@/lib/api/endpoints";
 import type {
   AnnotatedImage,
   CostEstimate,
+  CreateFeedbackRequest,
   CreateRunRequest,
   CurateImageRequest,
   ExpandPromptRequest,
   ExpandPromptResponse,
+  FoundryFeedback,
   Paginated,
   PipelineRun,
   PredictionResult,
@@ -22,6 +24,9 @@ import { getSimulatedAgents } from "./simulator";
 
 /** Small realistic latency so loading skeletons are actually visible. */
 const lag = () => delay(Math.round(150 + Math.random() * 250));
+
+/** Playground hard cases flagged this session (per-tab, like the rest of db). */
+const feedbackStore: FoundryFeedback[] = [];
 
 const notFound = (code: string, message: string) =>
   HttpResponse.json({ status: 404, code, message }, { status: 404 });
@@ -69,6 +74,28 @@ export const handlers = [
     return project
       ? HttpResponse.json(project)
       : notFound("project_not_found", `No project ${params.id}`);
+  }),
+
+  http.get(`${API_BASE}/projects/:id/feedback`, async ({ params }) => {
+    await lag();
+    return HttpResponse.json(
+      feedbackStore.filter((f) => f.projectId === params.id),
+    );
+  }),
+
+  http.post(`${API_BASE}/projects/:id/feedback`, async ({ params, request }) => {
+    await lag();
+    const body = (await request.json()) as CreateFeedbackRequest;
+    const fb: FoundryFeedback = {
+      id: `fb_${String(feedbackStore.length + 1).padStart(4, "0")}`,
+      projectId: String(params.id),
+      modelId: body.modelId,
+      note: body.note,
+      detections: body.detections,
+      createdAt: new Date().toISOString(),
+    };
+    feedbackStore.unshift(fb);
+    return HttpResponse.json(fb, { status: 201 });
   }),
 
   // -- Runs -----------------------------------------------------------------

@@ -47,6 +47,11 @@ class Settings(BaseSettings):
     critic_min_box_area: float = 0.0004  # normalized area
     critic_min_confidence: float = 0.30
     critic_iou_accept: float = 0.55
+    # Second stage: a Fireworks VLM spot-checks accepted crops semantically.
+    # Cost-capped per run; needs FIREWORKS_API_KEY and a vision-capable model.
+    semantic_critic: bool = True
+    semantic_critic_model: str = "accounts/fireworks/models/kimi-k2p6"
+    semantic_critic_max_checks: int = 8
 
     # --- MLOps Agent ---
     # Caps applied on this dev box so a demo run stays minutes, not hours.

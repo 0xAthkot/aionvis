@@ -10,7 +10,7 @@ hardware. Built for the AMD Developer Hackathon ACT II (Unicorn Track).
 Prompt Agent (Gemma · Fireworks AI)
    └─> Synthesis Agent (SDXL-Turbo / FLUX · diffusers)
          └─> Vision Agent (SAM 3 / YOLOE zero-shot segmentation)
-               └─> Critic Agent (OpenCV geometric verification, IoU verdicts)
+               └─> Critic Agent (OpenCV geometry + Fireworks VLM semantic spot-check)
                      └─> MLOps Agent (YOLOv10 training · PyTorch on ROCm)
 ```
 
@@ -18,7 +18,9 @@ The Control Plane streams every stage live — agent states, Critic verdicts,
 VRAM orchestration, synthetic images appearing the moment they're generated —
 and closes the loop with an **inference playground**: drop a photo on the
 model page and watch the just-trained weights detect, with real latency and
-device badges.
+device badges. Missed detection? **Flag it** — the next run's Prompt Agent
+generates scenarios covering exactly that failure (active learning, one
+click).
 
 | Part | What it is |
 |---|---|

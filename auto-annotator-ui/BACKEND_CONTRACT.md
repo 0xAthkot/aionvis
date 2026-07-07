@@ -45,6 +45,8 @@ NEXT_PUBLIC_WS_BASE_URL=ws://localhost:8000
 | GET | `/organizations/{orgId}/members` | → `Member[]` |
 | GET | `/projects` | → `Project[]` |
 | GET | `/projects/{id}` | → `Project` |
+| GET | `/projects/{id}/feedback` | → `FoundryFeedback[]` (playground hard cases, newest first) |
+| POST | `/projects/{id}/feedback` | `CreateFeedbackRequest` → `FoundryFeedback` (201; consumed by the project's next run) |
 
 ### Runs
 | Method | Path | Request → Response |

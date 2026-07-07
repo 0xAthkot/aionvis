@@ -22,14 +22,21 @@ Auto-Annotator is an autonomous agent swarm that feeds them:
 3. **Vision Agent** (SAM 3 / open-vocabulary segmentation) labels every
    object — no fixed class list, any noun works.
 4. **Critic Agent** re-derives every box geometrically (OpenCV) and rejects
-   or regenerates bad labels. The swarm QAs itself; typical runs reject 2–3×
-   more candidate labels than they accept.
+   or regenerates bad labels, then a vision-language model spot-checks
+   accepted crops semantically — geometry proves the box fits, the VLM
+   proves it's actually a forklift. The swarm QAs itself; typical runs
+   reject 2–3× more candidate labels than they accept.
 5. **MLOps Agent** trains YOLOv10 on the accepted data, streams live metrics,
    writes its own model card, and exports deployable `.pt`/ONNX weights.
 
 The customer never draws a box. For teams with existing imagery, the same
 swarm labels uploaded archives (BYOD path) — that's the Scale AI workflow
 without the humans.
+
+And the loop closes: when a trained model misses something in the inference
+playground, one click sends that failure back to the Foundry — the next
+run's Prompt Agent generates scenarios specifically covering it. The swarm
+doesn't just label data; it learns from its models' mistakes.
 
 ## Why now, why AMD
 

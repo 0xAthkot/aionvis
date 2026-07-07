@@ -8,7 +8,7 @@ the autonomous agent swarm that the Control Plane UI drives.
 | Prompt Agent | Gemma on **Fireworks AI** (chat completions); deterministic local fallback without a key |
 | Synthesis Agent | **SDXL-Turbo** via HuggingFace diffusers (FLUX.1-schnell on MI300X) |
 | Vision Agent | **YOLOE** open-vocabulary segmentation (default) or **SAM 3** (`VISION_BACKEND=sam3`) |
-| Critic Agent | **OpenCV** geometric verification — re-derives tight boxes from mask contours, computes IoU, rejects/regenerates |
+| Critic Agent | **OpenCV** geometric verification — re-derives tight boxes from mask contours, computes IoU, rejects/regenerates — plus a **Fireworks VLM semantic spot-check** that confirms crops actually show the claimed class (cost-capped per run, `SEMANTIC_CRITIC=false` to disable) |
 | MLOps Agent | **Ultralytics YOLOv10** training with live epoch metrics, `.pt`/ONNX export |
 
 Between stages the orchestrator flushes VRAM (`torch.cuda.empty_cache()` —

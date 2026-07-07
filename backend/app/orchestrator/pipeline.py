@@ -201,8 +201,19 @@ class Pipeline:
         ctx.set_agent("prompt", "thinking", "Expanding base prompt with domain randomization")
         ctx.check_cancelled()
         n_scenarios = min(rand.scenario_count, run.progress.images_total, 16)
+        # Active learning: hard cases flagged in the playground steer this
+        # expansion, then are marked consumed.
+        pending = [f for f in store.feedback.values()
+                   if f.project_id == run.project_id and f.consumed_by_run_id is None]
+        if pending:
+            ctx.log("info",
+                    f"Incorporating {len(pending)} flagged hard case(s) from the "
+                    "inference playground into scenario expansion", agent="prompt")
+            for f in pending:
+                f.consumed_by_run_id = run.id
         scenarios = prompt_agent.expand(
-            source.base_prompt, run.target_classes, rand, n_scenarios
+            source.base_prompt, run.target_classes, rand, n_scenarios,
+            hard_cases=[f.note for f in pending],
         )
         for i, s in enumerate(scenarios[:5]):
             ctx.log("info", f"scenario[{i}] {s}", agent="prompt")
@@ -260,6 +271,14 @@ class Pipeline:
             ctx, annotated,
             on_progress=lambda done: self._pct(ctx, done / max(len(annotated), 1)),
         )
+        try:
+            from ..agents.semantic_critic import spot_check
+
+            spot_check(ctx, reviewed, ctx.run.target_classes)
+        except RunCancelled:
+            raise
+        except Exception as exc:  # semantic stage is best-effort by design
+            ctx.log("warn", f"Semantic Critic skipped: {exc}", agent="critic")
         ctx.set_agent("critic", "done")
         return reviewed
 

@@ -43,9 +43,10 @@ class PromptAgent:
         # the launched run would otherwise each pay for an identical call.
         self._cache: dict[tuple, list[str]] = {}
 
-    def _cache_key(self, base_prompt, target_classes, randomization, count) -> tuple:
+    def _cache_key(self, base_prompt, target_classes, randomization, count,
+                   hard_cases: tuple = ()) -> tuple:
         return (
-            base_prompt.strip().lower(), tuple(target_classes),
+            base_prompt.strip().lower(), tuple(target_classes), hard_cases,
             round(randomization.lighting_variation, 2),
             round(randomization.camera_angle_variation, 2),
             round(randomization.background_diversity, 2),
@@ -96,11 +97,15 @@ class PromptAgent:
         return data
 
     def expand(self, base_prompt: str, target_classes: list[str],
-               randomization: DomainRandomizationConfig, count: int) -> list[str]:
+               randomization: DomainRandomizationConfig, count: int,
+               hard_cases: list[str] | None = None) -> list[str]:
         """Synchronous variant for the pipeline worker thread."""
+        hard = tuple(hard_cases or ())
         if not self.has_key:
-            return self._fallback(base_prompt, target_classes, randomization, count)
-        key = self._cache_key(base_prompt, target_classes, randomization, count)
+            return self._fallback(base_prompt, target_classes, randomization,
+                                  count, hard)
+        key = self._cache_key(base_prompt, target_classes, randomization, count,
+                              hard)
         if key in self._cache:
             return self._cache[key]
         try:
@@ -108,7 +113,8 @@ class PromptAgent:
                 resp = client.post(
                     f"{settings.fireworks_base_url}/chat/completions",
                     headers=self._headers(),
-                    json=self._payload(base_prompt, target_classes, randomization, count),
+                    json=self._payload(base_prompt, target_classes, randomization,
+                                       count, hard),
                 )
                 resp.raise_for_status()
                 scenarios = self._parse(resp.json(), base_prompt, target_classes,
@@ -124,7 +130,8 @@ class PromptAgent:
     def _headers(self) -> dict:
         return {"Authorization": f"Bearer {settings.fireworks_api_key}"}
 
-    def _payload(self, base_prompt, target_classes, randomization, count) -> dict:
+    def _payload(self, base_prompt, target_classes, randomization, count,
+                 hard_cases: tuple = ()) -> dict:
         user = (
             f"Base scene: {base_prompt}\n"
             f"Target classes (must all be plausibly present): {', '.join(target_classes)}\n"
@@ -134,6 +141,12 @@ class PromptAgent:
             f"occlusion: {randomization.occlusion_rate:.2f}\n"
             f"Generate exactly {count} scenario prompts."
         )
+        if hard_cases:
+            cases = "\n".join(f"- {c}" for c in hard_cases)
+            user += (
+                "\nA deployed model trained on earlier data FAILED on these "
+                f"observed cases — dedicate several scenarios to covering them:\n{cases}"
+            )
         return {
             "model": settings.fireworks_model,
             "messages": [
@@ -182,7 +195,8 @@ class PromptAgent:
     # --- deterministic fallback ---------------------------------------------------
 
     def _fallback(self, base_prompt: str, target_classes: list[str],
-                  randomization: DomainRandomizationConfig, count: int) -> list[str]:
+                  randomization: DomainRandomizationConfig, count: int,
+                  hard_cases: tuple = ()) -> list[str]:
         def take(pool: list[str], intensity: float) -> list[str]:
             n = max(1, round(1 + intensity * (len(pool) - 1)))
             return pool[:n]
@@ -200,8 +214,10 @@ class PromptAgent:
                 if (i / max(count, 1)) < randomization.occlusion_rate
                 else ""
             )
+            hard = (f", emphasizing this failure case: {hard_cases[i]}"
+                    if i < len(hard_cases) else "")
             out.append(
-                f"{base_prompt}, {angle}, {light}, {backdrop}{occ}, "
+                f"{base_prompt}, {angle}, {light}, {backdrop}{occ}{hard}, "
                 f"showing {classes}, photorealistic, sharp focus"
             )
         return out

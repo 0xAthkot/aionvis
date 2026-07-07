@@ -1,8 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { ImageUp, Loader2, RotateCcw, ScanSearch, Zap } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  Flag,
+  ImageUp,
+  Loader2,
+  RotateCcw,
+  ScanSearch,
+  Zap,
+} from "lucide-react";
 import { toast } from "sonner";
 import { BBoxImage } from "@/components/datasets/bbox-image";
 import { Badge } from "@/components/ui/badge";
@@ -14,12 +21,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { apiUpload } from "@/lib/api/client";
+import { Input } from "@/components/ui/input";
+import { api, apiPost, apiUpload } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type {
   AnnotatedImage,
   DatasetClass,
+  FoundryFeedback,
   ModelArtifact,
+  PipelineRun,
   PredictionResult,
 } from "@/lib/api/types";
 import { CLASS_COLORS } from "@/lib/class-colors";
@@ -64,6 +74,32 @@ export function InferencePlayground({ model }: { model: ModelArtifact }) {
       toast.error("Inference failed", { description: err.message }),
   });
 
+  // The run that produced this model links it to its project — feedback
+  // flagged here steers the project's next run (active learning).
+  const { data: run } = useQuery({
+    queryKey: ["run", model.runId],
+    queryFn: () => api<PipelineRun>(endpoints.runs.get(model.runId)),
+  });
+  const [note, setNote] = useState("");
+  const [flagged, setFlagged] = useState(false);
+  const flag = useMutation({
+    mutationFn: () =>
+      apiPost<FoundryFeedback>(endpoints.projects.feedback(run!.projectId), {
+        modelId: model.id,
+        note: note.trim(),
+        detections: predict.data?.boxes.length ?? 0,
+      }),
+    onSuccess: () => {
+      setFlagged(true);
+      toast.success("Hard case sent to the Foundry", {
+        description:
+          "The next run in this project will generate scenarios covering it.",
+      });
+    },
+    onError: (err) =>
+      toast.error("Could not flag the case", { description: err.message }),
+  });
+
   const handleFile = useCallback(
     (file: File | undefined) => {
       if (!file) return;
@@ -82,6 +118,8 @@ export function InferencePlayground({ model }: { model: ModelArtifact }) {
   const reset = () => {
     setPreview(null);
     predict.reset();
+    setNote("");
+    setFlagged(false);
     if (inputRef.current) inputRef.current.value = "";
   };
 
@@ -201,6 +239,39 @@ export function InferencePlayground({ model }: { model: ModelArtifact }) {
                 </Badge>
               </div>
             )}
+
+            {result &&
+              (flagged ? (
+                <p className="text-xs text-muted-foreground">
+                  <Flag className="mr-1 inline size-3" />
+                  Flagged — the next run in this project will target this case.
+                </p>
+              ) : (
+                <form
+                  className="flex gap-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (note.trim() && run) flag.mutate();
+                  }}
+                >
+                  <Input
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="Wrong or missed? Describe it, e.g. “forklift missed in low light”"
+                    className="h-8 text-xs"
+                    maxLength={300}
+                  />
+                  <Button
+                    type="submit"
+                    size="sm"
+                    variant="outline"
+                    disabled={!note.trim() || !run || flag.isPending}
+                  >
+                    <Flag className="size-3.5" />
+                    Send to Foundry
+                  </Button>
+                </form>
+              ))}
           </div>
         )}
       </CardContent>

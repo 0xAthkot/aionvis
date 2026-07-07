@@ -18,6 +18,7 @@ from .schemas import (
     CostBreakdownItem,
     CostEstimate,
     CreateApiKeyRequest,
+    CreateFeedbackRequest,
     CreateRunRequest,
     CurateImageRequest,
     DashboardStats,
@@ -26,6 +27,7 @@ from .schemas import (
     ExpandPromptResponse,
     ExportRequest,
     ExportResponse,
+    FoundryFeedback,
     HardwareNode,
     LogEvent,
     Member,
@@ -108,6 +110,30 @@ def project(project_id: str) -> Project:
         if p.id == project_id:
             return p
     raise _not_found("Project", project_id)
+
+
+@router.get("/projects/{project_id}/feedback")
+def project_feedback(project_id: str) -> list[FoundryFeedback]:
+    return sorted(
+        (f for f in store.feedback.values() if f.project_id == project_id),
+        key=lambda f: f.created_at, reverse=True,
+    )
+
+
+@router.post("/projects/{project_id}/feedback", status_code=201)
+def create_feedback(project_id: str, body: CreateFeedbackRequest) -> FoundryFeedback:
+    if not any(p.id == project_id for p in store.projects):
+        raise _not_found("Project", project_id)
+    if body.model_id not in store.models:
+        raise _not_found("Model", body.model_id)
+    fb = FoundryFeedback(
+        id=store.next_id("fb"), project_id=project_id, model_id=body.model_id,
+        note=body.note.strip()[:300], detections=body.detections,
+        created_at=now_iso(),
+    )
+    store.feedback[fb.id] = fb
+    store.save()
+    return fb
 
 
 # --- runs ----------------------------------------------------------------------

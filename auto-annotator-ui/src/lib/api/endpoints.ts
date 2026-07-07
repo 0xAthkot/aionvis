@@ -22,6 +22,8 @@ export const endpoints = {
     list: () => `${API_BASE}/projects`,
     /** GET → Project */
     get: (id: string) => `${API_BASE}/projects/${id}`,
+    /** GET → FoundryFeedback[] · POST CreateFeedbackRequest → FoundryFeedback */
+    feedback: (id: string) => `${API_BASE}/projects/${id}/feedback`,
   },
 
   runs: {
