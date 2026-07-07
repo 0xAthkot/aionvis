@@ -309,6 +309,8 @@ class ModelArtifact(ApiModel):
     trained_on: HardwareSummary
     status: Literal["training", "ready", "archived"]
     created_at: str
+    # Markdown card written by the LLM after training (None if unavailable).
+    model_card: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------

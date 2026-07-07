@@ -283,6 +283,13 @@ class Pipeline:
             on_epoch=lambda e: self._pct(ctx, e / max(run.progress.total_epochs, 1)),
         )
         run.model_id = artifact.id
+        ctx.set_agent("mlops", "working", "Writing the model card")
+        try:
+            from ..agents.model_card import write_model_card
+
+            write_model_card(ctx, artifact, dataset)
+        except Exception as exc:  # a missing card must never fail the run
+            ctx.log("warn", f"Model card generation failed: {exc}", agent="mlops")
         ctx.set_agent("mlops", "done")
 
 

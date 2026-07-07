@@ -18,10 +18,14 @@ class Settings(BaseSettings):
     # Public base URL of this backend; image/file URLs are minted against it.
     public_base_url: str = "http://localhost:8000"
 
-    # --- Prompt Agent (Fireworks AI) ---
+    # --- Prompt Agent (any OpenAI-compatible chat endpoint) ---
+    # Default: Fireworks AI serverless. On the MI300X, point base_url at a
+    # local vLLM serving Gemma (the key is then ignored by the server).
     fireworks_api_key: str = ""
     fireworks_base_url: str = "https://api.fireworks.ai/inference/v1"
-    fireworks_model: str = "accounts/fireworks/models/gemma-3-27b-it"
+    fireworks_model: str = "accounts/fireworks/models/gpt-oss-120b"
+    # Shown as the agent's provider in the UI; defaults by base_url.
+    llm_provider_label: str = ""
 
     # --- Synthesis Agent ---
     # sdxl -> stabilityai/sdxl-turbo (fits 8 GB); flux -> FLUX.1-schnell (MI300X)

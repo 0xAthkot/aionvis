@@ -64,6 +64,18 @@ MAX_IMAGES_PER_RUN=500
 MAX_EPOCHS=100
 ```
 
+Optional flex: serve **Gemma on the MI300X itself** and point the Prompt
+Agent at it — zero API spend, every agent on AMD silicon:
+
+```bash
+pip install vllm            # ROCm build
+vllm serve google/gemma-3-27b-it --port 8001
+# .env
+FIREWORKS_BASE_URL=http://localhost:8001/v1
+FIREWORKS_MODEL=google/gemma-3-27b-it
+LLM_PROVIDER_LABEL=vLLM · MI300X (local)
+```
+
 Telemetry automatically switches to `amd-smi` and the hardware page shows
 the real MI300X (VRAM, hotspot temp, socket power). The node is detected as
 `amd-developer-cloud` when the GPU name contains "MI300".

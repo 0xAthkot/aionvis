@@ -6,6 +6,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Download, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { InferencePlayground } from "@/components/registry/inference-playground";
+import { ModelCardView } from "@/components/registry/model-card";
 import { LossCurves, MapCurves } from "@/components/registry/training-curves";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -211,6 +212,8 @@ export default function ModelDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      {model.modelCard && <ModelCardView card={model.modelCard} />}
     </main>
   );
 }

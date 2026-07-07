@@ -38,6 +38,26 @@ _OCCLUSION = ["partially occluded by tooling", "with overlapping parts",
 class PromptAgent:
     display_name = "Prompt Agent"
 
+    def __init__(self) -> None:
+        # Same params → same scenarios, one API call. The wizard preview and
+        # the launched run would otherwise each pay for an identical call.
+        self._cache: dict[tuple, list[str]] = {}
+
+    def _cache_key(self, base_prompt, target_classes, randomization, count) -> tuple:
+        return (
+            base_prompt.strip().lower(), tuple(target_classes),
+            round(randomization.lighting_variation, 2),
+            round(randomization.camera_angle_variation, 2),
+            round(randomization.background_diversity, 2),
+            round(randomization.occlusion_rate, 2),
+            count,
+        )
+
+    def _cache_put(self, key: tuple, scenarios: list[str]) -> None:
+        if len(self._cache) >= 64:  # tiny FIFO; a demo session never hits this
+            self._cache.pop(next(iter(self._cache)))
+        self._cache[key] = scenarios
+
     @property
     def has_key(self) -> bool:
         return bool(settings.fireworks_api_key)
@@ -48,7 +68,12 @@ class PromptAgent:
 
     @property
     def provider_label(self) -> str:
-        return "Fireworks AI" if self.has_key else "local fallback (set FIREWORKS_API_KEY)"
+        if not self.has_key:
+            return "local fallback (set FIREWORKS_API_KEY)"
+        if settings.llm_provider_label:
+            return settings.llm_provider_label
+        return ("Fireworks AI" if "fireworks.ai" in settings.fireworks_base_url
+                else "self-hosted (OpenAI-compatible)")
 
     # --- public API ------------------------------------------------------------
 
@@ -56,8 +81,18 @@ class PromptAgent:
                            randomization: DomainRandomizationConfig, count: int) -> list[str]:
         if not self.has_key:
             return self._fallback(base_prompt, target_classes, randomization, count)
-        async with httpx.AsyncClient(timeout=60) as client:
-            data = await self._chat(client, base_prompt, target_classes, randomization, count)
+        key = self._cache_key(base_prompt, target_classes, randomization, count)
+        if key in self._cache:
+            return self._cache[key]
+        try:
+            async with httpx.AsyncClient(timeout=60) as client:
+                data = await self._chat(client, base_prompt, target_classes,
+                                         randomization, count)
+        except httpx.HTTPError as exc:
+            # A dead key or retired model must degrade, never 500 the wizard.
+            print(f"[prompt-agent] Fireworks call failed ({exc}); using fallback")
+            return self._fallback(base_prompt, target_classes, randomization, count)
+        self._cache_put(key, data)
         return data
 
     def expand(self, base_prompt: str, target_classes: list[str],
@@ -65,15 +100,24 @@ class PromptAgent:
         """Synchronous variant for the pipeline worker thread."""
         if not self.has_key:
             return self._fallback(base_prompt, target_classes, randomization, count)
-        with httpx.Client(timeout=60) as client:
-            resp = client.post(
-                f"{settings.fireworks_base_url}/chat/completions",
-                headers=self._headers(),
-                json=self._payload(base_prompt, target_classes, randomization, count),
-            )
-            resp.raise_for_status()
-            return self._parse(resp.json(), base_prompt, target_classes,
-                               randomization, count)
+        key = self._cache_key(base_prompt, target_classes, randomization, count)
+        if key in self._cache:
+            return self._cache[key]
+        try:
+            with httpx.Client(timeout=60) as client:
+                resp = client.post(
+                    f"{settings.fireworks_base_url}/chat/completions",
+                    headers=self._headers(),
+                    json=self._payload(base_prompt, target_classes, randomization, count),
+                )
+                resp.raise_for_status()
+                scenarios = self._parse(resp.json(), base_prompt, target_classes,
+                                        randomization, count)
+        except httpx.HTTPError as exc:
+            print(f"[prompt-agent] Fireworks call failed ({exc}); using fallback")
+            return self._fallback(base_prompt, target_classes, randomization, count)
+        self._cache_put(key, scenarios)
+        return scenarios
 
     # --- Fireworks call ----------------------------------------------------------
 
@@ -97,7 +141,12 @@ class PromptAgent:
                 {"role": "user", "content": user},
             ],
             "temperature": 0.9,
-            "max_tokens": 220 * max(count, 1),
+            # ~80 tokens per sub-60-word prompt + JSON overhead + headroom
+            # for reasoning models that think before answering.
+            "max_tokens": 100 * max(count, 1) + 700,
+            # Scenario expansion needs diversity, not deliberation; keeps
+            # reasoning models (gpt-oss) cheap. Non-reasoning slugs ignore it.
+            "reasoning_effort": "low",
         }
 
     async def _chat(self, client: httpx.AsyncClient, base_prompt, target_classes,
@@ -112,7 +161,10 @@ class PromptAgent:
 
     def _parse(self, data: dict, base_prompt, target_classes,
                randomization, count) -> list[str]:
-        text = data["choices"][0]["message"]["content"].strip()
+        msg = data.get("choices", [{}])[0].get("message", {})
+        # Reasoning models may put everything in reasoning_content when the
+        # token budget runs out before the final answer.
+        text = (msg.get("content") or msg.get("reasoning_content") or "").strip()
         match = re.search(r"\[.*\]", text, re.DOTALL)
         if match:
             try:

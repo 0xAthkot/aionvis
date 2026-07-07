@@ -339,6 +339,8 @@ export interface ModelArtifact {
   trainedOn: HardwareSummary;
   status: "training" | "ready" | "archived";
   createdAt: ISODateString;
+  /** Markdown model card authored by the LLM after training. */
+  modelCard?: string;
 }
 
 /** Result of live inference with a trained model (`POST /models/{id}/predict`). */
