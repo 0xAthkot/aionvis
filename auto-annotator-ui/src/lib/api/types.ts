@@ -119,8 +119,18 @@ export interface ByodSourceConfig {
 
 export type SourceConfig = SyntheticSourceConfig | ByodSourceConfig;
 
+/** Trainable detector families (all via Ultralytics). */
+export type Architecture =
+  | "yolov10n" | "yolov10s" | "yolov10m" | "yolov10l" | "yolov10x"
+  | "yolo11n" | "yolo11s" | "yolo11m" | "yolo11l" | "yolo11x"
+  | "yolo26n" | "yolo26s" | "yolo26m" | "yolo26l" | "yolo26x"
+  | "rtdetr-l" | "rtdetr-x";
+
+/** Weight export targets (`POST /models/{id}/export`); openvino downloads as a zip. */
+export type ModelExportFormat = "pt" | "onnx" | "torchscript" | "openvino";
+
 export interface TrainingConfig {
-  architecture: "yolov10n" | "yolov10s" | "yolov10m" | "yolov10l" | "yolov10x";
+  architecture: Architecture;
   epochs: number;
   imageSize: number;
   batchSize: number;

@@ -14,6 +14,7 @@ import type {
   ExpandPromptRequest,
   ExpandPromptResponse,
   FoundryFeedback,
+  ModelExportFormat,
   Paginated,
   PipelineRun,
   PredictionResult,
@@ -241,7 +242,12 @@ export const handlers = [
       : body.source.imageCount;
     const synthesisMin = body.source.path === "synthetic" ? images * 0.03 : 0;
     const segmentationMin = images * 0.012;
-    const trainingMin = body.training.epochs * (images / 1000) * 0.9;
+    const arch = body.training.architecture;
+    // Mirrors the backend's per-architecture factor (RT-DETR ≈ 3× a nano YOLO).
+    const archFactor = arch.startsWith("rtdetr")
+      ? arch.endsWith("l") ? 3 : 4.5
+      : ({ n: 1, s: 1.3, m: 1.8, l: 2.5, x: 3.5 }[arch.slice(-1)] ?? 1);
+    const trainingMin = body.training.epochs * (images / 1000) * 0.9 * archFactor;
     const estimate: CostEstimate = {
       gpuMinutes: Math.round(synthesisMin + segmentationMin + trainingMin),
       estimatedUsd: +((synthesisMin + segmentationMin + trainingMin) * 0.33).toFixed(2),
@@ -412,9 +418,12 @@ export const handlers = [
     await lag();
     const model = db.models.find((m) => m.id === params.id);
     if (!model) return notFound("model_not_found", `No model ${params.id}`);
-    const body = (await request.json()) as { format: "pt" | "onnx" };
+    const body = (await request.json()) as { format: ModelExportFormat };
+    // openvino exports download as a zipped model directory.
+    const suffix =
+      body.format === "openvino" ? "_openvino.zip" : `.${body.format}`;
     return HttpResponse.json({
-      downloadUrl: `/downloads/${model.fileName.replace(/\.pt$/, `.${body.format}`)}`,
+      downloadUrl: `/downloads/${model.fileName.replace(/\.pt$/, suffix)}`,
     });
   }),
 

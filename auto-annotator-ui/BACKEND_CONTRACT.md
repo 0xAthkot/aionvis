@@ -64,6 +64,10 @@ NEXT_PUBLIC_WS_BASE_URL=ws://localhost:8000
 Notes: `CreateRunRequest` is a union on `source.path` (`"synthetic"` |
 `"byod"`). BYOD runs skip the `prompt_expansion` and `synthesis` stages. On
 success the backend sets `datasetId` and `modelId` on the run.
+`training.architecture` accepts the YOLOv10 / YOLO11 / YOLO26 families
+(n·s·m·l·x each) plus `rtdetr-l` / `rtdetr-x` — the `Architecture` union in
+types.ts is the source of truth; `/runs/estimate` prices bigger
+architectures higher.
 
 ### Foundry
 | Method | Path | Request → Response |
@@ -96,7 +100,7 @@ for the pipeline. Bounding boxes are YOLO-normalized (`cx cy w h` ∈ 0–1).
 |---|---|---|
 | GET | `/models` | → `ModelArtifact[]` |
 | GET | `/models/{id}` | → `ModelArtifact` |
-| POST | `/models/{id}/export` | `{ format: "pt" \| "onnx" }` → `{ downloadUrl }` |
+| POST | `/models/{id}/export` | `{ format: "pt" \| "onnx" \| "torchscript" \| "openvino" }` → `{ downloadUrl }` (openvino downloads as a zipped model dir) |
 | POST | `/models/{id}/predict` | multipart (field `image`) → `PredictionResult` (live inference with the trained weights) |
 
 ### Hardware

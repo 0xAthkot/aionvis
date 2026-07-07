@@ -1,4 +1,4 @@
-"""MLOps Agent — real Ultralytics YOLOv10 training + model registry.
+"""MLOps Agent — real Ultralytics training (YOLOv10/11/26, RT-DETR) + registry.
 
 Streams genuine per-epoch metrics from trainer callbacks into the run's
 log/progress channels, then registers a ModelArtifact whose curves and
@@ -27,25 +27,32 @@ from .gpu import device_str, flush_vram
 MODELS_DIR = DATA_DIR / "files" / "models"
 
 
+def _model_class(arch: str):
+    """RT-DETR checkpoints need the RTDETR entry point; YOLO handles the rest."""
+    from ultralytics import RTDETR, YOLO
+
+    return RTDETR if arch.startswith("rtdetr") else YOLO
+
+
 class MLOpsAgent:
     def train(self, ctx: RunContext, dataset: Dataset, workdir: Path,
               on_epoch: Callable[[int], None]) -> ModelArtifact:
-        from ultralytics import YOLO
-
         run = ctx.run
         progress = run.progress
         device = device_str()
         arch = run.training.architecture
         epochs = progress.total_epochs
         imgsz = min(run.training.image_size, settings.synthesis_image_size)
-        batch = max(1, min(run.training.batch_size, 8))
+        # The RT-DETR transformer needs ~2× the VRAM per sample of a YOLO CNN.
+        batch = max(1, min(run.training.batch_size,
+                           4 if arch.startswith("rtdetr") else 8))
 
         ctx.set_agent("mlops", "waiting_gpu", f"Loading {arch} base weights")
         flush_vram(ctx)
         ctx.log("info", f"Starting {arch} training — {epochs} epochs, "
                         f"imgsz {imgsz}, batch {batch}, device {device}",
                 agent="mlops")
-        model = YOLO(f"{arch}.pt")
+        model = _model_class(arch)(f"{arch}.pt")
 
         curves: list[TrainingCurvePoint] = []
         epoch_started = {"t": time.monotonic()}
@@ -169,15 +176,14 @@ _inference_cache: dict[str, object] = {}
 
 def run_inference(artifact: ModelArtifact, image_path: Path) -> dict:
     """Real inference with the trained weights; returns PredictionResult fields."""
-    from ultralytics import YOLO
-
     from ..orchestrator.pipeline import pipeline
     from ..schemas import BoundingBox
 
     weights = MODELS_DIR / artifact.id / artifact.file_name
     if artifact.id not in _inference_cache:
         _inference_cache.clear()  # keep at most one model warm
-        _inference_cache[artifact.id] = YOLO(str(weights))
+        _inference_cache[artifact.id] = _model_class(artifact.architecture)(
+            str(weights))
     model = _inference_cache[artifact.id]
 
     # A training pipeline owns the GPU; playground requests yield to CPU.
@@ -185,8 +191,8 @@ def run_inference(artifact: ModelArtifact, image_path: Path) -> dict:
     device = "cpu" if gpu_busy or device_str() == "cpu" else 0
 
     start = time.monotonic()
-    res = model.predict(source=str(image_path), conf=0.25, device=device,
-                        verbose=False)[0]
+    res = model.predict(source=str(image_path), conf=0.25, max_det=50,
+                        device=device, verbose=False)[0]
     latency_ms = (time.monotonic() - start) * 1000
     h, w = res.orig_shape
 
@@ -216,17 +222,32 @@ def run_inference(artifact: ModelArtifact, image_path: Path) -> dict:
 
 
 def export_artifact(artifact: ModelArtifact, fmt: str) -> str:
-    """Return a download URL for the real weights (.pt) or an ONNX export."""
+    """Return a download URL for the weights in the requested format.
+
+    pt serves the training checkpoint as-is; onnx/torchscript convert to a
+    single file; openvino produces a directory, so it's zipped for download.
+    Conversions are cached next to the weights.
+    """
     weights = MODELS_DIR / artifact.id / artifact.file_name
     base = f"{settings.public_base_url}/files/models/{artifact.id}"
     if fmt == "pt":
         return f"{base}/{artifact.file_name}"
-    onnx_path = weights.with_suffix(".onnx")
-    if not onnx_path.exists():
-        from ultralytics import YOLO
 
-        YOLO(str(weights)).export(format="onnx", imgsz=640)
-    return f"{base}/{onnx_path.name}"
+    if fmt == "openvino":
+        zip_path = weights.with_name(weights.stem + "_openvino.zip")
+        if not zip_path.exists():
+            _model_class(artifact.architecture)(str(weights)).export(
+                format="openvino", imgsz=640)
+            ov_dir = weights.with_name(weights.stem + "_openvino_model")
+            shutil.make_archive(str(zip_path.with_suffix("")), "zip", ov_dir)
+        return f"{base}/{zip_path.name}"
+
+    suffix = {"onnx": ".onnx", "torchscript": ".torchscript"}[fmt]
+    out_path = weights.with_suffix(suffix)
+    if not out_path.exists():
+        _model_class(artifact.architecture)(str(weights)).export(
+            format=fmt, imgsz=640)
+    return f"{base}/{out_path.name}"
 
 
 mlops_agent = MLOpsAgent()

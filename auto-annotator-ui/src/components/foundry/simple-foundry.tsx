@@ -82,7 +82,7 @@ export function SimpleFoundry() {
       },
     },
     training: {
-      architecture: "yolov10m",
+      architecture: "yolo26m",
       epochs: sizeCfg.epochs,
       imageSize: 640,
       batchSize: 32,

@@ -3,13 +3,19 @@
 import { use } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Download, Rocket } from "lucide-react";
+import { ArrowLeft, ChevronDown, Download, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { InferencePlayground } from "@/components/registry/inference-playground";
 import { ModelCardView } from "@/components/registry/model-card";
 import { LossCurves, MapCurves } from "@/components/registry/training-curves";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Card,
   CardContent,
@@ -25,7 +31,13 @@ import {
 } from "@/components/ui/tooltip";
 import { api, apiPost } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
-import type { ModelArtifact } from "@/lib/api/types";
+import type { ModelArtifact, ModelExportFormat } from "@/lib/api/types";
+
+const EXPORT_FORMATS: { format: ModelExportFormat; label: string; hint: string }[] = [
+  { format: "onnx", label: "ONNX", hint: "runtime-agnostic" },
+  { format: "torchscript", label: "TorchScript", hint: "PyTorch C++/mobile" },
+  { format: "openvino", label: "OpenVINO", hint: "Intel CPU · zip" },
+];
 
 function MetricTile({ label, value }: { label: string; value: string }) {
   return (
@@ -51,7 +63,7 @@ export default function ModelDetailPage({
   });
 
   const exportModel = useMutation({
-    mutationFn: (format: "pt" | "onnx") =>
+    mutationFn: (format: ModelExportFormat) =>
       apiPost<{ downloadUrl: string }>(endpoints.models.export(id), { format }),
     onSuccess: (res, format) =>
       toast.success(`Export ready (${format.toUpperCase()})`, {
@@ -92,15 +104,28 @@ export default function ModelDetailPage({
             </Badge>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={exportModel.isPending}
-              onClick={() => exportModel.mutate("onnx")}
-            >
-              <Download className="size-3.5" />
-              ONNX
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" disabled={exportModel.isPending}>
+                  <Download className="size-3.5" />
+                  Export
+                  <ChevronDown className="size-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {EXPORT_FORMATS.map((f) => (
+                  <DropdownMenuItem
+                    key={f.format}
+                    onClick={() => exportModel.mutate(f.format)}
+                  >
+                    {f.label}
+                    <span className="ml-auto pl-4 text-xs text-muted-foreground">
+                      {f.hint}
+                    </span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               size="sm"
               disabled={exportModel.isPending}

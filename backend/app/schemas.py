@@ -116,7 +116,12 @@ SourceConfig = Annotated[
     Union[SyntheticSourceConfig, ByodSourceConfig], Field(discriminator="path")
 ]
 
-Architecture = Literal["yolov10n", "yolov10s", "yolov10m", "yolov10l", "yolov10x"]
+Architecture = Literal[
+    "yolov10n", "yolov10s", "yolov10m", "yolov10l", "yolov10x",
+    "yolo11n", "yolo11s", "yolo11m", "yolo11l", "yolo11x",
+    "yolo26n", "yolo26s", "yolo26m", "yolo26l", "yolo26x",
+    "rtdetr-l", "rtdetr-x",
+]
 
 
 class TrainingConfig(ApiModel):
@@ -445,7 +450,7 @@ class UploadRegisterRequest(ApiModel):
 
 
 class ExportRequest(ApiModel):
-    format: Literal["pt", "onnx"]
+    format: Literal["pt", "onnx", "torchscript", "openvino"]
 
 
 class DatasetExportRequest(ApiModel):

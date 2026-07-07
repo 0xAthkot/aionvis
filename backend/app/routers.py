@@ -213,9 +213,17 @@ def estimate_run(body: CreateRunRequest) -> CostEstimate:
     return _estimate(body)
 
 
+def _arch_factor(arch: str) -> float:
+    """Relative training cost vs a nano YOLO; RT-DETR's transformer is ~3×."""
+    if arch.startswith("rtdetr"):
+        return 3.0 if arch.endswith("l") else 4.5
+    return {"n": 1.0, "s": 1.3, "m": 1.8, "l": 2.5, "x": 3.5}.get(arch[-1], 1.0)
+
+
 def _estimate(body: CreateRunRequest) -> CostEstimate:
     """Heuristic dry-run pricing; mirrors the stage plan the orchestrator runs."""
     epochs = min(body.training.epochs, settings.max_epochs)
+    train_min = epochs * 0.02 * _arch_factor(body.training.architecture)
     if body.source.path == "synthetic":
         images = min(body.source.randomization.image_count, settings.max_images_per_run)
         stages: list[tuple[PipelineStage, float]] = [
@@ -224,7 +232,7 @@ def _estimate(body: CreateRunRequest) -> CostEstimate:
             ("segmentation", images * 1.5 / 60),
             ("critic_review", images * 0.5 / 60),
             ("dataset_compile", 0.3),
-            ("training", epochs * images * 0.02),
+            ("training", images * train_min),
         ]
     else:
         images = body.source.image_count
@@ -232,7 +240,7 @@ def _estimate(body: CreateRunRequest) -> CostEstimate:
             ("segmentation", images * 1.5 / 60),
             ("critic_review", images * 0.5 / 60),
             ("dataset_compile", 0.3),
-            ("training", epochs * images * 0.02),
+            ("training", images * train_min),
         ]
     total_min = sum(m for _, m in stages)
     return CostEstimate(
@@ -420,7 +428,10 @@ def export_model(model_id: str, body: ExportRequest) -> ExportResponse:
         raise _not_found("Model", model_id)
     from .agents.mlops_agent import export_artifact
 
-    url = export_artifact(artifact, body.format)
+    try:
+        url = export_artifact(artifact, body.format)
+    except Exception as exc:  # exporter deps install on demand and can fail
+        raise HTTPException(502, f"{body.format} export failed: {exc}")
     return ExportResponse(download_url=url)
 
 
