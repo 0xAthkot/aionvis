@@ -1,0 +1,190 @@
+"use client";
+
+import { Check, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
+
+/**
+ * Looping visual replay of a run for the landing hero: prompt typed →
+ * synthetic images appear → verified boxes draw on → training → model ready.
+ * The three tiles are REAL SDXL outputs from the showcase dataset
+ * (public/landing/gen-*.jpg) with their REAL Critic-verified YOLO boxes.
+ */
+const PROMPT = "a yellow forklift moving pallets in a busy warehouse";
+
+// Normalized cx/cy/w/h straight from the dataset records (ds_0006).
+type Box = { label: string; color: string; cx: number; cy: number; w: number; h: number };
+const TILES: { src: string; boxes: Box[] }[] = [
+  {
+    src: "/landing/gen-3.jpg",
+    boxes: [
+      { label: "forklift", color: "#d97706", cx: 0.416, cy: 0.5438, w: 0.3675, h: 0.6799 },
+      { label: "worker", color: "#65a30d", cx: 0.3081, cy: 0.5382, w: 0.2239, h: 0.5901 },
+    ],
+  },
+  {
+    src: "/landing/gen-1.jpg",
+    boxes: [
+      { label: "forklift", color: "#d97706", cx: 0.6633, cy: 0.5346, w: 0.165, h: 0.284 },
+    ],
+  },
+  {
+    src: "/landing/gen-2.jpg",
+    boxes: [
+      { label: "pallet", color: "#0284c7", cx: 0.6112, cy: 0.8355, w: 0.4862, h: 0.1004 },
+    ],
+  },
+];
+
+// One 250 ms tick drives the whole timeline; everything derives from `t`.
+const TYPE_END = 11;
+const TILE_AT = [14, 17, 20];
+const BOX_AT = [24, 26, 28];
+const TRAIN_START = 31;
+const TRAIN_END = 45;
+const DONE_AT = 46;
+const LOOP_AT = 62;
+
+export function HeroVisual() {
+  const [t, setT] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setT((v) => (v >= LOOP_AT ? 0 : v + 1)), 250);
+    return () => clearInterval(id);
+  }, []);
+
+  const typed = PROMPT.slice(0, Math.ceil((PROMPT.length * Math.min(t, TYPE_END)) / TYPE_END));
+  const expanded = t > TYPE_END + 1;
+  const training = t >= TRAIN_START && t < DONE_AT;
+  const done = t >= DONE_AT;
+  const progress = Math.min(1, Math.max(0, (t - TRAIN_START) / (TRAIN_END - TRAIN_START)));
+
+  const status = done
+    ? "model_0014 ready · mAP50 0.85 · exported .pt / ONNX"
+    : training
+      ? `MLOps Agent — training YOLOv10 · epoch ${Math.max(1, Math.round(progress * 60))}/60`
+      : t >= BOX_AT[0]
+        ? "Critic Agent — every box re-derived, semantics VLM-verified"
+        : t >= TILE_AT[0]
+          ? "Synthesis Agent — rendering scenarios (SDXL)"
+          : expanded
+            ? "Prompt Agent — 48 domain-randomized scenarios"
+            : "Describe what the model should detect";
+
+  return (
+    <div className="relative">
+      <div aria-hidden className="absolute -inset-4 rounded-3xl bg-primary/20 blur-3xl" />
+      <div className="relative overflow-hidden rounded-xl border border-white/10 bg-zinc-950/90 shadow-2xl backdrop-blur">
+        {/* window chrome */}
+        <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2.5">
+          <span className="size-2.5 rounded-full bg-red-500/80" />
+          <span className="size-2.5 rounded-full bg-amber-500/80" />
+          <span className="size-2.5 rounded-full bg-emerald-500/80" />
+          <span className="ml-2 text-xs text-zinc-500">
+            Warehouse Safety — autonomous run
+          </span>
+          <span className="ml-auto flex items-center gap-1.5 font-mono text-xs text-emerald-400/80">
+            <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" />
+            live
+          </span>
+        </div>
+
+        <div className="space-y-4 p-4 sm:p-5">
+          {/* prompt bar */}
+          <div className="flex items-center gap-2.5 rounded-lg border border-white/10 bg-white/5 px-3.5 py-2.5">
+            <Sparkles className="size-4 shrink-0 text-primary" />
+            <p className="truncate text-sm text-zinc-200">
+              {typed}
+              {!expanded && <span className="animate-pulse text-zinc-500">▍</span>}
+            </p>
+            <span
+              className={cn(
+                "ml-auto shrink-0 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[11px] text-primary transition-opacity duration-500",
+                expanded ? "opacity-100" : "opacity-0",
+              )}
+            >
+              → 48 scenarios
+            </span>
+          </div>
+
+          {/* generated tiles with verified boxes */}
+          <div className="grid grid-cols-3 gap-2.5">
+            {TILES.map((tile, i) => {
+              const shown = t >= TILE_AT[i];
+              const boxed = t >= BOX_AT[i];
+              return (
+                <div
+                  key={tile.src}
+                  className="relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-white/5"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- static marketing asset, no optimization needed */}
+                  <img
+                    src={tile.src}
+                    alt="Synthetic training image generated by the swarm"
+                    className={cn(
+                      "size-full object-cover transition-all duration-700",
+                      shown ? "scale-100 opacity-100" : "scale-105 opacity-0",
+                    )}
+                  />
+                  {!shown && (
+                    <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-white/5 to-transparent" />
+                  )}
+                  {tile.boxes.map((b) => (
+                    <div
+                      key={b.label + b.cx}
+                      className={cn(
+                        "absolute rounded-sm border-2 transition-all duration-500",
+                        boxed ? "scale-100 opacity-100" : "scale-110 opacity-0",
+                      )}
+                      style={{
+                        borderColor: b.color,
+                        left: `${(b.cx - b.w / 2) * 100}%`,
+                        top: `${(b.cy - b.h / 2) * 100}%`,
+                        width: `${b.w * 100}%`,
+                        height: `${b.h * 100}%`,
+                      }}
+                    >
+                      <span
+                        className="absolute -top-5 left-0 rounded-sm px-1 py-px text-[10px] font-medium whitespace-nowrap text-zinc-950"
+                        style={{ backgroundColor: b.color }}
+                      >
+                        {b.label} ✓
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* status / training / done */}
+          <div className="flex h-9 items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3.5">
+            {done ? (
+              <>
+                <span className="flex size-4 items-center justify-center rounded-full bg-emerald-400">
+                  <Check className="size-3 text-zinc-950" />
+                </span>
+                <p className="truncate font-mono text-xs text-emerald-400">{status}</p>
+                <span className="ml-auto shrink-0 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-2 py-0.5 text-[11px] text-emerald-400">
+                  0 human labels
+                </span>
+              </>
+            ) : (
+              <>
+                <p className="shrink-0 font-mono text-xs text-zinc-400">{status}</p>
+                {training && (
+                  <div className="ml-auto h-1.5 w-1/3 overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all duration-300"
+                      style={{ width: `${progress * 100}%` }}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
