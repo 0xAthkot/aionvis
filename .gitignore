@@ -22,3 +22,5 @@ Thumbs.db
 
 # Claude Code local settings
 .claude/settings.local.json
+
+landing_page_console.png
