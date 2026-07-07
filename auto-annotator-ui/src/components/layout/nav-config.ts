@@ -84,21 +84,55 @@ export const navGroups: NavGroup[] = [
 
 export const allNavItems = navGroups.flatMap((g) => g.items);
 
-/** Simple mode hides infrastructure detail; Pro shows everything. */
+/**
+ * Simple mode replaces the whole console nav with the three-step journey
+ * (see the dashboard getting-started card): project → model → test.
+ * Runs, datasets, hardware and settings stay reachable through in-page links
+ * (recent runs, run detail) but never appear as tabs.
+ */
+const simpleNavGroups: NavGroup[] = [
+  {
+    label: "Workspace",
+    items: [
+      {
+        title: "Dashboard",
+        href: "/dashboard",
+        icon: LayoutDashboard,
+        description: "Your models and recent activity",
+      },
+      {
+        title: "Build a model",
+        href: "/foundry",
+        icon: FlaskConical,
+        description: "Describe a scene, get a detection model",
+      },
+      {
+        title: "Your models",
+        href: "/models",
+        icon: Boxes,
+        description: "Test trained models on your own photos",
+      },
+    ],
+  },
+];
+
 export function navGroupsFor(mode: "simple" | "pro"): NavGroup[] {
-  if (mode === "pro") return navGroups;
-  return navGroups
-    .map((g) => ({
-      ...g,
-      items: g.items.filter((i) => i.href !== "/hardware"),
-    }))
-    .filter((g) => g.items.length > 0);
+  return mode === "pro" ? navGroups : simpleNavGroups;
 }
 
-export function titleForPath(pathname: string): string {
-  const exact = allNavItems.find((i) => i.href === pathname);
+export function titleForPath(
+  pathname: string,
+  mode: "simple" | "pro" = "pro",
+): string {
+  // Simple-mode names win where they exist; fall back to the full map so
+  // pages without a simple tab (run detail, datasets) still get a title.
+  const items = [
+    ...(mode === "simple" ? simpleNavGroups.flatMap((g) => g.items) : []),
+    ...allNavItems,
+  ];
+  const exact = items.find((i) => i.href === pathname);
   if (exact) return exact.title;
-  const prefix = allNavItems
+  const prefix = items
     .filter((i) => i.href !== "/" && pathname.startsWith(i.href))
     .sort((a, b) => b.href.length - a.href.length)[0];
   return prefix?.title ?? "Auto-Annotator";

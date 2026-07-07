@@ -1,10 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { api } from "@/lib/api/client";
@@ -17,34 +26,69 @@ import { titleForPath } from "./nav-config";
 function ModeToggle() {
   const mode = useUiModeStore((s) => s.mode);
   const setMode = useUiModeStore((s) => s.setMode);
+  // Switching modes swaps whole page trees, so any unlaunched form input
+  // (a run being configured, an unsaved dialog) is unmounted — confirm first.
+  const [pending, setPending] = useState<UiMode | null>(null);
 
   return (
-    <div
-      className="flex items-center rounded-full border p-0.5"
-      role="group"
-      aria-label="Interface complexity"
-    >
-      {(["simple", "pro"] as UiMode[]).map((m) => (
-        <button
-          key={m}
-          type="button"
-          onClick={() => setMode(m)}
-          title={
-            m === "simple"
-              ? "Guided interface with sensible defaults"
-              : "Full control plane — every option, terminal, telemetry"
-          }
-          className={cn(
-            "rounded-full px-2.5 py-0.5 text-xs font-medium capitalize transition-colors",
-            mode === m
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          {m}
-        </button>
-      ))}
-    </div>
+    <>
+      <div
+        className="flex items-center rounded-full border p-0.5"
+        role="group"
+        aria-label="Interface complexity"
+      >
+        {(["simple", "pro"] as UiMode[]).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => m !== mode && setPending(m)}
+            title={
+              m === "simple"
+                ? "Guided interface with sensible defaults"
+                : "Full control plane — every option, terminal, telemetry"
+            }
+            className={cn(
+              "rounded-full px-2.5 py-0.5 text-xs font-medium capitalize transition-colors",
+              mode === m
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {m}
+          </button>
+        ))}
+      </div>
+
+      <Dialog open={pending !== null} onOpenChange={(o) => !o && setPending(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              Switch to {pending === "pro" ? "Pro" : "Simple"} mode?
+            </DialogTitle>
+            <DialogDescription>
+              {pending === "pro"
+                ? "The full control plane replaces the guided interface — every option, agent terminal and telemetry."
+                : "The guided interface replaces the full console — fewer tabs, sensible defaults."}{" "}
+              Anything you have typed but not launched on this page will be
+              cleared. Running jobs are not affected.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPending(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (pending) setMode(pending);
+                setPending(null);
+              }}
+            >
+              Switch to {pending === "pro" ? "Pro" : "Simple"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -80,7 +124,7 @@ export function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
     <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mr-1 h-4!" />
-      <h1 className="text-sm font-medium">{titleForPath(pathname)}</h1>
+      <h1 className="text-sm font-medium">{titleForPath(pathname, mode)}</h1>
       <div className="ml-auto flex items-center gap-2">
         <ModeToggle />
         {mode === "pro" && <GpuStatusChip />}
