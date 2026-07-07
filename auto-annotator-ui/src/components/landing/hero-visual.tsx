@@ -45,6 +45,9 @@ const TILES: { src: string; boxes: Box[] }[] = [
 ];
 
 // One 250 ms tick drives the whole timeline; everything derives from `t`.
+// The interval itself runs at 50 ms (5 sub-ticks per tick) so the prompt
+// can type character by character instead of in 5-char chunks.
+const SUB = 5;
 const TYPE_END = 11;
 const TILE_AT = [14, 17, 20];
 const BOX_AT = [24, 26, 28];
@@ -63,14 +66,21 @@ const AGENTS = [
 ];
 
 export function HeroVisual() {
-  const [t, setT] = useState(0);
+  const [f, setF] = useState(0);
 
   useEffect(() => {
-    const id = setInterval(() => setT((v) => (v >= LOOP_AT ? 0 : v + 1)), 250);
+    const id = setInterval(
+      () => setF((v) => (v >= (LOOP_AT + 1) * SUB - 1 ? 0 : v + 1)),
+      50,
+    );
     return () => clearInterval(id);
   }, []);
 
-  const typed = PROMPT.slice(0, Math.ceil((PROMPT.length * Math.min(t, TYPE_END)) / TYPE_END));
+  const t = Math.floor(f / SUB);
+  const typed = PROMPT.slice(
+    0,
+    Math.ceil((PROMPT.length * Math.min(f, TYPE_END * SUB)) / (TYPE_END * SUB)),
+  );
   const expanded = t > TYPE_END + 1;
   const training = t >= TRAIN_START && t < DONE_AT;
   const done = t >= DONE_AT;
