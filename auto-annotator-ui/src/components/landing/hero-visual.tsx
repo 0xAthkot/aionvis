@@ -15,31 +15,97 @@ import { cn } from "@/lib/utils";
 /**
  * Looping visual replay of a run for the landing hero: prompt typed →
  * synthetic images appear → verified boxes draw on → training → model ready.
- * The three tiles are REAL SDXL outputs from the showcase dataset
- * (public/landing/gen-*.jpg) with their REAL Critic-verified YOLO boxes.
+ * Each loop plays the next scenario. Every tile is a REAL SDXL output from a
+ * real pipeline run (public/landing/*.jpg) with its REAL Critic-verified
+ * YOLO boxes — normalized cx/cy/w/h straight from the dataset records.
  */
-const PROMPT = "a yellow forklift moving pallets in a busy warehouse";
-
-// Normalized cx/cy/w/h straight from the dataset records (ds_0006).
 type Box = { label: string; color: string; cx: number; cy: number; w: number; h: number };
-const TILES: { src: string; boxes: Box[] }[] = [
+type Scenario = {
+  prompt: string;
+  done: string;
+  tiles: { src: string; boxes: Box[] }[];
+};
+
+const SCENARIOS: Scenario[] = [
   {
-    src: "/landing/gen-3.jpg",
-    boxes: [
-      { label: "forklift", color: "#d97706", cx: 0.416, cy: 0.5438, w: 0.3675, h: 0.6799 },
-      { label: "worker", color: "#65a30d", cx: 0.3081, cy: 0.5382, w: 0.2239, h: 0.5901 },
+    // ds_0006 · warehouse safety showcase
+    prompt: "a yellow forklift moving pallets in a busy warehouse",
+    done: "model_0014 ready · mAP50 0.85 · exported .pt / ONNX",
+    tiles: [
+      {
+        src: "/landing/gen-3.jpg",
+        boxes: [
+          { label: "forklift", color: "#d97706", cx: 0.416, cy: 0.5438, w: 0.3675, h: 0.6799 },
+          { label: "worker", color: "#65a30d", cx: 0.3081, cy: 0.5382, w: 0.2239, h: 0.5901 },
+        ],
+      },
+      {
+        src: "/landing/gen-1.jpg",
+        boxes: [
+          { label: "forklift", color: "#d97706", cx: 0.6633, cy: 0.5346, w: 0.165, h: 0.284 },
+        ],
+      },
+      {
+        src: "/landing/gen-2.jpg",
+        boxes: [
+          { label: "pallet", color: "#0284c7", cx: 0.6112, cy: 0.8355, w: 0.4862, h: 0.1004 },
+        ],
+      },
     ],
   },
   {
-    src: "/landing/gen-1.jpg",
-    boxes: [
-      { label: "forklift", color: "#d97706", cx: 0.6633, cy: 0.5346, w: 0.165, h: 0.284 },
+    // ds_0010 + ds_0012 · farm-aerial runs (run_0014 / run_0017)
+    prompt: "a tractor working crop rows, seen from a farm drone",
+    done: "model_0011 ready · exported .pt / ONNX",
+    tiles: [
+      {
+        src: "/landing/agri-1.jpg",
+        boxes: [
+          { label: "tractor", color: "#d97706", cx: 0.494, cy: 0.668, w: 0.104, h: 0.158 },
+        ],
+      },
+      {
+        src: "/landing/agri-2.jpg",
+        boxes: [
+          { label: "hay_bale", color: "#0284c7", cx: 0.413, cy: 0.616, w: 0.138, h: 0.143 },
+        ],
+      },
+      {
+        src: "/landing/agri-3.jpg",
+        boxes: [
+          { label: "tractor", color: "#d97706", cx: 0.284, cy: 0.292, w: 0.099, h: 0.066 },
+        ],
+      },
     ],
   },
   {
-    src: "/landing/gen-2.jpg",
-    boxes: [
-      { label: "pallet", color: "#0284c7", cx: 0.6112, cy: 0.8355, w: 0.4862, h: 0.1004 },
+    // ds_0011 · street-camera run (run_0015)
+    prompt: "delivery vans and cyclists from a street camera feed",
+    done: "model_0010 ready · trained on 100% synthetic data",
+    tiles: [
+      {
+        src: "/landing/street-1.jpg",
+        boxes: [
+          { label: "delivery_van", color: "#0284c7", cx: 0.615, cy: 0.787, w: 0.342, h: 0.192 },
+          { label: "delivery_van", color: "#0284c7", cx: 0.187, cy: 0.771, w: 0.228, h: 0.15 },
+        ],
+      },
+      {
+        src: "/landing/street-2.jpg",
+        boxes: [
+          { label: "cyclist", color: "#65a30d", cx: 0.379, cy: 0.685, w: 0.083, h: 0.208 },
+          { label: "cyclist", color: "#65a30d", cx: 0.287, cy: 0.657, w: 0.08, h: 0.176 },
+          { label: "cyclist", color: "#65a30d", cx: 0.653, cy: 0.668, w: 0.11, h: 0.214 },
+          { label: "delivery_van", color: "#0284c7", cx: 0.86, cy: 0.479, w: 0.244, h: 0.309 },
+        ],
+      },
+      {
+        src: "/landing/street-3.jpg",
+        boxes: [
+          { label: "delivery_van", color: "#0284c7", cx: 0.544, cy: 0.445, w: 0.13, h: 0.164 },
+          { label: "cyclist", color: "#65a30d", cx: 0.963, cy: 0.644, w: 0.075, h: 0.137 },
+        ],
+      },
     ],
   },
 ];
@@ -65,21 +131,26 @@ const AGENTS = [
   { name: "MLOps", icon: Boxes, from: TRAIN_START },
 ];
 
+const CYCLE = (LOOP_AT + 1) * SUB;
+
 export function HeroVisual() {
+  // Global 50 ms frame counter; each CYCLE-long loop plays the next scenario.
   const [f, setF] = useState(0);
 
   useEffect(() => {
-    const id = setInterval(
-      () => setF((v) => (v >= (LOOP_AT + 1) * SUB - 1 ? 0 : v + 1)),
-      50,
-    );
+    const id = setInterval(() => setF((v) => v + 1), 50);
     return () => clearInterval(id);
   }, []);
 
-  const t = Math.floor(f / SUB);
-  const typed = PROMPT.slice(
+  const scenario = SCENARIOS[Math.floor(f / CYCLE) % SCENARIOS.length];
+  const local = f % CYCLE;
+  const t = Math.floor(local / SUB);
+  const typed = scenario.prompt.slice(
     0,
-    Math.ceil((PROMPT.length * Math.min(f, TYPE_END * SUB)) / (TYPE_END * SUB)),
+    Math.ceil(
+      (scenario.prompt.length * Math.min(local, TYPE_END * SUB)) /
+        (TYPE_END * SUB),
+    ),
   );
   const expanded = t > TYPE_END + 1;
   const training = t >= TRAIN_START && t < DONE_AT;
@@ -88,7 +159,7 @@ export function HeroVisual() {
   const activeAgent = AGENTS.reduce((acc, a, i) => (t >= a.from ? i : acc), 0);
 
   const status = done
-    ? "model_0014 ready · mAP50 0.85 · exported .pt / ONNX"
+    ? scenario.done
     : training
       ? `Training YOLOv10 · epoch ${Math.max(1, Math.round(progress * 60))}/60`
       : t >= VERIFY_AT
@@ -167,7 +238,7 @@ export function HeroVisual() {
 
         {/* generated tiles with verified boxes */}
         <div className="grid grid-cols-3 gap-3 sm:gap-4">
-          {TILES.map((tile, i) => {
+          {scenario.tiles.map((tile, i) => {
             const shown = t >= TILE_AT[i];
             const boxed = t >= BOX_AT[i];
             return (
@@ -208,7 +279,12 @@ export function HeroVisual() {
                     }}
                   >
                     <span
-                      className="absolute -top-5 left-0 rounded-sm px-1 py-px text-[10px] font-medium whitespace-nowrap text-zinc-950"
+                      className={cn(
+                        "absolute -top-5 rounded-sm px-1 py-px text-[10px] font-medium whitespace-nowrap text-zinc-950",
+                        // Anchor right for boxes near the tile's right edge so
+                        // the label isn't clipped by overflow-hidden.
+                        b.cx > 0.8 ? "right-0" : "left-0",
+                      )}
                       style={{ backgroundColor: b.color }}
                     >
                       {/* the ✓ lands when the Critic pass runs */}
