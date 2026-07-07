@@ -16,7 +16,9 @@ Golden path for judges. Two ways to run it:
 ## Setup (before you present)
 
 1. `npm run dev`, open http://localhost:3000, sign in (any credentials).
-   Real mode: start the backend first (`uvicorn app.main:app --port 8000`).
+   Real mode: start the backend first (`uvicorn app.main:app --port 8000`),
+   then run the preflight: `python backend/smoke_test.py` — every check must
+   pass before you present.
 2. Keep the **Dashboard** open in one tab — its VRAM sparkline moves with the
    pipeline, which makes the intro land.
 

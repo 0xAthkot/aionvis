@@ -1,0 +1,113 @@
+"""Demo-morning preflight: verify every critical endpoint is alive.
+
+Read-only by design — it creates no runs, feedback or datasets, so it is
+safe to fire minutes before going on stage. The one LLM call it makes
+(expand-prompt) hits the Prompt Agent's cache/fallback path and costs at
+most a fraction of a cent.
+
+    .venv/Scripts/python smoke_test.py [--base http://localhost:8000]
+"""
+
+import argparse
+import io
+import sys
+
+import httpx
+
+CHECK = "[ OK ]"
+CROSS = "[FAIL]"
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--base", default="http://localhost:8000")
+    base = ap.parse_args().base.rstrip("/") + "/api/v1"
+
+    failures = 0
+    client = httpx.Client(timeout=120)
+
+    def check(name: str, fn):
+        nonlocal failures
+        try:
+            detail = fn()
+            print(f"{CHECK} {name}" + (f" - {detail}" if detail else ""))
+        except Exception as exc:  # noqa: BLE001 — a preflight reports, never crashes
+            failures += 1
+            print(f"{CROSS} {name} - {exc}")
+
+    def get(path: str):
+        r = client.get(f"{base}{path}")
+        r.raise_for_status()
+        return r.json()
+
+    projects = []
+    models = []
+
+    def _projects():
+        nonlocal projects
+        projects = get("/projects")
+        assert projects, "no projects seeded"
+        return f"{len(projects)} projects"
+
+    def _models():
+        nonlocal models
+        models = get("/models")
+        return f"{len(models)} models"
+
+    check("GET /projects", _projects)
+    check("GET /models", _models)
+    check("GET /dashboard/stats", lambda: f"{get('/dashboard/stats')['modelsTrained']} models trained")
+    check("GET /runs", lambda: f"{get('/runs?pageSize=5')['total']} runs")
+    check("GET /datasets", lambda: f"{len(get('/datasets'))} datasets")
+    check("GET /hardware/nodes", lambda: ", ".join(n["gpu"] for n in get("/hardware/nodes")))
+
+    if projects:
+        pid = projects[0]["id"]
+        check(f"GET /projects/{pid}/feedback",
+              lambda: f"{sum(1 for f in get(f'/projects/{pid}/feedback') if not f.get('consumedByRunId'))} pending hard cases")
+
+    def _expand():
+        r = client.post(f"{base}/foundry/expand-prompt", json={
+            "basePrompt": "A forklift moving pallets in a warehouse aisle",
+            "targetClasses": ["forklift", "pallet"],
+            "randomization": {
+                "lightingVariation": 0.5, "cameraAngleVariation": 0.5,
+                "backgroundDiversity": 0.5, "occlusionRate": 0.2,
+                "scenarioCount": 10, "imageCount": 10, "guidanceScale": 7.5,
+            },
+            "previewCount": 2,
+        })
+        r.raise_for_status()
+        data = r.json()
+        assert data["scenarios"], "no scenarios returned"
+        return f"{data['model']} via {data['provider']}"
+
+    check("POST /foundry/expand-prompt (Prompt Agent live)", _expand)
+
+    def _predict():
+        ready = [m for m in models if m.get("status") in (None, "ready")]
+        if not ready:
+            return "skipped — no trained model yet"
+        from PIL import Image  # deferred: PIL is in the backend venv
+        buf = io.BytesIO()
+        Image.new("RGB", (64, 64), (200, 160, 40)).save(buf, format="PNG")
+        r = client.post(
+            f"{base}/models/{ready[-1]['id']}/predict",
+            files={"image": ("smoke.png", buf.getvalue(), "image/png")},
+        )
+        r.raise_for_status()
+        p = r.json()
+        return f"{ready[-1]['id']}: {len(p['boxes'])} boxes in {p['latencyMs']:.0f} ms on {p['device']}"
+
+    check("POST /models/{id}/predict (playground inference)", _predict)
+
+    print()
+    if failures:
+        print(f"{failures} check(s) FAILED — do not go on stage yet.")
+    else:
+        print("All checks passed. Break a leg.")
+    return 1 if failures else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

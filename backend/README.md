@@ -110,3 +110,7 @@ State lives in `data/` (gitignored): `state.json`, generated datasets under
 For a clean demo slate, stop the backend and run `python reset_demo.py`
 (add `--yes` to skip the prompt) — the next start reseeds the demo org and
 projects.
+
+Before going on stage, run `python smoke_test.py` against the live backend —
+a read-only preflight that checks every critical endpoint (REST, Prompt Agent,
+playground inference) and prints pass/fail per check.
