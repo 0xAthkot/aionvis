@@ -3,6 +3,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Flag, Rocket, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { NewProjectDialog } from "@/components/shared/new-project-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -130,21 +131,24 @@ export function SimpleFoundry() {
         <CardContent className="space-y-5">
           <div className="space-y-2">
             <Label>Project</Label>
-            <Select value={projectId} onValueChange={setProjectId}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a project" />
-              </SelectTrigger>
-              <SelectContent>
-                {projects?.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                    <span className="text-muted-foreground">
-                      · {p.targetClasses.join(", ")}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <Select value={projectId} onValueChange={setProjectId}>
+                <SelectTrigger className="w-full flex-1">
+                  <SelectValue placeholder="Select a project" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects?.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                      <span className="text-muted-foreground">
+                        · {p.targetClasses.join(", ")}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <NewProjectDialog onCreated={(p) => setProjectId(p.id)} />
+            </div>
           </div>
 
           <div className="space-y-2">

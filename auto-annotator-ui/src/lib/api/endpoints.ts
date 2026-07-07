@@ -18,7 +18,7 @@ export const endpoints = {
   },
 
   projects: {
-    /** GET → Project[] */
+    /** GET → Project[] · POST CreateProjectRequest → Project (201) */
     list: () => `${API_BASE}/projects`,
     /** GET → Project */
     get: (id: string) => `${API_BASE}/projects/${id}`,

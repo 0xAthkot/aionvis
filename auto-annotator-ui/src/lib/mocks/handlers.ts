@@ -8,6 +8,7 @@ import type {
   AnnotatedImage,
   CostEstimate,
   CreateFeedbackRequest,
+  CreateProjectRequest,
   CreateRunRequest,
   CurateImageRequest,
   ExpandPromptRequest,
@@ -66,6 +67,24 @@ export const handlers = [
   http.get(`${API_BASE}/projects`, async () => {
     await lag();
     return HttpResponse.json(db.projects);
+  }),
+
+  http.post(`${API_BASE}/projects`, async ({ request }) => {
+    await lag();
+    const body = (await request.json()) as CreateProjectRequest;
+    const project = {
+      id: nextId("proj"),
+      orgId: db.organizations[0].id,
+      name: body.name.trim().slice(0, 80),
+      description: (body.description ?? "").trim().slice(0, 300),
+      targetClasses: body.targetClasses
+        .map((c) => c.trim().toLowerCase().replace(/\s+/g, "_"))
+        .filter(Boolean)
+        .slice(0, 8),
+      createdAt: new Date().toISOString(),
+    };
+    db.projects.push(project);
+    return HttpResponse.json(project, { status: 201 });
   }),
 
   http.get(`${API_BASE}/projects/:id`, async ({ params }) => {

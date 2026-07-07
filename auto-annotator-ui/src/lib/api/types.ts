@@ -40,6 +40,13 @@ export interface Project {
   createdAt: ISODateString;
 }
 
+/** `POST /projects` — classes are slugified server-side ("solder bridge" → "solder_bridge"). */
+export interface CreateProjectRequest {
+  name: string;
+  description?: string;
+  targetClasses: string[];
+}
+
 // ---------------------------------------------------------------------------
 // Pipeline runs
 // ---------------------------------------------------------------------------

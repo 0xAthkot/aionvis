@@ -19,6 +19,7 @@ from .schemas import (
     CostEstimate,
     CreateApiKeyRequest,
     CreateFeedbackRequest,
+    CreateProjectRequest,
     CreateRunRequest,
     CurateImageRequest,
     DashboardStats,
@@ -111,6 +112,24 @@ def project(project_id: str) -> Project:
         if p.id == project_id:
             return p
     raise _not_found("Project", project_id)
+
+
+@router.post("/projects", status_code=201)
+def create_project(body: CreateProjectRequest) -> Project:
+    name = body.name.strip()
+    # YOLO-friendly class slugs, same shape as the seeded projects.
+    classes = [c.strip().lower().replace(" ", "_")
+               for c in body.target_classes if c.strip()]
+    if not name or not classes:
+        raise HTTPException(400, "name and at least one target class are required")
+    project = Project(
+        id=store.next_id("proj"), org_id=store.organizations[0].id,
+        name=name[:80], description=body.description.strip()[:300],
+        target_classes=classes[:8], created_at=now_iso(),
+    )
+    store.projects.append(project)
+    store.save()
+    return project
 
 
 @router.get("/projects/{project_id}/feedback")

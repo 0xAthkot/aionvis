@@ -5,6 +5,7 @@ import { Flag, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { LaunchSummary } from "@/components/foundry/launch-summary";
 import { SimpleFoundry } from "@/components/foundry/simple-foundry";
+import { NewProjectDialog } from "@/components/shared/new-project-dialog";
 import { TagInput } from "@/components/shared/tag-input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -195,18 +196,21 @@ export default function FoundryPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Project</Label>
-                  <Select value={projectId} onValueChange={selectProject}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a project" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {projects?.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-2">
+                    <Select value={projectId} onValueChange={selectProject}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Select a project" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {projects?.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <NewProjectDialog onCreated={(p) => selectProject(p.id)} />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="run-name">Run name</Label>

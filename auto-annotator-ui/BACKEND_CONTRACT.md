@@ -44,6 +44,7 @@ NEXT_PUBLIC_WS_BASE_URL=ws://localhost:8000
 | GET | `/organizations` | → `Organization[]` |
 | GET | `/organizations/{orgId}/members` | → `Member[]` |
 | GET | `/projects` | → `Project[]` |
+| POST | `/projects` | `CreateProjectRequest` → `Project` (201; classes slugified, e.g. "solder bridge" → "solder_bridge") |
 | GET | `/projects/{id}` | → `Project` |
 | GET | `/projects/{id}/feedback` | → `FoundryFeedback[]` (playground hard cases, newest first) |
 | POST | `/projects/{id}/feedback` | `CreateFeedbackRequest` → `FoundryFeedback` (201; consumed by the project's next run) |

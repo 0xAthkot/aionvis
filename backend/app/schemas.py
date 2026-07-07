@@ -50,6 +50,12 @@ class Project(ApiModel):
     created_at: str
 
 
+class CreateProjectRequest(ApiModel):
+    name: str
+    description: str = ""
+    target_classes: list[str]
+
+
 # ---------------------------------------------------------------------------
 # Pipeline runs
 # ---------------------------------------------------------------------------
