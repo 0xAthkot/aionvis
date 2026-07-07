@@ -71,7 +71,9 @@ success the backend sets `datasetId` and `modelId` on the run.
 
 The Prompt Agent (Gemma 4 via Fireworks AI) expands the base prompt into
 domain-randomized scenario prompts; `previewCount` caps the sample returned
-(UI sends 8, cap at 12).
+(UI sends 8, cap at 12). When `projectId` is set, the project's pending
+playground feedback (unconsumed `FoundryFeedback`) is folded into the
+expansion so the preview matches what the launched run will generate.
 
 ### Datasets
 | Method | Path | Request → Response |

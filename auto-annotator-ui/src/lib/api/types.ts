@@ -480,6 +480,11 @@ export interface ExpandPromptRequest {
   randomization: DomainRandomizationConfig;
   /** How many scenarios to return in the preview (backend caps at 12). */
   previewCount?: number;
+  /**
+   * When set, the project's pending playground feedback (hard cases) is
+   * folded into the expansion so the preview matches what the run will do.
+   */
+  projectId?: string;
 }
 
 export interface ExpandPromptResponse {

@@ -285,11 +285,16 @@ def run_preview(run_id: str) -> list[RunPreviewImage]:
 @router.post("/foundry/expand-prompt")
 async def expand_prompt(body: ExpandPromptRequest) -> ExpandPromptResponse:
     preview = min(body.preview_count or 8, 12)
+    hard_cases = [
+        f.note for f in store.feedback.values()
+        if f.project_id == body.project_id and f.consumed_by_run_id is None
+    ] if body.project_id else []
     scenarios = await prompt_agent.expand_async(
         base_prompt=body.base_prompt,
         target_classes=body.target_classes,
         randomization=body.randomization,
         count=preview,
+        hard_cases=hard_cases,
     )
     return ExpandPromptResponse(
         scenarios=scenarios,

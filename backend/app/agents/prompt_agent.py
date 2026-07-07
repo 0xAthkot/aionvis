@@ -79,20 +79,25 @@ class PromptAgent:
     # --- public API ------------------------------------------------------------
 
     async def expand_async(self, base_prompt: str, target_classes: list[str],
-                           randomization: DomainRandomizationConfig, count: int) -> list[str]:
+                           randomization: DomainRandomizationConfig, count: int,
+                           hard_cases: list[str] | None = None) -> list[str]:
+        hard = tuple(hard_cases or ())
         if not self.has_key:
-            return self._fallback(base_prompt, target_classes, randomization, count)
-        key = self._cache_key(base_prompt, target_classes, randomization, count)
+            return self._fallback(base_prompt, target_classes, randomization,
+                                  count, hard)
+        key = self._cache_key(base_prompt, target_classes, randomization, count,
+                              hard)
         if key in self._cache:
             return self._cache[key]
         try:
             async with httpx.AsyncClient(timeout=60) as client:
                 data = await self._chat(client, base_prompt, target_classes,
-                                         randomization, count)
+                                         randomization, count, hard)
         except httpx.HTTPError as exc:
             # A dead key or retired model must degrade, never 500 the wizard.
             print(f"[prompt-agent] Fireworks call failed ({exc}); using fallback")
-            return self._fallback(base_prompt, target_classes, randomization, count)
+            return self._fallback(base_prompt, target_classes, randomization,
+                                  count, hard)
         self._cache_put(key, data)
         return data
 
@@ -163,11 +168,12 @@ class PromptAgent:
         }
 
     async def _chat(self, client: httpx.AsyncClient, base_prompt, target_classes,
-                    randomization, count) -> list[str]:
+                    randomization, count, hard_cases: tuple = ()) -> list[str]:
         resp = await client.post(
             f"{settings.fireworks_base_url}/chat/completions",
             headers=self._headers(),
-            json=self._payload(base_prompt, target_classes, randomization, count),
+            json=self._payload(base_prompt, target_classes, randomization, count,
+                               hard_cases),
         )
         resp.raise_for_status()
         return self._parse(resp.json(), base_prompt, target_classes, randomization, count)

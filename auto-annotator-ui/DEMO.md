@@ -66,10 +66,19 @@ forklift into the playground. Real inference on the weights the swarm just
 trained: boxes, class labels, single-digit-millisecond latency, device badge.
 "Prompt in, deployable model out — and here it is, deployed."
 
+**The encore — close the loop.** Find (or claim) a miss, type it into
+**Send to Foundry** — e.g. *"worker crouching behind a pallet jack, mostly
+hidden"* — and flag it. Back in the Foundry with the same project selected:
+an amber **Active learning** panel now lists that hard case, and clicking
+**Preview expansion** shows the Prompt Agent writing scenarios that target
+it verbatim. "The swarm doesn't just label data — it learns from its own
+model's mistakes. That's the flywheel."
+
 ## One-liners worth landing
 
 - "Roboflow needs your data and your clicks. We need one sentence."
 - "Ninety seconds ago this model didn't exist. Neither did its training data."
 - "Every rejected label you saw was caught by our own Critic — no human QA."
+- "One click on a failure, and the next dataset is built to fix it."
 - "This UI is contract-first: the same screens run against the live FastAPI
   backend by flipping one env var."

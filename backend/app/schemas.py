@@ -421,6 +421,9 @@ class ExpandPromptRequest(ApiModel):
     target_classes: list[str]
     randomization: DomainRandomizationConfig
     preview_count: Optional[int] = None
+    # When set, the project's pending playground feedback (hard cases) is
+    # folded into the expansion so the preview matches what the run will do.
+    project_id: Optional[str] = None
 
 
 class ExpandPromptResponse(ApiModel):

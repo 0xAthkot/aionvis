@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Sparkles } from "lucide-react";
+import { Flag, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { LaunchSummary } from "@/components/foundry/launch-summary";
 import { TagInput } from "@/components/shared/tag-input";
@@ -32,6 +32,7 @@ import type {
   CreateSyntheticRunRequest,
   ExpandPromptRequest,
   ExpandPromptResponse,
+  FoundryFeedback,
   Project,
   TrainingConfig,
 } from "@/lib/api/types";
@@ -142,6 +143,13 @@ export default function FoundryPage() {
       apiPost<ExpandPromptResponse>(endpoints.foundry.expandPrompt(), body),
   });
 
+  const { data: feedback } = useQuery({
+    queryKey: ["feedback", projectId],
+    queryFn: () => api<FoundryFeedback[]>(endpoints.projects.feedback(projectId)),
+    enabled: !!projectId,
+  });
+  const pendingFeedback = feedback?.filter((f) => !f.consumedByRunId) ?? [];
+
   return (
     <main className="flex flex-1 flex-col gap-6 p-6">
       <header className="space-y-1">
@@ -246,6 +254,32 @@ export default function FoundryPage() {
                 </div>
               </div>
 
+              {pendingFeedback.length > 0 && (
+                <div className="space-y-2 rounded-lg border border-amber-500/40 bg-amber-500/5 p-4">
+                  <div className="flex items-center gap-2">
+                    <Flag className="size-4 text-amber-500" />
+                    <p className="text-sm font-medium">
+                      Active learning · {pendingFeedback.length} flagged hard{" "}
+                      {pendingFeedback.length === 1 ? "case" : "cases"} pending
+                    </p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Failures flagged in the inference playground. The Prompt
+                    Agent will dedicate scenarios to each of them in this run.
+                  </p>
+                  <div className="space-y-1.5">
+                    {pendingFeedback.map((f) => (
+                      <p
+                        key={f.id}
+                        className="border-l-2 border-amber-500/50 pl-2 text-xs text-muted-foreground"
+                      >
+                        {f.note}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
@@ -264,6 +298,7 @@ export default function FoundryPage() {
                         targetClasses,
                         randomization,
                         previewCount: 8,
+                        projectId: projectId || undefined,
                       })
                     }
                   >

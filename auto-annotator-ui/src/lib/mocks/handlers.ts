@@ -134,6 +134,11 @@ export const handlers = [
     };
     db.runs.unshift(run);
     db.dashboardStats.queuedRuns += 1;
+    // The real pipeline consumes the project's pending hard cases at launch.
+    for (const f of feedbackStore) {
+      if (f.projectId === body.projectId && !f.consumedByRunId)
+        f.consumedByRunId = run.id;
+    }
     return HttpResponse.json(run, { status: 201 });
   }),
 
@@ -276,6 +281,11 @@ export const handlers = [
     const pick = <T,>(arr: T[], i: number, intensity: number) =>
       arr[Math.floor(i * (1 + intensity * 7)) % arr.length];
 
+    const hardCases = body.projectId
+      ? feedbackStore
+          .filter((f) => f.projectId === body.projectId && !f.consumedByRunId)
+          .map((f) => f.note)
+      : [];
     const count = Math.min(body.previewCount ?? 8, 12);
     const scenarios = Array.from({ length: count }, (_, i) => {
       const parts = [
@@ -285,6 +295,8 @@ export const handlers = [
         pick(backgrounds, i + 3, r.backgroundDiversity),
       ];
       if (r.occlusionRate > 0.15) parts.push(pick(conditions, i + 4, r.occlusionRate));
+      if (i < hardCases.length)
+        parts.push(`emphasizing this observed failure: ${hardCases[i]}`);
       return `${parts.join(", ")}, photorealistic, 8k detail`;
     });
 
