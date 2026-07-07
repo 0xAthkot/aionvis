@@ -59,7 +59,8 @@ function CommandDialog({
         )}
         showCloseButton={showCloseButton}
       >
-        {children}
+        {/* cmdk requires Input/List to live under the Command root. */}
+        <Command>{children}</Command>
       </DialogContent>
     </Dialog>
   )
