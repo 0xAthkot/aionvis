@@ -46,8 +46,10 @@ class Settings(BaseSettings):
 
     # --- MLOps Agent ---
     # Caps applied on this dev box so a demo run stays minutes, not hours.
+    # YOLO confidence stays near zero below ~40 epochs on tiny datasets, so
+    # the epoch cap must leave room for a showcase model that actually detects.
     max_images_per_run: int = 48
-    max_epochs: int = 20
+    max_epochs: int = 80
 
     # --- pricing model for /runs/estimate (USD per GPU-minute) ---
     gpu_usd_per_min: float = 0.033

@@ -55,6 +55,7 @@ NEXT_PUBLIC_WS_BASE_URL=ws://localhost:8000
 | POST | `/runs/{id}/cancel` | → `PipelineRun` (status `cancelled`) |
 | GET | `/runs/{id}/agents` | → `AgentInstance[]` (current states) |
 | GET | `/runs/{id}/logs` | → `LogEvent[]` (history; live tail is on the WebSocket) |
+| GET | `/runs/{id}/preview` | → `RunPreviewImage[]` (images generated so far; the UI polls ~2 s while running) |
 | POST | `/runs/estimate` | `CreateRunRequest` → `CostEstimate` (dry run, no side effects) |
 
 Notes: `CreateRunRequest` is a union on `source.path` (`"synthetic"` |
@@ -90,6 +91,7 @@ for the pipeline. Bounding boxes are YOLO-normalized (`cx cy w h` ∈ 0–1).
 | GET | `/models` | → `ModelArtifact[]` |
 | GET | `/models/{id}` | → `ModelArtifact` |
 | POST | `/models/{id}/export` | `{ format: "pt" \| "onnx" }` → `{ downloadUrl }` |
+| POST | `/models/{id}/predict` | multipart (field `image`) → `PredictionResult` (live inference with the trained weights) |
 
 ### Hardware
 | Method | Path | Request → Response |

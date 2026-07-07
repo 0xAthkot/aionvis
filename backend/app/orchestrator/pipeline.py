@@ -33,6 +33,10 @@ class Pipeline:
     def __init__(self) -> None:
         self.active: dict[str, RunContext] = {}
         self._lock = threading.Lock()
+        # One pipeline owns the GPU at a time; later runs hold status=queued
+        # until the slot frees. On a multi-GPU node raise the count.
+        self._gpu_slot = threading.Semaphore(1)
+        self._queue_order: list[str] = []
 
     # --- public API ----------------------------------------------------------
 
@@ -91,12 +95,46 @@ class Pipeline:
         ctx.run.progress.pct = round(done / total * 100, 1)
         ctx.publish_progress()
 
+    # --- GPU slot ------------------------------------------------------------------
+
+    def _acquire_gpu(self, ctx: RunContext) -> bool:
+        """Block until the GPU frees. False if cancelled while queued."""
+        run = ctx.run
+        if not self._gpu_slot.acquire(blocking=False):
+            with self._lock:
+                self._queue_order.append(run.id)
+                position = len(self._queue_order)
+            ctx.log("info", f"GPU busy — queued at position {position}. "
+                            "The run starts automatically when the node frees.")
+            while not self._gpu_slot.acquire(timeout=1.0):
+                if ctx.cancel_event.is_set():
+                    with self._lock:
+                        if run.id in self._queue_order:
+                            self._queue_order.remove(run.id)
+                    return False
+            with self._lock:
+                if run.id in self._queue_order:
+                    self._queue_order.remove(run.id)
+        if ctx.cancel_event.is_set():
+            self._gpu_slot.release()
+            return False
+        return True
+
     # --- the run ------------------------------------------------------------------
 
     def _worker(self, ctx: RunContext) -> None:
         run = ctx.run
         workdir = DATA_DIR / "runs" / run.id
         workdir.mkdir(parents=True, exist_ok=True)
+        if not self._acquire_gpu(ctx):
+            run.status = "cancelled"
+            run.finished_at = now_iso()
+            ctx.log("warn", "Cancelled while waiting in the GPU queue.")
+            ctx.publish_status()
+            with self._lock:
+                self.active.pop(run.id, None)
+            store.save()
+            return
         try:
             run.status = "running"
             run.started_at = now_iso()
@@ -140,6 +178,7 @@ class Pipeline:
             from ..agents.gpu import flush_vram
 
             flush_vram(ctx, quiet=True)
+            self._gpu_slot.release()
             for kind, agent in ctx.agents.items():
                 if agent.state not in ("done", "error"):
                     ctx.set_agent(kind, "done" if run.status == "succeeded" else "idle")
@@ -172,10 +211,11 @@ class Pipeline:
         ctx.set_agent("prompt", "done")
         self._pct(ctx, 1.0)
 
-        # 2) synthesis
+        # 2) synthesis — output goes under /files so Mission Control can
+        # poll GET /runs/{id}/preview and show images as they appear.
         ctx.set_stage("synthesis", f"{settings.sdxl_model} → {run.progress.images_total} images")
         images = synthesis_agent.generate(
-            ctx, scenarios, workdir / "raw",
+            ctx, scenarios, DATA_DIR / "files" / "runs" / run.id,
             count=run.progress.images_total,
             negative_prompt=source.negative_prompt,
             guidance_scale=rand.guidance_scale,

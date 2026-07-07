@@ -35,6 +35,8 @@ export const endpoints = {
     agents: (id: string) => `${API_BASE}/runs/${id}/agents`,
     /** GET → LogEvent[] (history; live tail comes over the WebSocket) */
     logs: (id: string) => `${API_BASE}/runs/${id}/logs`,
+    /** GET → RunPreviewImage[] (images generated so far; poll while running) */
+    preview: (id: string) => `${API_BASE}/runs/${id}/preview`,
     /** POST CreateRunRequest → CostEstimate (dry-run pricing for the wizard) */
     estimate: () => `${API_BASE}/runs/estimate`,
   },
@@ -65,6 +67,8 @@ export const endpoints = {
     get: (id: string) => `${API_BASE}/models/${id}`,
     /** POST { format: "pt" | "onnx" } → { downloadUrl } */
     export: (id: string) => `${API_BASE}/models/${id}/export`,
+    /** POST multipart (field "image") → PredictionResult (live inference) */
+    predict: (id: string) => `${API_BASE}/models/${id}/predict`,
   },
 
   hardware: {

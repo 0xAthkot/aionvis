@@ -3,8 +3,9 @@
 import { use } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Download, Grid3x3, Rocket } from "lucide-react";
+import { ArrowLeft, Download, Rocket } from "lucide-react";
 import { toast } from "sonner";
+import { InferencePlayground } from "@/components/registry/inference-playground";
 import { LossCurves, MapCurves } from "@/components/registry/training-curves";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -117,7 +118,8 @@ export default function ModelDetailPage({
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                Inference endpoints ship with the backend integration
+                Managed endpoints are on the roadmap — try the inference
+                playground below for live predictions
               </TooltipContent>
             </Tooltip>
           </div>
@@ -159,6 +161,7 @@ export default function ModelDetailPage({
       </div>
 
       <div className="grid items-start gap-6 xl:grid-cols-2">
+        <InferencePlayground model={model} />
         <Card>
           <CardHeader>
             <CardTitle>Provenance</CardTitle>
@@ -205,22 +208,6 @@ export default function ModelDetailPage({
                 </dd>
               </div>
             </dl>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Confusion matrix</CardTitle>
-            <CardDescription>Per-class error analysis</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-lg border border-dashed">
-              <Grid3x3 className="size-6 text-muted-foreground" />
-              <p className="px-6 text-center text-xs text-muted-foreground">
-                Computed by the evaluation service on the backend — the
-                contract reserves this panel.
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>

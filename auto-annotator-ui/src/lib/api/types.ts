@@ -157,6 +157,14 @@ export interface PipelineRun {
   failureReason?: string;
 }
 
+/** A generated image surfaced live while the Synthesis Agent works. */
+export interface RunPreviewImage {
+  fileName: string;
+  url: string;
+  /** Scenario prompt that produced this image (synthetic runs). */
+  scenario?: string;
+}
+
 // ---------------------------------------------------------------------------
 // Agents
 // ---------------------------------------------------------------------------
@@ -331,6 +339,17 @@ export interface ModelArtifact {
   trainedOn: HardwareSummary;
   status: "training" | "ready" | "archived";
   createdAt: ISODateString;
+}
+
+/** Result of live inference with a trained model (`POST /models/{id}/predict`). */
+export interface PredictionResult {
+  /** classId indexes into ModelArtifact.classes. */
+  boxes: BoundingBox[];
+  latencyMs: number;
+  /** Where inference ran, e.g. "cuda:0 · MI300X" or "cpu (GPU busy)". */
+  device: string;
+  width: number;
+  height: number;
 }
 
 // ---------------------------------------------------------------------------

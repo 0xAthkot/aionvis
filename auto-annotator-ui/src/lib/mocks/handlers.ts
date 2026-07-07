@@ -13,8 +13,11 @@ import type {
   ExpandPromptResponse,
   Paginated,
   PipelineRun,
+  PredictionResult,
+  RunPreviewImage,
 } from "@/lib/api/types";
 import { db, nextId } from "./db";
+import { placeholderImage } from "./fixtures/placeholder";
 import { getSimulatedAgents } from "./simulator";
 
 /** Small realistic latency so loading skeletons are actually visible. */
@@ -162,6 +165,21 @@ export const handlers = [
   http.get(`${API_BASE}/runs/:id/logs`, async ({ params }) => {
     await lag();
     return HttpResponse.json(db.runLogs.filter((l) => l.runId === params.id));
+  }),
+
+  http.get(`${API_BASE}/runs/:id/preview`, async ({ params }) => {
+    await lag();
+    const run = db.runs.find((r) => r.id === params.id);
+    if (!run) return notFound("not_found", `Run '${params.id}' not found`);
+    if (run.source.path !== "synthetic") return HttpResponse.json([]);
+    const count = Math.min(run.progress.imagesGenerated, 48);
+    const basePrompt = run.source.basePrompt;
+    const previews: RunPreviewImage[] = Array.from({ length: count }, (_, i) => ({
+      fileName: `img_${String(i).padStart(4, "0")}.jpg`,
+      url: placeholderImage(i + 7, `foundry ${i}`, 320, 320),
+      scenario: basePrompt,
+    }));
+    return HttpResponse.json(previews);
   }),
 
   http.post(`${API_BASE}/runs/estimate`, async ({ request }) => {
@@ -329,6 +347,32 @@ export const handlers = [
     return HttpResponse.json({
       downloadUrl: `/downloads/${model.fileName.replace(/\.pt$/, `.${body.format}`)}`,
     });
+  }),
+
+  http.post(`${API_BASE}/models/:id/predict`, async ({ params }) => {
+    // Simulated inference latency, then plausible detections.
+    await delay(350 + Math.random() * 450);
+    const model = db.models.find((m) => m.id === params.id);
+    if (!model) return notFound("model_not_found", `No model ${params.id}`);
+    const boxes = Array.from(
+      { length: 1 + Math.floor(Math.random() * 3) },
+      (_, i) => ({
+        classId: i % model.classes.length,
+        cx: 0.25 + Math.random() * 0.5,
+        cy: 0.25 + Math.random() * 0.5,
+        w: 0.15 + Math.random() * 0.2,
+        h: 0.15 + Math.random() * 0.2,
+        confidence: 0.55 + Math.random() * 0.4,
+      }),
+    );
+    const result: PredictionResult = {
+      boxes,
+      latencyMs: Math.round(9 + Math.random() * 14),
+      device: "cuda:0 · MI300X (simulated)",
+      width: 640,
+      height: 640,
+    };
+    return HttpResponse.json(result);
   }),
 
   // -- Hardware -----------------------------------------------------------------

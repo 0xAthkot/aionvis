@@ -154,6 +154,12 @@ class PipelineRun(ApiModel):
     failure_reason: Optional[str] = None
 
 
+class RunPreviewImage(ApiModel):
+    file_name: str
+    url: str
+    scenario: Optional[str] = None
+
+
 # ---------------------------------------------------------------------------
 # Agents
 # ---------------------------------------------------------------------------
@@ -433,6 +439,16 @@ class ExportRequest(ApiModel):
 
 class ExportResponse(ApiModel):
     download_url: str
+
+
+class PredictionResult(ApiModel):
+    """Result of live inference with a trained model (POST /models/{id}/predict)."""
+
+    boxes: list[BoundingBox]
+    latency_ms: float
+    device: str
+    width: int
+    height: int
 
 
 class CreateApiKeyRequest(ApiModel):

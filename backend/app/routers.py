@@ -1,6 +1,7 @@
 """Every REST route from BACKEND_CONTRACT.md / endpoints.ts, 1:1."""
 
 import secrets
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
 from starlette.datastructures import UploadFile
@@ -32,8 +33,10 @@ from .schemas import (
     Organization,
     Paginated,
     PipelineRun,
+    PredictionResult,
     PipelineStage,
     Project,
+    RunPreviewImage,
     RunProgress,
     TelemetrySample,
     UploadRegisterRequest,
@@ -226,6 +229,30 @@ def run_logs(run_id: str) -> list[LogEvent]:
     return store.run_logs.get(run_id, [])
 
 
+@router.get("/runs/{run_id}/preview")
+def run_preview(run_id: str) -> list[RunPreviewImage]:
+    """Images the Synthesis Agent has produced so far (poll while running)."""
+    import json as _json
+
+    from .config import DATA_DIR
+
+    if run_id not in store.runs:
+        raise _not_found("Run", run_id)
+    manifest_path = DATA_DIR / "files" / "runs" / run_id / "preview.json"
+    if not manifest_path.exists():
+        return []
+    entries = _json.loads(manifest_path.read_text(encoding="utf-8"))
+    base = f"{settings.public_base_url}/files/runs/{run_id}"
+    return [
+        RunPreviewImage(
+            file_name=e["fileName"],
+            url=f"{base}/{e['fileName']}",
+            scenario=e.get("scenario"),
+        )
+        for e in entries
+    ]
+
+
 # --- foundry ---------------------------------------------------------------------
 
 
@@ -330,6 +357,37 @@ def export_model(model_id: str, body: ExportRequest) -> ExportResponse:
 
     url = export_artifact(artifact, body.format)
     return ExportResponse(download_url=url)
+
+
+@router.post("/models/{model_id}/predict")
+async def predict(model_id: str, request: Request) -> PredictionResult:
+    """Live inference with the trained weights (multipart field "image")."""
+    import uuid
+
+    from .agents.mlops_agent import run_inference
+    from .config import DATA_DIR
+
+    artifact = store.models.get(model_id)
+    if artifact is None:
+        raise _not_found("Model", model_id)
+    form = await request.form()
+    image = form.get("image")
+    if not isinstance(image, UploadFile):
+        raise HTTPException(400, "multipart field 'image' is required")
+    suffix = Path(image.filename or "upload.jpg").suffix.lower() or ".jpg"
+    if suffix not in (".jpg", ".jpeg", ".png", ".bmp", ".webp"):
+        raise HTTPException(400, f"unsupported image type '{suffix}'")
+    pred_dir = DATA_DIR / "predictions" / model_id
+    pred_dir.mkdir(parents=True, exist_ok=True)
+    image_path = pred_dir / f"{uuid.uuid4().hex}{suffix}"
+    image_path.write_bytes(await image.read())
+    try:
+        import asyncio
+
+        result = await asyncio.to_thread(run_inference, artifact, image_path)
+    finally:
+        image_path.unlink(missing_ok=True)
+    return PredictionResult.model_validate(result)
 
 
 # --- hardware --------------------------------------------------------------------

@@ -17,8 +17,13 @@ export class ApiError extends Error {
  * mock→real backend swap is just `NEXT_PUBLIC_API_BASE_URL` + auth headers.
  */
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
+  // FormData bodies must set their own multipart boundary header.
+  const isForm = init?.body instanceof FormData;
   const res = await fetch(`${features.apiBaseUrl}${path}`, {
-    headers: { "Content-Type": "application/json", ...init?.headers },
+    headers: {
+      ...(isForm ? {} : { "Content-Type": "application/json" }),
+      ...init?.headers,
+    },
     ...init,
   });
 
@@ -48,3 +53,6 @@ export const apiPost = <T>(path: string, body: unknown): Promise<T> =>
 
 export const apiPatch = <T>(path: string, body: unknown): Promise<T> =>
   api<T>(path, { method: "PATCH", body: JSON.stringify(body) });
+
+export const apiUpload = <T>(path: string, form: FormData): Promise<T> =>
+  api<T>(path, { method: "POST", body: form });

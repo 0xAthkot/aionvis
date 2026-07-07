@@ -3,19 +3,10 @@
  * completes and needs a plausible dataset + annotated images to exist.
  */
 import type { AnnotatedImage, DatasetClass } from "@/lib/api/types";
+import { CLASS_COLORS } from "@/lib/class-colors";
 import { placeholderImage } from "./placeholder";
 
-/** Validated categorical set for the dark surface (dataviz six checks). */
-export const CLASS_COLORS = [
-  "#d97706",
-  "#0284c7",
-  "#65a30d",
-  "#c026d3",
-  "#e11d48",
-  "#059669",
-  "#a16207",
-  "#6366f1",
-];
+export { CLASS_COLORS };
 
 export function datasetClassesFrom(
   classNames: string[],

@@ -15,6 +15,12 @@ Between stages the orchestrator flushes VRAM (`torch.cuda.empty_cache()` —
 which *is* `hip.empty_cache()` on ROCm builds) and the telemetry sampler
 reports the real dips: pynvml on NVIDIA, `amd-smi` on AMD.
 
+Runs share the GPU through a queue: one pipeline owns the GPU at a time,
+later launches hold `status=queued` (with a live queue-position log) and are
+cancellable while waiting. `POST /models/{id}/predict` runs live inference
+with any registered model's weights — it yields to CPU when a pipeline run
+owns the GPU.
+
 ## Run it (local dev, NVIDIA)
 
 ```powershell
@@ -89,4 +95,6 @@ app/
 
 State lives in `data/` (gitignored): `state.json`, generated datasets under
 `data/files/…` (served at `/files`), run workdirs under `data/runs/…`.
-Delete `data/` for a factory reset.
+For a clean demo slate, stop the backend and run `python reset_demo.py`
+(add `--yes` to skip the prompt) — the next start reseeds the demo org and
+projects.

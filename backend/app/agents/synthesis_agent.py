@@ -7,6 +7,7 @@ loaded per stage and torn down afterwards — deliberate VRAM orchestration.
 """
 
 import gc
+import json
 import time
 from pathlib import Path
 from typing import Callable, Optional
@@ -57,6 +58,7 @@ class SynthesisAgent:
 
         size = settings.synthesis_image_size
         paths: list[Path] = []
+        manifest: list[dict] = []  # read by GET /runs/{id}/preview
         ctx.set_agent("synthesis", "working", f"Generating {count} images")
         started = time.monotonic()
         for i in range(count):
@@ -76,6 +78,10 @@ class SynthesisAgent:
             path = out_dir / f"img_{i:04d}.jpg"
             image.save(path, quality=92)
             paths.append(path)
+            manifest.append({"fileName": path.name, "scenario": prompt})
+            (out_dir / "preview.json").write_text(
+                json.dumps(manifest), encoding="utf-8"
+            )
 
             dt = time.monotonic() - t0
             ctx.run.progress.images_generated = i + 1

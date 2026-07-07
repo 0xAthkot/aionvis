@@ -7,6 +7,7 @@ import { ArrowLeft, Boxes, CheckCircle2, Database, OctagonX } from "lucide-react
 import { toast } from "sonner";
 import { runStatusVariant } from "@/components/dashboard/recent-runs";
 import { AgentRoster } from "@/components/runs/agent-roster";
+import { FoundryPreview } from "@/components/runs/foundry-preview";
 import { LogTerminal } from "@/components/runs/log-terminal";
 import { StageTracker } from "@/components/runs/stage-tracker";
 import { VramCard } from "@/components/runs/vram-card";
@@ -175,6 +176,14 @@ export default function RunDetailPage({
               />
             </CardContent>
           </Card>
+
+          {run.path === "synthetic" && (
+            <FoundryPreview
+              runId={id}
+              active={streaming}
+              imagesTotal={run.progress.imagesTotal}
+            />
+          )}
 
           <Card>
             <CardHeader>

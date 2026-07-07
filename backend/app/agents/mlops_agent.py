@@ -163,6 +163,58 @@ class MLOpsAgent:
         return artifact
 
 
+# One loaded model kept warm for the inference playground; swapped on demand.
+_inference_cache: dict[str, object] = {}
+
+
+def run_inference(artifact: ModelArtifact, image_path: Path) -> dict:
+    """Real inference with the trained weights; returns PredictionResult fields."""
+    from ultralytics import YOLO
+
+    from ..orchestrator.pipeline import pipeline
+    from ..schemas import BoundingBox
+
+    weights = MODELS_DIR / artifact.id / artifact.file_name
+    if artifact.id not in _inference_cache:
+        _inference_cache.clear()  # keep at most one model warm
+        _inference_cache[artifact.id] = YOLO(str(weights))
+    model = _inference_cache[artifact.id]
+
+    # A training pipeline owns the GPU; playground requests yield to CPU.
+    gpu_busy = pipeline.any_active()
+    device = "cpu" if gpu_busy or device_str() == "cpu" else 0
+
+    start = time.monotonic()
+    res = model.predict(source=str(image_path), conf=0.25, device=device,
+                        verbose=False)[0]
+    latency_ms = (time.monotonic() - start) * 1000
+    h, w = res.orig_shape
+
+    boxes = []
+    for b in res.boxes or []:
+        x1, y1, x2, y2 = b.xyxyn[0].tolist()
+        boxes.append(BoundingBox(
+            class_id=int(b.cls.item()),
+            cx=round((x1 + x2) / 2, 4), cy=round((y1 + y2) / 2, 4),
+            w=round(x2 - x1, 4), h=round(y2 - y1, 4),
+            confidence=round(float(b.conf.item()), 3),
+        ))
+
+    gpu_name = telemetry.GPU.name
+    device_label = (
+        f"cpu (GPU busy with a pipeline run)" if gpu_busy and device == "cpu"
+        else "cpu" if device == "cpu"
+        else f"cuda:0 · {gpu_name}"
+    )
+    return {
+        "boxes": boxes,
+        "latency_ms": round(latency_ms, 1),
+        "device": device_label,
+        "width": int(w),
+        "height": int(h),
+    }
+
+
 def export_artifact(artifact: ModelArtifact, fmt: str) -> str:
     """Return a download URL for the real weights (.pt) or an ONNX export."""
     weights = MODELS_DIR / artifact.id / artifact.file_name

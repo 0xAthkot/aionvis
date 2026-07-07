@@ -14,6 +14,12 @@ Prompt Agent (Gemma · Fireworks AI)
                      └─> MLOps Agent (YOLOv10 training · PyTorch on ROCm)
 ```
 
+The Control Plane streams every stage live — agent states, Critic verdicts,
+VRAM orchestration, synthetic images appearing the moment they're generated —
+and closes the loop with an **inference playground**: drop a photo on the
+model page and watch the just-trained weights detect, with real latency and
+device badges.
+
 | Part | What it is |
 |---|---|
 | [`auto-annotator-ui/`](auto-annotator-ui/README.md) | Next.js 16 MLOps Command Center — runs standalone on an in-browser mock, or against the real backend with one env flip |
