@@ -60,6 +60,8 @@ export const endpoints = {
       `${API_BASE}/datasets/${datasetId}/images/${imageId}`,
     /** POST { archiveName, sizeMb } → Dataset (registers a BYOD upload) */
     upload: () => `${API_BASE}/datasets/upload`,
+    /** POST DatasetExportRequest → { downloadUrl } (YOLO or COCO zip) */
+    export: (id: string) => `${API_BASE}/datasets/${id}/export`,
   },
 
   models: {

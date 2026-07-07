@@ -28,7 +28,7 @@ export const navGroups: NavGroup[] = [
     items: [
       {
         title: "Dashboard",
-        href: "/",
+        href: "/dashboard",
         icon: LayoutDashboard,
         description: "Fleet overview and recent activity",
       },

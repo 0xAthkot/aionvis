@@ -345,6 +345,17 @@ export const handlers = [
     },
   ),
 
+  http.post(`${API_BASE}/datasets/:id/export`, async ({ params }) => {
+    await delay(600); // "zipping"
+    if (!db.datasets.some((d) => d.id === params.id))
+      return notFound("dataset_not_found", `No dataset ${params.id}`);
+    // Smallest valid zip (empty archive) as a data URI so the download
+    // click actually produces a file in mock mode.
+    return HttpResponse.json({
+      downloadUrl: "data:application/zip;base64,UEsFBgAAAAAAAAAAAAAAAAAAAAAAAA==",
+    });
+  }),
+
   http.post(`${API_BASE}/datasets/upload`, async ({ request }) => {
     await lag();
     const body = (await request.json()) as { archiveName: string; sizeMb: number };

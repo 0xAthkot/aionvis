@@ -125,7 +125,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/">
+              <Link href="/dashboard">
                 <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
                   <Crosshair className="size-4.5 text-primary-foreground" />
                 </div>

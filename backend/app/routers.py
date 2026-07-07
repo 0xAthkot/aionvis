@@ -23,6 +23,7 @@ from .schemas import (
     CurateImageRequest,
     DashboardStats,
     Dataset,
+    DatasetExportRequest,
     ExpandPromptRequest,
     ExpandPromptResponse,
     ExportRequest,
@@ -328,6 +329,20 @@ def dataset_images(
         raise _not_found("Dataset", dataset_id)
     images = store.images.get(dataset_id, [])
     return Paginated[AnnotatedImage].model_validate(_paginate(images, page, pageSize))
+
+
+@router.post("/datasets/{dataset_id}/export")
+def export_dataset_route(dataset_id: str, body: DatasetExportRequest) -> ExportResponse:
+    ds = store.datasets.get(dataset_id)
+    if ds is None:
+        raise _not_found("Dataset", dataset_id)
+    from .agents.dataset_export import export_dataset
+
+    try:
+        url = export_dataset(ds, store.images.get(dataset_id, []), body.format)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc))
+    return ExportResponse(download_url=url)
 
 
 @router.patch("/datasets/{dataset_id}/images/{image_id}")

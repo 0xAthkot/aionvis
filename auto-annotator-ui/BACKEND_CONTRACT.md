@@ -83,6 +83,7 @@ expansion so the preview matches what the launched run will generate.
 | GET | `/datasets/{id}/images` | → `Paginated<AnnotatedImage>` |
 | PATCH | `/datasets/{datasetId}/images/{imageId}` | `CurateImageRequest` → `AnnotatedImage` |
 | POST | `/datasets/upload` | `{ archiveName, sizeMb }` → `Dataset` (201) |
+| POST | `/datasets/{id}/export` | `DatasetExportRequest` (`{ format: "yolo" \| "coco" }`) → `{ downloadUrl }` (zip; accepted labeled images only; 409 if none) |
 
 Note: `/datasets/upload` accepts both the JSON registration above and a real
 multipart upload (field `archive`, a .zip of images) — the UI sends multipart

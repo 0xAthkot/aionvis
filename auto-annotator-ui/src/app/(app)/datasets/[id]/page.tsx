@@ -3,7 +3,8 @@
 import { use, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Download, X } from "lucide-react";
+import { toast } from "sonner";
 import { BBoxImage } from "@/components/datasets/bbox-image";
 import { ClassDistribution } from "@/components/datasets/class-distribution";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { api, apiPatch } from "@/lib/api/client";
+import { api, apiPatch, apiPost } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type {
   AnnotatedImage,
@@ -89,6 +90,25 @@ export default function DatasetDetailPage({
     },
   });
 
+  const exportDataset = useMutation({
+    mutationFn: (format: "yolo" | "coco") =>
+      apiPost<{ downloadUrl: string }>(endpoints.datasets.export(id), {
+        format,
+      }),
+    onSuccess: (res, format) => {
+      // Trigger the browser download directly — no extra click.
+      const a = document.createElement("a");
+      a.href = res.downloadUrl;
+      a.download = `${id}-${format}.zip`;
+      a.click();
+      toast.success(`${format.toUpperCase()} export ready`, {
+        description: "Training-ready archive — images, labels and metadata.",
+      });
+    },
+    onError: (err) =>
+      toast.error("Export failed", { description: err.message }),
+  });
+
   const images = useMemo(() => imagePage?.items ?? [], [imagePage]);
   const filtered = useMemo(
     () =>
@@ -138,13 +158,33 @@ export default function DatasetDetailPage({
               {dataset.status}
             </Badge>
           </div>
-          {dataset.runId && (
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/runs/${dataset.runId}`}>
-                Producing run <ArrowRight className="size-3.5" />
-              </Link>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={exportDataset.isPending || dataset.status !== "ready"}
+              onClick={() => exportDataset.mutate("coco")}
+            >
+              <Download className="size-3.5" />
+              COCO
             </Button>
-          )}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={exportDataset.isPending || dataset.status !== "ready"}
+              onClick={() => exportDataset.mutate("yolo")}
+            >
+              <Download className="size-3.5" />
+              YOLO
+            </Button>
+            {dataset.runId && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/runs/${dataset.runId}`}>
+                  Producing run <ArrowRight className="size-3.5" />
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
         <p className="text-sm text-muted-foreground">
           {dataset.imageCount.toLocaleString()} images ·{" "}

@@ -26,13 +26,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
 
   useEffect(() => {
-    if (user) router.replace("/");
+    if (user) router.replace("/dashboard");
   }, [user, router]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     login(email || "operator@aegisrobotics.io");
-    router.replace("/");
+    router.replace("/dashboard");
   }
 
   return (

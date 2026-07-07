@@ -12,3 +12,4 @@ psutil>=5.9
 # shell out to amd-smi instead.
 nvidia-ml-py>=12.555
 python-dotenv>=1.0
+pyyaml>=6.0

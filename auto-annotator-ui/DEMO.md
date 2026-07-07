@@ -15,10 +15,11 @@ Golden path for judges. Two ways to run it:
 
 ## Setup (before you present)
 
-1. `npm run dev`, open http://localhost:3000, sign in (any credentials).
-   Real mode: start the backend first (`uvicorn app.main:app --port 8000`),
-   then run the preflight: `python backend/smoke_test.py` — every check must
-   pass before you present.
+1. `npm run dev`, open http://localhost:3000 — the landing page (worth 5
+   seconds on screen by itself) — then **Launch console** and sign in (any
+   credentials). Real mode: start the backend first
+   (`uvicorn app.main:app --port 8000`), then run the preflight:
+   `python backend/smoke_test.py` — every check must pass before you present.
 2. Keep the **Dashboard** open in one tab — its VRAM sparkline moves with the
    pipeline, which makes the intro land.
 
@@ -60,8 +61,9 @@ cliff chart, or to the Dashboard tab showing the same load.)*
 
 **2:15 — Completion.** Toast fires; the green banner appears. Click
 **View dataset**: bounding boxes drawn on every image, Critic verdicts on
-click, class distribution chart. Then **View model**: training curves and
-one-click .pt / ONNX export.
+click, class distribution chart — and one-click **YOLO / COCO** archive
+export ("your data is never locked in"). Then **View model**: training
+curves and one-click .pt / ONNX export.
 
 **The closer — Inference playground.** On the model page, drop a photo of a
 forklift into the playground. Real inference on the weights the swarm just

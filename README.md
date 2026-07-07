@@ -27,7 +27,28 @@ click).
 | [`auto-annotator-ui/`](auto-annotator-ui/README.md) | Next.js 16 MLOps Command Center — runs standalone on an in-browser mock, or against the real backend with one env flip |
 | [`backend/`](backend/README.md) | FastAPI + the real agent swarm; implements [`BACKEND_CONTRACT.md`](auto-annotator-ui/BACKEND_CONTRACT.md) |
 
-## Quick start
+## Quick start (Docker — recommended for judges)
+
+```bash
+# Optional but recommended: your own Fireworks key (LLM prompt expansion,
+# VLM semantic critic, model cards). Without it the swarm degrades
+# gracefully to deterministic fallbacks.
+echo "FIREWORKS_API_KEY=fw_..." > .env
+
+docker compose up --build
+```
+
+- **UI** → http://localhost:3000 — landing page; *Launch console* to sign in
+  (any credentials, demo auth)
+- **API** → http://localhost:8000/docs
+
+Defaults are CPU-only so it runs on any machine — the diffusion model is
+slow on CPU but everything is real. On an NVIDIA box rebuild the backend
+with `TORCH_INDEX=https://download.pytorch.org/whl/cu126` and uncomment
+`gpus: all` in `docker-compose.yml`; on an AMD MI300X use
+[`backend/deploy_mi300x.sh`](backend/deploy_mi300x.sh) instead.
+
+## Quick start (native dev)
 
 ```bash
 # 1. Backend (see backend/README.md for the GPU stack install)

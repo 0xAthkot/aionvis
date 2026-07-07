@@ -366,6 +366,12 @@ export interface CreateFeedbackRequest {
   detections: number;
 }
 
+/** Download a dataset as a training-ready archive (`POST /datasets/{id}/export`). */
+export interface DatasetExportRequest {
+  /** yolo = images/ + labels/ + data.yaml · coco = images/ + instances.json */
+  format: "yolo" | "coco";
+}
+
 /** Result of live inference with a trained model (`POST /models/{id}/predict`). */
 export interface PredictionResult {
   /** classId indexes into ModelArtifact.classes. */

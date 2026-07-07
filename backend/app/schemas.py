@@ -442,6 +442,10 @@ class ExportRequest(ApiModel):
     format: Literal["pt", "onnx"]
 
 
+class DatasetExportRequest(ApiModel):
+    format: Literal["yolo", "coco"]
+
+
 class ExportResponse(ApiModel):
     download_url: str
 

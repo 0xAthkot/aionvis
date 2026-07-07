@@ -1,0 +1,48 @@
+# Auto-Annotator — full stack for local review.
+#
+#   FIREWORKS_API_KEY=fw_... docker compose up --build
+#
+# (or put FIREWORKS_API_KEY=fw_... in a `.env` file next to this compose
+# file). Without a key everything still runs: the Prompt Agent degrades to
+# a deterministic template expander and the semantic critic stage skips.
+#
+#   UI  → http://localhost:3000        (landing page + console)
+#   API → http://localhost:8000/docs   (OpenAPI)
+#
+# Defaults are CPU-only so it runs anywhere — synthesis is slow but real.
+# On an NVIDIA machine, rebuild the backend with the cu126 wheel index and
+# uncomment `gpus: all` below. On an AMD MI300X, skip Docker and use
+# backend/deploy_mi300x.sh (ROCm wheels + big caps).
+services:
+  backend:
+    build:
+      context: ./backend
+      # NVIDIA: TORCH_INDEX: https://download.pytorch.org/whl/cu126
+      # AMD:    TORCH_INDEX: https://download.pytorch.org/whl/rocm6.2
+    ports:
+      - "8000:8000"
+    environment:
+      FIREWORKS_API_KEY: ${FIREWORKS_API_KEY:-}
+      # Conservative caps for CPU review; raise freely on a GPU.
+      MAX_IMAGES_PER_RUN: ${MAX_IMAGES_PER_RUN:-6}
+      MAX_EPOCHS: ${MAX_EPOCHS:-12}
+    volumes:
+      - backend-data:/app/data      # runs, datasets, trained models
+      - model-cache:/root/.cache    # HuggingFace/Ultralytics weights (~4 GB once)
+    # gpus: all                     # NVIDIA GPU passthrough
+
+  frontend:
+    build:
+      context: ./auto-annotator-ui
+      args:
+        NEXT_PUBLIC_USE_MOCKS: "false"
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+        NEXT_PUBLIC_WS_BASE_URL: ws://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  backend-data:
+  model-cache:
