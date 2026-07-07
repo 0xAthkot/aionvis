@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Crosshair } from "lucide-react";
+import { ArrowLeft, Crosshair } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -38,7 +39,11 @@ export default function LoginPage() {
   return (
     <main className="flex flex-1 items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-6">
-        <div className="flex items-center justify-center gap-2.5">
+        <Link
+          href="/"
+          className="flex items-center justify-center gap-2.5"
+          title="Back to the landing page"
+        >
           <div className="flex size-9 items-center justify-center rounded-lg bg-primary">
             <Crosshair className="size-5 text-primary-foreground" />
           </div>
@@ -48,7 +53,7 @@ export default function LoginPage() {
               MLOps Command Center
             </p>
           </div>
-        </div>
+        </Link>
 
         <Card>
           <CardHeader>
@@ -114,6 +119,13 @@ export default function LoginPage() {
         <p className="text-center text-xs text-muted-foreground">
           Demo mode — any credentials sign you in to Aegis Robotics.
         </p>
+        <Link
+          href="/"
+          className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="size-3" />
+          Back to the landing page
+        </Link>
       </div>
     </main>
   );

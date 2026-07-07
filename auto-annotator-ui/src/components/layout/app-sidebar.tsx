@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, ChevronsUpDown, Crosshair, LogOut } from "lucide-react";
+import { Building2, ChevronsUpDown, Crosshair, Globe, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -107,6 +107,12 @@ function UserMenu() {
       <DropdownMenuContent className="w-56" align="start" side="top">
         <DropdownMenuLabel className="capitalize">{user.role}</DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/">
+            <Globe className="size-4" />
+            Landing page
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={logout} variant="destructive">
           <LogOut className="size-4" />
           Sign out
