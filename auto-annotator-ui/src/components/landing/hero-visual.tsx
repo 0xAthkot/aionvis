@@ -1,6 +1,14 @@
 "use client";
 
-import { Check, Sparkles } from "lucide-react";
+import {
+  Boxes,
+  Check,
+  Eye,
+  ImageIcon,
+  MessageSquareText,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import { Fragment, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -47,11 +55,11 @@ const DONE_AT = 50;
 const LOOP_AT = 66;
 
 const AGENTS = [
-  { name: "Prompt", from: 0 },
-  { name: "Synthesis", from: TILE_AT[0] },
-  { name: "Vision", from: BOX_AT[0] },
-  { name: "Critic", from: VERIFY_AT },
-  { name: "MLOps", from: TRAIN_START },
+  { name: "Prompt", icon: MessageSquareText, from: 0 },
+  { name: "Synthesis", icon: ImageIcon, from: TILE_AT[0] },
+  { name: "Vision", icon: Eye, from: BOX_AT[0] },
+  { name: "Critic", icon: ShieldCheck, from: VERIFY_AT },
+  { name: "MLOps", icon: Boxes, from: TRAIN_START },
 ];
 
 export function HeroVisual() {
@@ -129,11 +137,18 @@ export function HeroVisual() {
                         : "border-transparent text-muted-foreground/40",
                   )}
                 >
+                  {isDone ? (
+                    <Check className="size-3 shrink-0 text-emerald-400" />
+                  ) : (
+                    <a.icon
+                      className={cn("size-3 shrink-0", isActive && "text-primary")}
+                    />
+                  )}
+                  <span className="hidden sm:inline">{a.name} Agent</span>
+                  <span className="sm:hidden">{a.name}</span>
                   {isActive && (
                     <span className="size-1.5 animate-pulse rounded-full bg-primary" />
                   )}
-                  {isDone && <Check className="size-3 text-emerald-400" />}
-                  {a.name}
                 </span>
               </Fragment>
             );
