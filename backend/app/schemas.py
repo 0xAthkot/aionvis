@@ -123,9 +123,15 @@ Architecture = Literal[
     "rtdetr-l", "rtdetr-x",
 ]
 
+# What the trained model outputs. segment/obb reuse the Vision Agent's mask
+# polygons; pose keypoints come from a pretrained teacher at compile time.
+# Only YOLO11/YOLO26 ship non-detect heads (YOLOv10 and RT-DETR are detect-only).
+TrainingTask = Literal["detect", "segment", "obb", "pose"]
+
 
 class TrainingConfig(ApiModel):
     architecture: Architecture
+    task: TrainingTask = "detect"
     epochs: int
     image_size: int
     batch_size: int
@@ -249,6 +255,9 @@ class BoundingBox(ApiModel):
     w: float
     h: float
     confidence: Optional[float] = None
+    # Simplified mask contour as flat normalized pairs [x1, y1, x2, y2, …];
+    # present on Critic-verified labels, powers segment/obb training + export.
+    polygon: Optional[list[float]] = None
 
 
 class CritiqueRecord(ApiModel):
@@ -312,6 +321,7 @@ class ModelArtifact(ApiModel):
     name: str
     version: int
     architecture: Architecture
+    task: TrainingTask = "detect"
     file_name: str
     file_size_mb: float
     classes: list[str]
@@ -454,7 +464,7 @@ class ExportRequest(ApiModel):
 
 
 class DatasetExportRequest(ApiModel):
-    format: Literal["yolo", "coco"]
+    format: Literal["yolo", "coco", "voc", "csv"]
 
 
 class ExportResponse(ApiModel):

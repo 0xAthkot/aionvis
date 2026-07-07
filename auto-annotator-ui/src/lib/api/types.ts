@@ -129,8 +129,17 @@ export type Architecture =
 /** Weight export targets (`POST /models/{id}/export`); openvino downloads as a zip. */
 export type ModelExportFormat = "pt" | "onnx" | "torchscript" | "openvino";
 
+/**
+ * What the trained model outputs. segment/obb reuse the Critic-verified mask
+ * polygons; pose keypoints come from a pretrained teacher at compile time.
+ * Non-detect tasks require YOLO11/YOLO26 (YOLOv10 and RT-DETR are detect-only).
+ */
+export type TrainingTask = "detect" | "segment" | "obb" | "pose";
+
 export interface TrainingConfig {
   architecture: Architecture;
+  /** Defaults to "detect" server-side when omitted. */
+  task?: TrainingTask;
   epochs: number;
   imageSize: number;
   batchSize: number;
@@ -284,6 +293,11 @@ export interface BoundingBox {
   w: number;
   h: number;
   confidence?: number;
+  /**
+   * Simplified mask contour as flat normalized pairs [x1, y1, x2, y2, …].
+   * Present on Critic-verified labels; powers segment/obb training + export.
+   */
+  polygon?: number[];
 }
 
 export interface CritiqueRecord {
@@ -348,6 +362,8 @@ export interface ModelArtifact {
   name: string;
   version: number;
   architecture: TrainingConfig["architecture"];
+  /** Absent on models trained before tasks existed (= "detect"). */
+  task?: TrainingTask;
   fileName: string;
   fileSizeMb: number;
   classes: string[];
@@ -383,10 +399,14 @@ export interface CreateFeedbackRequest {
   detections: number;
 }
 
-/** Download a dataset as a training-ready archive (`POST /datasets/{id}/export`). */
+/**
+ * Download a dataset as a training-ready archive (`POST /datasets/{id}/export`).
+ * Format parity with Label Studio's CV exports: yolo = images/ + labels/ +
+ * data.yaml · coco = instances.json (with segmentation when masks exist) ·
+ * voc = Pascal VOC XML per image · csv = one flat annotations.csv.
+ */
 export interface DatasetExportRequest {
-  /** yolo = images/ + labels/ + data.yaml · coco = images/ + instances.json */
-  format: "yolo" | "coco";
+  format: "yolo" | "coco" | "voc" | "csv";
 }
 
 /** Result of live inference with a trained model (`POST /models/{id}/predict`). */

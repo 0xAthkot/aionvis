@@ -1,4 +1,4 @@
-import type { Architecture } from "@/lib/api/types";
+import type { Architecture, TrainingTask } from "@/lib/api/types";
 
 /**
  * Every trainable detector, grouped by family. Single source for the Pro
@@ -33,3 +33,16 @@ export const ARCH_FAMILIES: {
 ];
 
 export const RECOMMENDED_ARCH: Architecture = "yolo26m";
+
+/** Model output types, in plain language for Simple and Pro alike. */
+export const TASKS: { id: TrainingTask; label: string; hint: string }[] = [
+  { id: "detect", label: "Boxes", hint: "rectangles around each object" },
+  { id: "segment", label: "Masks", hint: "pixel-perfect outlines" },
+  { id: "obb", label: "Rotated boxes", hint: "angled objects, aerial views" },
+  { id: "pose", label: "Pose", hint: "body keypoints on people" },
+];
+
+/** YOLOv10 and RT-DETR ship detection heads only. */
+export function supportsTask(arch: Architecture, task: TrainingTask): boolean {
+  return task === "detect" || arch.startsWith("yolo11") || arch.startsWith("yolo26");
+}

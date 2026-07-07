@@ -30,6 +30,7 @@ import { endpoints } from "@/lib/api/endpoints";
 import type {
   AnnotatedImage,
   Dataset,
+  DatasetExportRequest,
   Paginated,
 } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
@@ -91,7 +92,7 @@ export default function DatasetDetailPage({
   });
 
   const exportDataset = useMutation({
-    mutationFn: (format: "yolo" | "coco") =>
+    mutationFn: (format: DatasetExportRequest["format"]) =>
       apiPost<{ downloadUrl: string }>(endpoints.datasets.export(id), {
         format,
       }),
@@ -159,24 +160,18 @@ export default function DatasetDetailPage({
             </Badge>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={exportDataset.isPending || dataset.status !== "ready"}
-              onClick={() => exportDataset.mutate("coco")}
-            >
-              <Download className="size-3.5" />
-              COCO
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={exportDataset.isPending || dataset.status !== "ready"}
-              onClick={() => exportDataset.mutate("yolo")}
-            >
-              <Download className="size-3.5" />
-              YOLO
-            </Button>
+            {(["yolo", "coco", "voc", "csv"] as const).map((format) => (
+              <Button
+                key={format}
+                variant="outline"
+                size="sm"
+                disabled={exportDataset.isPending || dataset.status !== "ready"}
+                onClick={() => exportDataset.mutate(format)}
+              >
+                <Download className="size-3.5" />
+                {format.toUpperCase()}
+              </Button>
+            ))}
             {dataset.runId && (
               <Button variant="outline" size="sm" asChild>
                 <Link href={`/runs/${dataset.runId}`}>

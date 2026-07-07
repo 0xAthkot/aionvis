@@ -36,8 +36,13 @@ import type {
 } from "@/lib/api/types";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useLaunchRun } from "@/hooks/use-launch-run";
-import { ARCH_FAMILIES, RECOMMENDED_ARCH } from "@/lib/architectures";
-import type { Architecture } from "@/lib/api/types";
+import {
+  ARCH_FAMILIES,
+  RECOMMENDED_ARCH,
+  supportsTask,
+  TASKS,
+} from "@/lib/architectures";
+import type { Architecture, TrainingTask } from "@/lib/api/types";
 import { useReportUnsaved } from "@/lib/stores/unsaved";
 import { cn } from "@/lib/utils";
 
@@ -59,7 +64,13 @@ export function SimpleFoundry() {
   const [basePrompt, setBasePrompt] = useState("");
   const [size, setSize] = useState<SizeId>("medium");
   const [architecture, setArchitecture] = useState<Architecture>(RECOMMENDED_ARCH);
+  const [task, setTask] = useState<TrainingTask>("detect");
   const [showMore, setShowMore] = useState(false);
+
+  function selectTask(next: TrainingTask) {
+    setTask(next);
+    if (!supportsTask(architecture, next)) setArchitecture(RECOMMENDED_ARCH);
+  }
 
   const project = projects?.find((p) => p.id === projectId);
   const sizeCfg = SIZES.find((s) => s.id === size) ?? SIZES[1];
@@ -89,6 +100,7 @@ export function SimpleFoundry() {
     },
     training: {
       architecture,
+      task,
       epochs: sizeCfg.epochs,
       imageSize: 640,
       batchSize: 32,
@@ -195,6 +207,28 @@ export function SimpleFoundry() {
           </div>
 
           <div className="space-y-2">
+            <Label>Model output</Label>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {TASKS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => selectTask(t.id)}
+                  className={cn(
+                    "rounded-lg border p-2.5 text-left transition-colors",
+                    task === t.id
+                      ? "border-primary bg-primary/10"
+                      : "hover:border-muted-foreground/40",
+                  )}
+                >
+                  <p className="text-sm font-medium">{t.label}</p>
+                  <p className="text-xs text-muted-foreground">{t.hint}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
             <button
               type="button"
               onClick={() => setShowMore((v) => !v)}
@@ -227,7 +261,11 @@ export function SimpleFoundry() {
                           {family.label} · {family.hint}
                         </SelectLabel>
                         {family.archs.map((arch) => (
-                          <SelectItem key={arch} value={arch}>
+                          <SelectItem
+                            key={arch}
+                            value={arch}
+                            disabled={!supportsTask(arch, task)}
+                          >
                             {arch.toUpperCase()}
                             {arch === RECOMMENDED_ARCH && (
                               <span className="text-muted-foreground"> · recommended</span>

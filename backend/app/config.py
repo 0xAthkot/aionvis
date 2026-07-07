@@ -53,6 +53,13 @@ class Settings(BaseSettings):
     semantic_critic_model: str = "accounts/fireworks/models/kimi-k2p6"
     semantic_critic_max_checks: int = 8
 
+    # --- Pose task ---
+    # COCO-pretrained teacher that keypoint-labels person-like instances at
+    # dataset-compile time (task="pose"); boxes it can't match get v=0 kpts.
+    pose_teacher_model: str = "yolo11m-pose.pt"
+    pose_teacher_conf: float = 0.30
+    pose_match_iou: float = 0.40
+
     # --- MLOps Agent ---
     # Caps applied on this dev box so a demo run stays minutes, not hours.
     # YOLO confidence stays near zero below ~40 epochs on tiny datasets, so

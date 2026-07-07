@@ -47,6 +47,25 @@ def _to_yolo(xyxyn: tuple[float, float, float, float]) -> tuple[float, float, fl
     return ((x1 + x2) / 2, (y1 + y2) / 2, x2 - x1, y2 - y1)
 
 
+def _simplify_polygon(polygon_px, width: int, height: int,
+                      max_points: int = 80) -> list[float]:
+    """Mask contour → compact normalized flat [x1, y1, …] for the contract."""
+    import cv2
+    import numpy as np
+
+    contour = np.asarray(polygon_px, dtype=np.float32).reshape(-1, 1, 2)
+    epsilon = 0.005 * max(cv2.arcLength(contour, closed=True), 1.0)
+    approx = cv2.approxPolyDP(contour, epsilon, closed=True).reshape(-1, 2)
+    if len(approx) > max_points:
+        step = len(approx) / max_points
+        approx = approx[[int(i * step) for i in range(max_points)]]
+    flat: list[float] = []
+    for x, y in approx:
+        flat.append(round(min(max(float(x) / width, 0.0), 1.0), 4))
+        flat.append(round(min(max(float(y) / height, 0.0), 1.0), 4))
+    return flat
+
+
 class CriticAgent:
     def review(self, ctx: RunContext, annotated: list[ImageAnnotation],
                on_progress: Callable[[int], None]) -> list[ReviewedImage]:
@@ -110,10 +129,13 @@ class CriticAgent:
                             f"ACCEPT {ann.path.name} class={det.class_id} "
                             f"IoU {iou:.2f} conf {det.confidence:.2f}",
                             agent="critic")
+                poly = (_simplify_polygon(det.polygon_px, ann.width, ann.height)
+                        if len(det.polygon_px) >= 3 else None)
                 boxes.append(BoundingBox(
                     class_id=det.class_id, cx=round(cx, 4), cy=round(cy, 4),
                     w=round(w, 4), h=round(h, 4),
                     confidence=round(det.confidence, 3),
+                    polygon=poly if poly and len(poly) >= 6 else None,
                 ))
 
             accepted = len(boxes) > 0

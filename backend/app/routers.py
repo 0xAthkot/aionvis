@@ -171,6 +171,11 @@ def create_run(body: CreateRunRequest) -> PipelineRun:
         raise _not_found("Project", body.project_id)
     if body.source.path == "byod" and body.source.dataset_id not in store.datasets:
         raise _not_found("Dataset", body.source.dataset_id)
+    if (body.training.task != "detect"
+            and not body.training.architecture.startswith(("yolo11", "yolo26"))):
+        raise HTTPException(
+            400, f"{body.training.task} needs a YOLO11 or YOLO26 architecture "
+                 "— YOLOv10 and RT-DETR ship detection heads only")
     org = store.organizations[0]
     run = PipelineRun(
         id=store.next_id("run"),

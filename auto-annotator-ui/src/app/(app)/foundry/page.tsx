@@ -34,7 +34,12 @@ import { api, apiPost } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import { useUiModeStore } from "@/lib/stores/ui-mode";
 import { useReportUnsaved } from "@/lib/stores/unsaved";
-import { ARCH_FAMILIES } from "@/lib/architectures";
+import {
+  ARCH_FAMILIES,
+  RECOMMENDED_ARCH,
+  supportsTask,
+  TASKS,
+} from "@/lib/architectures";
 import type {
   CreateSyntheticRunRequest,
   ExpandPromptRequest,
@@ -42,6 +47,7 @@ import type {
   FoundryFeedback,
   Project,
   TrainingConfig,
+  TrainingTask,
 } from "@/lib/api/types";
 
 function PercentSlider({
@@ -98,12 +104,24 @@ export default function FoundryPage() {
   const [guidanceScale, setGuidanceScale] = useState(7.5);
 
   const [training, setTraining] = useState<TrainingConfig>({
-    architecture: "yolov10m",
+    architecture: RECOMMENDED_ARCH,
+    task: "detect",
     epochs: 60,
     imageSize: 640,
     batchSize: 32,
     device: "mi300x-0",
   });
+
+  function selectTask(task: TrainingTask) {
+    setTraining((t) => ({
+      ...t,
+      task,
+      // YOLOv10/RT-DETR have no segment/obb/pose heads — swap to the default.
+      architecture: supportsTask(t.architecture, task)
+        ? t.architecture
+        : RECOMMENDED_ARCH,
+    }));
+  }
 
   function selectProject(id: string) {
     setProjectId(id);
@@ -458,6 +476,25 @@ export default function FoundryPage() {
             </CardHeader>
             <CardContent className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
               <div className="space-y-2">
+                <Label>Task</Label>
+                <Select
+                  value={training.task ?? "detect"}
+                  onValueChange={(v) => selectTask(v as TrainingTask)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TASKS.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.label}
+                        <span className="text-muted-foreground"> · {t.hint}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label>Architecture</Label>
                 <Select
                   value={training.architecture}
@@ -478,7 +515,11 @@ export default function FoundryPage() {
                           {family.label} · {family.hint}
                         </SelectLabel>
                         {family.archs.map((arch) => (
-                          <SelectItem key={arch} value={arch}>
+                          <SelectItem
+                            key={arch}
+                            value={arch}
+                            disabled={!supportsTask(arch, training.task ?? "detect")}
+                          >
                             {arch.toUpperCase()}
                           </SelectItem>
                         ))}

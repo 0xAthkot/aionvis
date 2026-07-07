@@ -67,7 +67,11 @@ success the backend sets `datasetId` and `modelId` on the run.
 `training.architecture` accepts the YOLOv10 / YOLO11 / YOLO26 families
 (n·s·m·l·x each) plus `rtdetr-l` / `rtdetr-x` — the `Architecture` union in
 types.ts is the source of truth; `/runs/estimate` prices bigger
-architectures higher.
+architectures higher. `training.task` (`detect` default | `segment` | `obb`
+| `pose`) picks the model head: segment/obb reuse the Critic-verified mask
+polygons, pose keypoints come from a pretrained teacher at compile time,
+and non-detect tasks require YOLO11/YOLO26 (400 otherwise). Verified boxes
+carry an optional `polygon` (flat normalized pairs).
 
 ### Foundry
 | Method | Path | Request → Response |
@@ -88,7 +92,7 @@ expansion so the preview matches what the launched run will generate.
 | GET | `/datasets/{id}/images` | → `Paginated<AnnotatedImage>` |
 | PATCH | `/datasets/{datasetId}/images/{imageId}` | `CurateImageRequest` → `AnnotatedImage` |
 | POST | `/datasets/upload` | `{ archiveName, sizeMb }` → `Dataset` (201) |
-| POST | `/datasets/{id}/export` | `DatasetExportRequest` (`{ format: "yolo" \| "coco" }`) → `{ downloadUrl }` (zip; accepted labeled images only; 409 if none) |
+| POST | `/datasets/{id}/export` | `DatasetExportRequest` (`{ format: "yolo" \| "coco" \| "voc" \| "csv" }`) → `{ downloadUrl }` (zip; accepted labeled images only; 409 if none; Label Studio format parity) |
 
 Note: `/datasets/upload` accepts both the JSON registration above and a real
 multipart upload (field `archive`, a .zip of images) — the UI sends multipart

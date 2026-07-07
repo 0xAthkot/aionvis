@@ -99,6 +99,11 @@ export default function ModelDetailPage({
             <Badge variant="outline" className="font-mono uppercase">
               {model.architecture}
             </Badge>
+            {model.task && model.task !== "detect" && (
+              <Badge variant="outline" className="capitalize">
+                {model.task === "obb" ? "Rotated boxes" : model.task}
+              </Badge>
+            )}
             <Badge variant={model.status === "ready" ? "default" : "secondary"}>
               {model.status}
             </Badge>

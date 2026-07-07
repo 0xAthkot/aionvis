@@ -26,6 +26,9 @@ from .gpu import device_str, flush_vram
 
 MODELS_DIR = DATA_DIR / "files" / "models"
 
+# Base-weight suffix per training task (yolo26n + segment → yolo26n-seg.pt).
+TASK_SUFFIX = {"detect": "", "segment": "-seg", "obb": "-obb", "pose": "-pose"}
+
 
 def _model_class(arch: str):
     """RT-DETR checkpoints need the RTDETR entry point; YOLO handles the rest."""
@@ -47,12 +50,15 @@ class MLOpsAgent:
         batch = max(1, min(run.training.batch_size,
                            4 if arch.startswith("rtdetr") else 8))
 
-        ctx.set_agent("mlops", "waiting_gpu", f"Loading {arch} base weights")
+        task = run.training.task
+        base_weights = f"{arch}{TASK_SUFFIX[task]}.pt"
+        ctx.set_agent("mlops", "waiting_gpu", f"Loading {base_weights} base weights")
         flush_vram(ctx)
-        ctx.log("info", f"Starting {arch} training — {epochs} epochs, "
-                        f"imgsz {imgsz}, batch {batch}, device {device}",
+        ctx.log("info", f"Starting {base_weights} training ({task}) — "
+                        f"{epochs} epochs, imgsz {imgsz}, batch {batch}, "
+                        f"device {device}",
                 agent="mlops")
-        model = _model_class(arch)(f"{arch}.pt")
+        model = _model_class(arch)(base_weights)
 
         curves: list[TrainingCurvePoint] = []
         epoch_started = {"t": time.monotonic()}
@@ -121,7 +127,7 @@ class MLOpsAgent:
         model_id = store.next_id("model")
         dest_dir = MODELS_DIR / model_id
         dest_dir.mkdir(parents=True, exist_ok=True)
-        weights = dest_dir / f"{model_id}_{arch}.pt"
+        weights = dest_dir / f"{model_id}_{arch}{TASK_SUFFIX[task]}.pt"
         shutil.copy2(best, weights)
 
         rd = getattr(results, "results_dict", {}) or {}
@@ -141,7 +147,8 @@ class MLOpsAgent:
         node = telemetry.build_node(busy=True)
         artifact = ModelArtifact(
             id=model_id, org_id=run.org_id, run_id=run.id, dataset_id=dataset.id,
-            name=f"{run.name} · {arch}", version=version, architecture=arch,
+            name=f"{run.name} · {arch}{TASK_SUFFIX[task]}", version=version,
+            architecture=arch, task=task,
             file_name=weights.name,
             file_size_mb=round(weights.stat().st_size / 1024**2, 1),
             classes=run.target_classes,
@@ -205,6 +212,20 @@ def run_inference(artifact: ModelArtifact, image_path: Path) -> dict:
             w=round(x2 - x1, 4), h=round(y2 - y1, 4),
             confidence=round(float(b.conf.item()), 3),
         ))
+    if res.boxes is None and getattr(res, "obb", None) is not None:
+        # OBB models emit rotated boxes; give the playground their
+        # axis-aligned hull plus the rotated corners as the polygon.
+        for ob in res.obb:
+            corners = ob.xyxyxyxyn[0].reshape(-1, 2).tolist()
+            xs, ys = [c[0] for c in corners], [c[1] for c in corners]
+            x1, y1, x2, y2 = min(xs), min(ys), max(xs), max(ys)
+            boxes.append(BoundingBox(
+                class_id=int(ob.cls.item()),
+                cx=round((x1 + x2) / 2, 4), cy=round((y1 + y2) / 2, 4),
+                w=round(x2 - x1, 4), h=round(y2 - y1, 4),
+                confidence=round(float(ob.conf.item()), 3),
+                polygon=[round(v, 4) for c in corners for v in c],
+            ))
 
     gpu_name = telemetry.GPU.name
     device_label = (

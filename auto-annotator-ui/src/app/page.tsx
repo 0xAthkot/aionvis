@@ -80,7 +80,7 @@ const FEATURES = [
   {
     icon: Download,
     title: "Export anywhere",
-    body: "Datasets download as YOLO or COCO archives; models export as PyTorch .pt or ONNX. Your data and weights are never locked in.",
+    body: "Datasets leave as YOLO, COCO, Pascal VOC or CSV; weights as .pt, ONNX, TorchScript or OpenVINO. Boxes, masks, rotated boxes or pose — never locked in.",
   },
 ];
 
@@ -151,7 +151,7 @@ const PLANS = [
       "docker compose up — full stack locally",
       "Bring your own GPU (CUDA or ROCm)",
       "Bring your own Fireworks API key",
-      "YOLO / COCO / ONNX export",
+      "YOLO / COCO / VOC / CSV / ONNX export",
     ],
     cta: "Run it locally",
     href: "#platform",
@@ -556,7 +556,8 @@ docker compose up --build
           <p className="text-xs text-muted-foreground">
             Built for the AMD Developer Hackathon ACT II — Unicorn Track.
             <br />
-            SDXL · SAM · YOLOv10 · Gemma on Fireworks AI · PyTorch on ROCm · MI300X
+            SDXL · SAM · YOLO26 / YOLO11 / YOLOv10 / RT-DETR · Gemma on
+            Fireworks AI · PyTorch on ROCm · MI300X
           </p>
           <p className="text-xs text-muted-foreground/60">
             © 2026 Auto-Annotator. All models trained, all labels verified, no

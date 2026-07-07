@@ -3,6 +3,12 @@
 Produces
   data/files/datasets/{id}/images/…  + thumbs/…   (served at /files/…)
   {workdir}/yolo/{images,labels}/{train,val}/ + data.yaml (for training)
+
+Label format follows run.training.task:
+  detect  — cls cx cy w h
+  segment — cls x1 y1 x2 y2 …            (Critic-verified mask polygon)
+  obb     — cls 4 corner pairs           (min-area rect around the polygon)
+  pose    — detect line + 17 COCO kpts   (pretrained teacher, see config)
 """
 
 import random
@@ -14,7 +20,7 @@ from PIL import Image
 
 from ..config import DATA_DIR, settings
 from ..orchestrator.context import RunContext
-from ..schemas import AnnotatedImage, Dataset, DatasetClass
+from ..schemas import AnnotatedImage, BoundingBox, Dataset, DatasetClass
 from ..store import now_iso, store
 from .critic_agent import ReviewedImage
 
@@ -25,6 +31,90 @@ CLASS_COLORS = ["#d97706", "#0284c7", "#65a30d", "#c026d3",
 THUMB_SIZE = 320
 
 
+def _box_corners(b: BoundingBox) -> list[float]:
+    x1, y1 = b.cx - b.w / 2, b.cy - b.h / 2
+    x2, y2 = b.cx + b.w / 2, b.cy + b.h / 2
+    return [x1, y1, x2, y1, x2, y2, x1, y2]
+
+
+def _seg_line(b: BoundingBox) -> str:
+    poly = b.polygon if b.polygon and len(b.polygon) >= 6 else _box_corners(b)
+    return f"{b.class_id} " + " ".join(f"{v:.4f}" for v in poly)
+
+
+def _obb_line(b: BoundingBox, width: int, height: int) -> str:
+    import cv2
+    import numpy as np
+
+    if b.polygon and len(b.polygon) >= 6:
+        pts = np.array(b.polygon, dtype=np.float32).reshape(-1, 2)
+        pts[:, 0] *= width
+        pts[:, 1] *= height
+        corners = cv2.boxPoints(cv2.minAreaRect(pts))
+        flat = []
+        for x, y in corners:
+            flat.append(min(max(float(x) / width, 0.0), 1.0))
+            flat.append(min(max(float(y) / height, 0.0), 1.0))
+    else:
+        flat = _box_corners(b)
+    return f"{b.class_id} " + " ".join(f"{v:.4f}" for v in flat)
+
+
+# COCO-17 horizontal-flip pairing, required for flip augmentation on pose.
+COCO_FLIP_IDX = [0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15]
+
+
+def _pose_keypoints(ctx: RunContext, items: list[ReviewedImage]) -> dict[Path, list]:
+    """Teacher pass: per image, [(person box xyxyn, (17,3) normalized kpts)]."""
+    from ultralytics import YOLO
+
+    from .gpu import device_str
+
+    ctx.log("info", f"Pose teacher {settings.pose_teacher_model} keypointing "
+                    f"{len(items)} images", agent="mlops")
+    teacher = YOLO(settings.pose_teacher_model)
+    out: dict[Path, list] = {}
+    for item in items:
+        res = teacher.predict(source=str(item.path), device=device_str(),
+                              conf=settings.pose_teacher_conf, verbose=False)[0]
+        pairs = []
+        if res.keypoints is not None and res.boxes is not None:
+            xyn = res.keypoints.xyn.cpu().numpy()          # (n, 17, 2)
+            conf = (res.keypoints.conf.cpu().numpy()
+                    if res.keypoints.conf is not None else None)
+            for j, box in enumerate(res.boxes):
+                kpts = []
+                for k in range(xyn.shape[1]):
+                    v = 2 if conf is None or conf[j][k] > 0.5 else 0
+                    kpts.append((float(xyn[j][k][0]), float(xyn[j][k][1]), v))
+                pairs.append((box.xyxyn[0].tolist(), kpts))
+        out[item.path] = pairs
+    del teacher
+    return out
+
+
+def _iou_xyxyn(a, b) -> float:
+    ix1, iy1 = max(a[0], b[0]), max(a[1], b[1])
+    ix2, iy2 = min(a[2], b[2]), min(a[3], b[3])
+    inter = max(ix2 - ix1, 0) * max(iy2 - iy1, 0)
+    union = ((a[2] - a[0]) * (a[3] - a[1])
+             + (b[2] - b[0]) * (b[3] - b[1]) - inter)
+    return inter / union if union > 0 else 0.0
+
+
+def _pose_line(b: BoundingBox, teacher_pairs: list) -> tuple[str, bool]:
+    """Detect line + best-matching teacher keypoints (v=0 when unmatched)."""
+    box_xyxyn = (b.cx - b.w / 2, b.cy - b.h / 2, b.cx + b.w / 2, b.cy + b.h / 2)
+    best, best_iou = None, settings.pose_match_iou
+    for person_box, kpts in teacher_pairs:
+        iou = _iou_xyxyn(box_xyxyn, person_box)
+        if iou >= best_iou:
+            best, best_iou = kpts, iou
+    kpts = best or [(0.0, 0.0, 0)] * 17
+    flat = " ".join(f"{x:.4f} {y:.4f} {v}" for x, y, v in kpts)
+    return f"{b.class_id} {b.cx} {b.cy} {b.w} {b.h} {flat}", best is not None
+
+
 def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
                     workdir: Path) -> Dataset:
     run = ctx.run
@@ -32,6 +122,7 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
     if not usable:
         raise RuntimeError("Critic rejected every image — nothing to train on. "
                            "Try a more concrete prompt or lower critic thresholds.")
+    task = run.training.task
 
     # --- reuse the uploaded dataset record for BYOD, mint a new one otherwise
     if run.path == "byod" and run.source.dataset_id in store.datasets:
@@ -70,6 +161,9 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
     total_bytes = 0
     base_url = f"{settings.public_base_url}/files/datasets/{dataset.id}"
 
+    pose_lookup = _pose_keypoints(ctx, usable) if task == "pose" else {}
+    pose_matched = 0
+
     for i, item in enumerate(reviewed):
         ctx.check_cancelled()
         file_name = item.path.name
@@ -85,7 +179,16 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
             shutil.copy2(item.path, yolo_dir / "images" / split / file_name)
             label_lines = []
             for b in item.boxes:
-                label_lines.append(f"{b.class_id} {b.cx} {b.cy} {b.w} {b.h}")
+                if task == "segment":
+                    label_lines.append(_seg_line(b))
+                elif task == "obb":
+                    label_lines.append(_obb_line(b, item.width, item.height))
+                elif task == "pose":
+                    line, matched = _pose_line(b, pose_lookup.get(item.path, []))
+                    label_lines.append(line)
+                    pose_matched += matched
+                else:
+                    label_lines.append(f"{b.class_id} {b.cx} {b.cy} {b.w} {b.h}")
                 instance_counts[b.class_id] = instance_counts.get(b.class_id, 0) + 1
             (yolo_dir / "labels" / split / f"{item.path.stem}.txt").write_text(
                 "\n".join(label_lines), encoding="utf-8"
@@ -103,13 +206,25 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
             critique=item.critique,
         ))
 
+    if task == "pose" and pose_matched == 0:
+        raise RuntimeError(
+            "Pose task: the keypoint teacher matched no instances — pose needs "
+            "person-like target classes (worker, pedestrian, …). Use detect or "
+            "segment for this scene instead."
+        )
+
     names = [c.replace("_", " ") for c in run.target_classes]
-    (yolo_dir / "data.yaml").write_text(yaml.safe_dump({
+    data_yaml: dict = {
         "path": str(yolo_dir).replace("\\", "/"),
         "train": "images/train",
         "val": "images/val" if n_val else "images/train",
         "names": {i: n for i, n in enumerate(names)},
-    }), encoding="utf-8")
+    }
+    if task == "pose":
+        data_yaml["kpt_shape"] = [17, 3]
+        data_yaml["flip_idx"] = COCO_FLIP_IDX
+    (yolo_dir / "data.yaml").write_text(yaml.safe_dump(data_yaml),
+                                        encoding="utf-8")
 
     dataset.classes = [
         DatasetClass(id=i, name=cls, color=CLASS_COLORS[i % len(CLASS_COLORS)],
