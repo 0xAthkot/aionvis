@@ -75,19 +75,13 @@ export default function DashboardPage() {
 
       <StatCards />
 
-      {mode === "simple" ? (
-        <>
-          <GettingStarted />
-          <RecentRuns />
-        </>
-      ) : (
-        <div className="grid gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <GpuFleetCard />
-          </div>
-          <RecentRuns />
+      {mode === "simple" && <GettingStarted />}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <GpuFleetCard />
         </div>
-      )}
+        <RecentRuns />
+      </div>
     </main>
   );
 }

@@ -85,10 +85,9 @@ export const navGroups: NavGroup[] = [
 export const allNavItems = navGroups.flatMap((g) => g.items);
 
 /**
- * Simple mode replaces the whole console nav with the three-step journey
- * (see the dashboard getting-started card): project → model → test.
- * Runs, datasets, hardware and settings stay reachable through in-page links
- * (recent runs, run detail) but never appear as tabs.
+ * Simple mode = the SAME destinations as Pro, in plain language (the
+ * Coinbase Simple/Advanced pattern: identical capability, jargon-free
+ * presentation). Never remove a tab here — rename and explain instead.
  */
 const simpleNavGroups: NavGroup[] = [
   {
@@ -107,10 +106,44 @@ const simpleNavGroups: NavGroup[] = [
         description: "Describe a scene, get a detection model",
       },
       {
+        title: "Activity",
+        href: "/runs",
+        icon: Play,
+        description: "Watch your models being built",
+      },
+    ],
+  },
+  {
+    label: "Library",
+    items: [
+      {
+        title: "Training data",
+        href: "/datasets",
+        icon: Database,
+        description: "The photos your models learn from",
+      },
+      {
         title: "Your models",
         href: "/models",
         icon: Boxes,
         description: "Test trained models on your own photos",
+      },
+    ],
+  },
+  {
+    label: "System",
+    items: [
+      {
+        title: "GPU monitor",
+        href: "/hardware",
+        icon: Cpu,
+        description: "The graphics card doing the work",
+      },
+      {
+        title: "Settings",
+        href: "/settings",
+        icon: Settings,
+        description: "Team and API keys",
       },
     ],
   },

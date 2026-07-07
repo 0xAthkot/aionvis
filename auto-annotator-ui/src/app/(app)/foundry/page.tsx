@@ -34,8 +34,8 @@ import { api, apiPost } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import { useUiModeStore } from "@/lib/stores/ui-mode";
 import { useReportUnsaved } from "@/lib/stores/unsaved";
+import { ARCH_FAMILIES } from "@/lib/architectures";
 import type {
-  Architecture,
   CreateSyntheticRunRequest,
   ExpandPromptRequest,
   ExpandPromptResponse,
@@ -43,13 +43,6 @@ import type {
   Project,
   TrainingConfig,
 } from "@/lib/api/types";
-
-const ARCH_FAMILIES: { label: string; archs: Architecture[] }[] = [
-  { label: "YOLO26 · newest, NMS-free", archs: ["yolo26n", "yolo26s", "yolo26m", "yolo26l", "yolo26x"] },
-  { label: "YOLO11", archs: ["yolo11n", "yolo11s", "yolo11m", "yolo11l", "yolo11x"] },
-  { label: "YOLOv10", archs: ["yolov10n", "yolov10s", "yolov10m", "yolov10l", "yolov10x"] },
-  { label: "RT-DETR · transformer", archs: ["rtdetr-l", "rtdetr-x"] },
-];
 
 function PercentSlider({
   id,
@@ -481,7 +474,9 @@ export default function FoundryPage() {
                   <SelectContent>
                     {ARCH_FAMILIES.map((family) => (
                       <SelectGroup key={family.label}>
-                        <SelectLabel>{family.label}</SelectLabel>
+                        <SelectLabel>
+                          {family.label} · {family.hint}
+                        </SelectLabel>
                         {family.archs.map((arch) => (
                           <SelectItem key={arch} value={arch}>
                             {arch.toUpperCase()}

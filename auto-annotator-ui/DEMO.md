@@ -23,11 +23,13 @@ Golden path for judges. Two ways to run it:
 2. Keep the **Dashboard** open in one tab — its VRAM sparkline moves with the
    pipeline, which makes the intro land.
 
-> **Simple vs Pro:** a fresh browser starts in **Simple mode** — three tabs,
-> a guided one-sentence launch flow. This script uses **Pro** (full nav,
-> wizard, terminal, VRAM telemetry): flip the toggle in the top bar and
-> confirm the dialog once, it persists. The switch itself is a great beat —
-> "novices get three tabs and three choices, ML engineers get every knob."
+> **Simple vs Pro:** a fresh browser starts in **Simple mode** — the same
+> console in plain language (Coinbase Simple/Advanced pattern): every tab,
+> every architecture, agent terminal and GPU telemetry included, but the
+> knobs live behind "More options" with tuned defaults. This script uses
+> **Pro** (every knob up front): flip the toggle in the top bar once, it
+> persists. The switch itself is a great beat — "same engine, two cockpits:
+> novices describe a scene, ML engineers grab every dial."
 
 ## The script
 

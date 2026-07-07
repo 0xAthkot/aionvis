@@ -74,8 +74,8 @@ function ModeToggle() {
             </DialogTitle>
             <DialogDescription>
               {pending === "pro"
-                ? "The full control plane replaces the guided interface — every option, agent terminal and telemetry."
-                : "The guided interface replaces the full console — fewer tabs, sensible defaults."}{" "}
+                ? "The full control plane replaces the guided interface — every knob exposed up front."
+                : "The guided interface replaces the full console — same features, plain language, sensible defaults."}{" "}
               You have unsaved input on this page; switching clears it.
               Running jobs are not affected.
             </DialogDescription>
@@ -134,7 +134,7 @@ export function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
       <h1 className="text-sm font-medium">{titleForPath(pathname, mode)}</h1>
       <div className="ml-auto flex items-center gap-2">
         <ModeToggle />
-        {mode === "pro" && <GpuStatusChip />}
+        <GpuStatusChip />
         <Button
           variant="outline"
           size="sm"

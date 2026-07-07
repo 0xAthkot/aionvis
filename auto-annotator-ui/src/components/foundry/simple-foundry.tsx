@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Flag, Rocket, Sparkles } from "lucide-react";
+import { ChevronDown, Flag, Rocket, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { NewProjectDialog } from "@/components/shared/new-project-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,9 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -34,6 +36,8 @@ import type {
 } from "@/lib/api/types";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useLaunchRun } from "@/hooks/use-launch-run";
+import { ARCH_FAMILIES, RECOMMENDED_ARCH } from "@/lib/architectures";
+import type { Architecture } from "@/lib/api/types";
 import { useReportUnsaved } from "@/lib/stores/unsaved";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +58,8 @@ export function SimpleFoundry() {
   const [projectId, setProjectId] = useState("");
   const [basePrompt, setBasePrompt] = useState("");
   const [size, setSize] = useState<SizeId>("medium");
+  const [architecture, setArchitecture] = useState<Architecture>(RECOMMENDED_ARCH);
+  const [showMore, setShowMore] = useState(false);
 
   const project = projects?.find((p) => p.id === projectId);
   const sizeCfg = SIZES.find((s) => s.id === size) ?? SIZES[1];
@@ -82,7 +88,7 @@ export function SimpleFoundry() {
       },
     },
     training: {
-      architecture: "yolo26m",
+      architecture,
       epochs: sizeCfg.epochs,
       imageSize: 640,
       batchSize: 32,
@@ -186,6 +192,59 @@ export function SimpleFoundry() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => setShowMore((v) => !v)}
+              className="flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ChevronDown
+                className={cn("size-3.5 transition-transform", showMore && "rotate-180")}
+              />
+              More options
+              {!showMore && architecture !== RECOMMENDED_ARCH && (
+                <Badge variant="outline" className="ml-1 font-mono text-[10px] uppercase">
+                  {architecture}
+                </Badge>
+              )}
+            </button>
+            {showMore && (
+              <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+                <Label>Model architecture</Label>
+                <Select
+                  value={architecture}
+                  onValueChange={(v) => setArchitecture(v as Architecture)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ARCH_FAMILIES.map((family) => (
+                      <SelectGroup key={family.label}>
+                        <SelectLabel>
+                          {family.label} · {family.hint}
+                        </SelectLabel>
+                        {family.archs.map((arch) => (
+                          <SelectItem key={arch} value={arch}>
+                            {arch.toUpperCase()}
+                            {arch === RECOMMENDED_ARCH && (
+                              <span className="text-muted-foreground"> · recommended</span>
+                            )}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  The same architectures Pro offers — the recommended one suits
+                  most jobs. Everything else (image size, batch, randomization)
+                  is tuned automatically.
+                </p>
+              </div>
+            )}
           </div>
 
           {pendingFeedback.length > 0 && (

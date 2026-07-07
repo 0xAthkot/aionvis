@@ -147,7 +147,6 @@ export default function RunDetailPage({
 
       <div className="grid items-start gap-6 xl:grid-cols-3">
         <div className="space-y-6 xl:col-span-2">
-          {pro && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between gap-2">
@@ -179,7 +178,6 @@ export default function RunDetailPage({
               />
             </CardContent>
           </Card>
-          )}
 
           {run.path === "synthetic" && (
             <FoundryPreview
@@ -231,7 +229,7 @@ export default function RunDetailPage({
         </div>
 
         <div className="space-y-6">
-          {pro && <VramCard />}
+          <VramCard />
 
           <Card>
             <CardHeader>
