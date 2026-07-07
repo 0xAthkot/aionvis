@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -40,10 +40,19 @@ const TILES: { src: string; boxes: Box[] }[] = [
 const TYPE_END = 11;
 const TILE_AT = [14, 17, 20];
 const BOX_AT = [24, 26, 28];
-const TRAIN_START = 31;
-const TRAIN_END = 45;
-const DONE_AT = 46;
-const LOOP_AT = 62;
+const VERIFY_AT = 31; // Critic pass: the ✓ appears on every label
+const TRAIN_START = 35;
+const TRAIN_END = 49;
+const DONE_AT = 50;
+const LOOP_AT = 66;
+
+const AGENTS = [
+  { name: "Prompt", from: 0 },
+  { name: "Synthesis", from: TILE_AT[0] },
+  { name: "Vision", from: BOX_AT[0] },
+  { name: "Critic", from: VERIFY_AT },
+  { name: "MLOps", from: TRAIN_START },
+];
 
 export function HeroVisual() {
   const [t, setT] = useState(0);
@@ -58,18 +67,21 @@ export function HeroVisual() {
   const training = t >= TRAIN_START && t < DONE_AT;
   const done = t >= DONE_AT;
   const progress = Math.min(1, Math.max(0, (t - TRAIN_START) / (TRAIN_END - TRAIN_START)));
+  const activeAgent = AGENTS.reduce((acc, a, i) => (t >= a.from ? i : acc), 0);
 
   const status = done
     ? "model_0014 ready · mAP50 0.85 · exported .pt / ONNX"
     : training
       ? `Training YOLOv10 · epoch ${Math.max(1, Math.round(progress * 60))}/60`
-      : t >= BOX_AT[0]
-        ? "Critic verifying every label — geometry + VLM"
-        : t >= TILE_AT[0]
-          ? "Synthesizing scenarios (SDXL)"
-          : expanded
-            ? "48 domain-randomized scenarios queued"
-            : "Describe what the model should detect";
+      : t >= VERIFY_AT
+        ? "Verifying every label — geometry + VLM"
+        : t >= BOX_AT[0]
+          ? "Segmenting objects — open vocabulary (SAM)"
+          : t >= TILE_AT[0]
+            ? "Rendering scenarios (SDXL)"
+            : expanded
+              ? "48 domain-randomized scenarios queued"
+              : "Describe what the model should detect";
 
   return (
     <div className="relative">
@@ -90,6 +102,42 @@ export function HeroVisual() {
           >
             → 48 scenarios
           </span>
+        </div>
+
+        {/* agent strip — who is working right now */}
+        <div className="flex items-center justify-center">
+          {AGENTS.map((a, i) => {
+            const isActive = !done && i === activeAgent;
+            const isDone = done || i < activeAgent;
+            return (
+              <Fragment key={a.name}>
+                {i > 0 && (
+                  <span
+                    className={cn(
+                      "h-px w-3 transition-colors duration-500 sm:w-6",
+                      isDone || isActive ? "bg-primary/50" : "bg-border",
+                    )}
+                  />
+                )}
+                <span
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] whitespace-nowrap transition-all duration-300",
+                    isActive
+                      ? "border-primary/50 bg-primary/10 font-medium text-foreground"
+                      : isDone
+                        ? "border-transparent text-muted-foreground"
+                        : "border-transparent text-muted-foreground/40",
+                  )}
+                >
+                  {isActive && (
+                    <span className="size-1.5 animate-pulse rounded-full bg-primary" />
+                  )}
+                  {isDone && <Check className="size-3 text-emerald-400" />}
+                  {a.name}
+                </span>
+              </Fragment>
+            );
+          })}
         </div>
 
         {/* generated tiles with verified boxes */}
@@ -138,7 +186,9 @@ export function HeroVisual() {
                       className="absolute -top-5 left-0 rounded-sm px-1 py-px text-[10px] font-medium whitespace-nowrap text-zinc-950"
                       style={{ backgroundColor: b.color }}
                     >
-                      {b.label} ✓
+                      {/* the ✓ lands when the Critic pass runs */}
+                      {b.label}
+                      {t >= VERIFY_AT && " ✓"}
                     </span>
                   </div>
                 ))}
