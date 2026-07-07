@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Flag, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { LaunchSummary } from "@/components/foundry/launch-summary";
+import { SimpleFoundry } from "@/components/foundry/simple-foundry";
 import { TagInput } from "@/components/shared/tag-input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { api, apiPost } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
+import { useUiModeStore } from "@/lib/stores/ui-mode";
 import type {
   CreateSyntheticRunRequest,
   ExpandPromptRequest,
@@ -69,6 +71,8 @@ function PercentSlider({
 }
 
 export default function FoundryPage() {
+  const mode = useUiModeStore((s) => s.mode);
+
   const { data: projects } = useQuery({
     queryKey: ["projects"],
     queryFn: () => api<Project[]>(endpoints.projects.list()),
@@ -149,6 +153,22 @@ export default function FoundryPage() {
     enabled: !!projectId,
   });
   const pendingFeedback = feedback?.filter((f) => !f.consumedByRunId) ?? [];
+
+  if (mode === "simple") {
+    return (
+      <main className="flex flex-1 flex-col gap-6 p-6">
+        <header className="space-y-1 text-center">
+          <h1 className="text-xl font-semibold tracking-tight">
+            Build a detection model
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            One sentence in, deployable model out.
+          </p>
+        </header>
+        <SimpleFoundry />
+      </main>
+    );
+  }
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-6">

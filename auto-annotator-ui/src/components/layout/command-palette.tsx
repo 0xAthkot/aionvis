@@ -12,7 +12,8 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { allNavItems } from "./nav-config";
+import { useUiModeStore } from "@/lib/stores/ui-mode";
+import { navGroupsFor } from "./nav-config";
 
 export function CommandPalette({
   open,
@@ -22,6 +23,8 @@ export function CommandPalette({
   onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
+  const mode = useUiModeStore((s) => s.mode);
+  const navItems = navGroupsFor(mode).flatMap((g) => g.items);
 
   function go(href: string) {
     onOpenChange(false);
@@ -50,7 +53,7 @@ export function CommandPalette({
         </CommandGroup>
         <CommandSeparator />
         <CommandGroup heading="Navigate">
-          {allNavItems.map((item) => (
+          {navItems.map((item) => (
             <CommandItem key={item.href} onSelect={() => go(item.href)}>
               <item.icon className="size-4" />
               {item.title}

@@ -23,6 +23,12 @@ Golden path for judges. Two ways to run it:
 2. Keep the **Dashboard** open in one tab — its VRAM sparkline moves with the
    pipeline, which makes the intro land.
 
+> **Simple vs Pro:** a fresh browser starts in **Simple mode** — a guided,
+> one-sentence launch flow. This script uses **Pro** (full wizard, terminal,
+> VRAM telemetry): flip the toggle in the top bar once, it persists. The
+> switch itself is a great beat — "novices get three choices, ML engineers
+> get every knob."
+
 ## The script
 
 **0:00 — Dashboard.** "This is the MLOps Command Center for our agent swarm.

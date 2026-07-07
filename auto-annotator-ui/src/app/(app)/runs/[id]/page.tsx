@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api, apiPost } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type { AgentInstance, LogEvent, PipelineRun } from "@/lib/api/types";
+import { useUiModeStore } from "@/lib/stores/ui-mode";
 import { useRunStream } from "@/hooks/use-run-stream";
 
 export default function RunDetailPage({
@@ -33,6 +34,7 @@ export default function RunDetailPage({
 }) {
   const { id } = use(params);
   const queryClient = useQueryClient();
+  const pro = useUiModeStore((s) => s.mode) === "pro";
 
   const { data: run } = useQuery({
     queryKey: ["run", id],
@@ -145,6 +147,7 @@ export default function RunDetailPage({
 
       <div className="grid items-start gap-6 xl:grid-cols-3">
         <div className="space-y-6 xl:col-span-2">
+          {pro && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between gap-2">
@@ -176,6 +179,7 @@ export default function RunDetailPage({
               />
             </CardContent>
           </Card>
+          )}
 
           {run.path === "synthetic" && (
             <FoundryPreview
@@ -227,7 +231,7 @@ export default function RunDetailPage({
         </div>
 
         <div className="space-y-6">
-          <VramCard />
+          {pro && <VramCard />}
 
           <Card>
             <CardHeader>
@@ -247,6 +251,7 @@ export default function RunDetailPage({
             </CardContent>
           </Card>
 
+          {pro && (
           <Card>
             <CardHeader>
               <CardTitle>Configuration</CardTitle>
@@ -315,6 +320,7 @@ export default function RunDetailPage({
               </dl>
             </CardContent>
           </Card>
+          )}
         </div>
       </div>
     </main>

@@ -10,7 +10,43 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { api } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type { HardwareNode } from "@/lib/api/types";
+import { useUiModeStore, type UiMode } from "@/lib/stores/ui-mode";
+import { cn } from "@/lib/utils";
 import { titleForPath } from "./nav-config";
+
+function ModeToggle() {
+  const mode = useUiModeStore((s) => s.mode);
+  const setMode = useUiModeStore((s) => s.setMode);
+
+  return (
+    <div
+      className="flex items-center rounded-full border p-0.5"
+      role="group"
+      aria-label="Interface complexity"
+    >
+      {(["simple", "pro"] as UiMode[]).map((m) => (
+        <button
+          key={m}
+          type="button"
+          onClick={() => setMode(m)}
+          title={
+            m === "simple"
+              ? "Guided interface with sensible defaults"
+              : "Full control plane — every option, terminal, telemetry"
+          }
+          className={cn(
+            "rounded-full px-2.5 py-0.5 text-xs font-medium capitalize transition-colors",
+            mode === m
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {m}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function GpuStatusChip() {
   const { data: nodes } = useQuery({
@@ -38,6 +74,7 @@ function GpuStatusChip() {
 
 export function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const pathname = usePathname();
+  const mode = useUiModeStore((s) => s.mode);
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
@@ -45,7 +82,8 @@ export function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
       <Separator orientation="vertical" className="mr-1 h-4!" />
       <h1 className="text-sm font-medium">{titleForPath(pathname)}</h1>
       <div className="ml-auto flex items-center gap-2">
-        <GpuStatusChip />
+        <ModeToggle />
+        {mode === "pro" && <GpuStatusChip />}
         <Button
           variant="outline"
           size="sm"

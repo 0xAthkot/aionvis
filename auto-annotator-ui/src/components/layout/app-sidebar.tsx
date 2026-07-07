@@ -31,7 +31,8 @@ import { api } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type { Organization } from "@/lib/api/types";
 import { useAuthStore } from "@/lib/stores/auth";
-import { navGroups } from "./nav-config";
+import { useUiModeStore } from "@/lib/stores/ui-mode";
+import { navGroupsFor } from "./nav-config";
 
 function OrgSwitcher() {
   const { data: orgs } = useQuery({
@@ -124,6 +125,7 @@ function UserMenu() {
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const mode = useUiModeStore((s) => s.mode);
 
   return (
     <Sidebar collapsible="icon">
@@ -153,7 +155,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {navGroups.map((group) => (
+        {navGroupsFor(mode).map((group) => (
           <SidebarGroup key={group.label}>
             <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
             <SidebarGroupContent>

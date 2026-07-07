@@ -84,6 +84,17 @@ export const navGroups: NavGroup[] = [
 
 export const allNavItems = navGroups.flatMap((g) => g.items);
 
+/** Simple mode hides infrastructure detail; Pro shows everything. */
+export function navGroupsFor(mode: "simple" | "pro"): NavGroup[] {
+  if (mode === "pro") return navGroups;
+  return navGroups
+    .map((g) => ({
+      ...g,
+      items: g.items.filter((i) => i.href !== "/hardware"),
+    }))
+    .filter((g) => g.items.length > 0);
+}
+
 export function titleForPath(pathname: string): string {
   const exact = allNavItems.find((i) => i.href === pathname);
   if (exact) return exact.title;
