@@ -35,7 +35,7 @@ const NAV_LINKS = [
 ];
 
 const STATS = [
-  { value: "0", label: "boxes drawn by humans" },
+  { value: "Zero", label: "boxes drawn by humans" },
   { value: "<$0.01", label: "LLM cost per run" },
   { value: "1 GPU", label: "whole swarm resident in 192 GB" },
   { value: "minutes", label: "from a sentence to weights" },
