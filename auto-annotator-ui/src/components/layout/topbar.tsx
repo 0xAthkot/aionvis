@@ -20,14 +20,17 @@ import { api } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type { HardwareNode } from "@/lib/api/types";
 import { useUiModeStore, type UiMode } from "@/lib/stores/ui-mode";
+import { useAnyUnsaved } from "@/lib/stores/unsaved";
 import { cn } from "@/lib/utils";
 import { titleForPath } from "./nav-config";
 
 function ModeToggle() {
   const mode = useUiModeStore((s) => s.mode);
   const setMode = useUiModeStore((s) => s.setMode);
-  // Switching modes swaps whole page trees, so any unlaunched form input
-  // (a run being configured, an unsaved dialog) is unmounted — confirm first.
+  // Switching modes swaps whole page trees, so unlaunched form input (a run
+  // being configured, an unsaved dialog) is unmounted — confirm first, but
+  // only when some form actually reports unsaved input.
+  const anyUnsaved = useAnyUnsaved();
   const [pending, setPending] = useState<UiMode | null>(null);
 
   return (
@@ -41,7 +44,11 @@ function ModeToggle() {
           <button
             key={m}
             type="button"
-            onClick={() => m !== mode && setPending(m)}
+            onClick={() => {
+              if (m === mode) return;
+              if (anyUnsaved) setPending(m);
+              else setMode(m);
+            }}
             title={
               m === "simple"
                 ? "Guided interface with sensible defaults"
@@ -69,8 +76,8 @@ function ModeToggle() {
               {pending === "pro"
                 ? "The full control plane replaces the guided interface — every option, agent terminal and telemetry."
                 : "The guided interface replaces the full console — fewer tabs, sensible defaults."}{" "}
-              Anything you have typed but not launched on this page will be
-              cleared. Running jobs are not affected.
+              You have unsaved input on this page; switching clears it.
+              Running jobs are not affected.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

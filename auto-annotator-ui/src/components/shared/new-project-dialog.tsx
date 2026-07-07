@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { apiPost } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type { CreateProjectRequest, Project } from "@/lib/api/types";
+import { useReportUnsaved } from "@/lib/stores/unsaved";
 
 /**
  * "New project" button + dialog. Projects are just a name and the object
@@ -54,6 +55,11 @@ export function NewProjectDialog({
   });
 
   const isValid = name.trim().length > 1 && classes.length > 0;
+  // Typed fields survive a close/reopen but not a mode switch (unmount).
+  useReportUnsaved(
+    "new-project-dialog",
+    name.trim().length > 0 || classes.length > 0,
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

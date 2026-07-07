@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { api, apiPost } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import { useUiModeStore } from "@/lib/stores/ui-mode";
+import { useReportUnsaved } from "@/lib/stores/unsaved";
 import type {
   CreateSyntheticRunRequest,
   ExpandPromptRequest,
@@ -142,6 +143,15 @@ export default function FoundryPage() {
     name.trim().length > 2 &&
     targetClasses.length > 0 &&
     basePrompt.trim().length > 15;
+
+  // Slider tweaks are one flick to redo; typed text is the progress worth
+  // guarding when a mode switch would unmount the wizard.
+  useReportUnsaved(
+    "pro-foundry",
+    basePrompt.trim().length > 0 ||
+      name.trim().length > 0 ||
+      targetClasses.length > 0,
+  );
 
   const expansion = useMutation({
     mutationFn: (body: ExpandPromptRequest) =>

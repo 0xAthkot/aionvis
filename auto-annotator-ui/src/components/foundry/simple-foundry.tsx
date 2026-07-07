@@ -34,6 +34,7 @@ import type {
 } from "@/lib/api/types";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useLaunchRun } from "@/hooks/use-launch-run";
+import { useReportUnsaved } from "@/lib/stores/unsaved";
 import { cn } from "@/lib/utils";
 
 /** Everything the Pro wizard exposes as knobs, chosen for the user. */
@@ -57,6 +58,7 @@ export function SimpleFoundry() {
   const project = projects?.find((p) => p.id === projectId);
   const sizeCfg = SIZES.find((s) => s.id === size) ?? SIZES[1];
   const isValid = !!project && basePrompt.trim().length > 15;
+  useReportUnsaved("simple-foundry", basePrompt.trim().length > 0);
 
   const request: CreateSyntheticRunRequest = {
     projectId,
