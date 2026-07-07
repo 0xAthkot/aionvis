@@ -523,7 +523,7 @@ docker compose up --build
             <div className="relative overflow-hidden rounded-2xl border border-primary/30 px-6 py-16 text-center">
               <div
                 aria-hidden
-                className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_100%_at_50%_100%,oklch(0.637_0.237_25.331_/_0.25),transparent)]"
+                className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_55%_65%_at_50%_50%,oklch(0.637_0.237_25.331_/_0.22),transparent_100%)]"
               />
               <div className="relative">
                 <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
