@@ -115,6 +115,47 @@ def _pose_line(b: BoundingBox, teacher_pairs: list) -> tuple[str, bool]:
     return f"{b.class_id} {b.cx} {b.cy} {b.w} {b.h} {flat}", best is not None
 
 
+def _write_rfdetr_coco(pairs: list[tuple[ReviewedImage, str]], workdir: Path,
+                       names: list[str]) -> None:
+    """Roboflow-COCO layout for the RF-DETR worker: {train,valid}/ dirs each
+    holding images + _annotations.coco.json (category ids are 1-based)."""
+    import json
+
+    root = workdir / "rfdetr"
+    categories = [{"id": i + 1, "name": n, "supercategory": "object"}
+                  for i, n in enumerate(names)]
+    by_split = {"train": [], "valid": []}
+    for item, split in pairs:
+        by_split["valid" if split == "val" else "train"].append(item)
+    if not by_split["valid"]:  # single-split dataset validates on train
+        by_split["valid"] = by_split["train"]
+
+    for split, items in by_split.items():
+        split_dir = root / split
+        split_dir.mkdir(parents=True, exist_ok=True)
+        coco = {"images": [], "annotations": [], "categories": categories}
+        ann_id = 1
+        for idx, item in enumerate(items):
+            shutil.copy2(item.path, split_dir / item.path.name)
+            coco["images"].append({
+                "id": idx, "file_name": item.path.name,
+                "width": item.width, "height": item.height,
+            })
+            for b in item.boxes:
+                w, h = b.w * item.width, b.h * item.height
+                x = b.cx * item.width - w / 2
+                y = b.cy * item.height - h / 2
+                coco["annotations"].append({
+                    "id": ann_id, "image_id": idx,
+                    "category_id": b.class_id + 1,
+                    "bbox": [round(x, 2), round(y, 2), round(w, 2), round(h, 2)],
+                    "area": round(w * h, 2), "iscrowd": 0,
+                })
+                ann_id += 1
+        (split_dir / "_annotations.coco.json").write_text(
+            json.dumps(coco), encoding="utf-8")
+
+
 def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
                     workdir: Path) -> Dataset:
     run = ctx.run
@@ -163,6 +204,7 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
 
     pose_lookup = _pose_keypoints(ctx, usable) if task == "pose" else {}
     pose_matched = 0
+    split_pairs: list[tuple[ReviewedImage, str]] = []
 
     for i, item in enumerate(reviewed):
         ctx.check_cancelled()
@@ -176,6 +218,7 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
         if item.accepted:
             usable_pos = usable.index(item)
             split = "val" if usable_pos in val_idx else "train"
+            split_pairs.append((item, split))
             shutil.copy2(item.path, yolo_dir / "images" / split / file_name)
             label_lines = []
             for b in item.boxes:
@@ -205,6 +248,10 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
             curation_state="accepted" if item.accepted else "rejected",
             critique=item.critique,
         ))
+
+    if run.training.architecture.startswith("rf-detr"):
+        _write_rfdetr_coco(split_pairs, workdir,
+                           [c.replace("_", " ") for c in run.target_classes])
 
     if task == "pose" and pose_matched == 0:
         raise RuntimeError(

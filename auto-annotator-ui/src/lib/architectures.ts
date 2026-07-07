@@ -30,6 +30,17 @@ export const ARCH_FAMILIES: {
     hint: "transformer — accurate, slower",
     archs: ["rtdetr-l", "rtdetr-x"],
   },
+  {
+    label: "RF-DETR",
+    hint: "Roboflow SOTA — first real-time 60+ AP",
+    archs: [
+      "rf-detr-nano",
+      "rf-detr-small",
+      "rf-detr-medium",
+      "rf-detr-base",
+      "rf-detr-large",
+    ],
+  },
 ];
 
 export const RECOMMENDED_ARCH: Architecture = "yolo26m";

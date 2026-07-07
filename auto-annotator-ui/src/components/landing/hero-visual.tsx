@@ -30,7 +30,7 @@ const SCENARIOS: Scenario[] = [
   {
     // ds_0006 · warehouse safety showcase
     prompt: "a yellow forklift moving pallets in a busy warehouse",
-    done: "model_0014 ready · mAP50 0.85 · exported .pt / ONNX",
+    done: "model_0006 ready · mAP50 0.85 · exported .pt / ONNX",
     tiles: [
       {
         src: "/landing/gen-3.jpg",

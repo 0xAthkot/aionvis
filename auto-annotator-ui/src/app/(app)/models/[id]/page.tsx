@@ -118,7 +118,10 @@ export default function ModelDetailPage({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {EXPORT_FORMATS.map((f) => (
+                {(model.architecture.startsWith("rf-detr")
+                  ? EXPORT_FORMATS.filter((f) => f.format === "onnx")
+                  : EXPORT_FORMATS
+                ).map((f) => (
                   <DropdownMenuItem
                     key={f.format}
                     onClick={() => exportModel.mutate(f.format)}

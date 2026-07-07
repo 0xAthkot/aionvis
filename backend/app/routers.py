@@ -175,7 +175,12 @@ def create_run(body: CreateRunRequest) -> PipelineRun:
             and not body.training.architecture.startswith(("yolo11", "yolo26"))):
         raise HTTPException(
             400, f"{body.training.task} needs a YOLO11 or YOLO26 architecture "
-                 "— YOLOv10 and RT-DETR ship detection heads only")
+                 "— YOLOv10, RT-DETR and RF-DETR ship detection heads only")
+    if body.training.architecture.startswith("rf-detr"):
+        from .agents.rfdetr_bridge import SETUP_HINT, available
+
+        if not available():
+            raise HTTPException(400, SETUP_HINT)
     org = store.organizations[0]
     run = PipelineRun(
         id=store.next_id("run"),
@@ -219,7 +224,9 @@ def estimate_run(body: CreateRunRequest) -> CostEstimate:
 
 
 def _arch_factor(arch: str) -> float:
-    """Relative training cost vs a nano YOLO; RT-DETR's transformer is ~3×."""
+    """Relative training cost vs a nano YOLO; transformers are ~3×."""
+    if arch.startswith("rf-detr"):
+        return 4.5 if arch.endswith("large") else 3.0
     if arch.startswith("rtdetr"):
         return 3.0 if arch.endswith("l") else 4.5
     return {"n": 1.0, "s": 1.3, "m": 1.8, "l": 2.5, "x": 3.5}.get(arch[-1], 1.0)

@@ -42,8 +42,12 @@ class MLOpsAgent:
               on_epoch: Callable[[int], None]) -> ModelArtifact:
         run = ctx.run
         progress = run.progress
-        device = device_str()
         arch = run.training.architecture
+        if arch.startswith("rf-detr"):
+            from .rfdetr_bridge import train_rfdetr
+
+            return train_rfdetr(ctx, dataset, workdir, on_epoch)
+        device = device_str()
         epochs = progress.total_epochs
         imgsz = min(run.training.image_size, settings.synthesis_image_size)
         # The RT-DETR transformer needs ~2× the VRAM per sample of a YOLO CNN.
@@ -183,6 +187,10 @@ _inference_cache: dict[str, object] = {}
 
 def run_inference(artifact: ModelArtifact, image_path: Path) -> dict:
     """Real inference with the trained weights; returns PredictionResult fields."""
+    if artifact.architecture.startswith("rf-detr"):
+        from .rfdetr_bridge import predict_rfdetr
+
+        return predict_rfdetr(artifact, image_path)
     from ..orchestrator.pipeline import pipeline
     from ..schemas import BoundingBox
 
@@ -251,6 +259,10 @@ def export_artifact(artifact: ModelArtifact, fmt: str) -> str:
     """
     weights = MODELS_DIR / artifact.id / artifact.file_name
     base = f"{settings.public_base_url}/files/models/{artifact.id}"
+    if artifact.architecture.startswith("rf-detr"):
+        from .rfdetr_bridge import export_rfdetr
+
+        return export_rfdetr(artifact, fmt, base)
     if fmt == "pt":
         return f"{base}/{artifact.file_name}"
 

@@ -58,4 +58,20 @@ cd backend && .venv/Scripts/python -m uvicorn app.main:app --port 8000
 cd auto-annotator-ui && npm run dev     # http://localhost:3000
 ```
 
+### Optional: RF-DETR architectures
+
+Roboflow's RF-DETR needs `transformers>=5`, which conflicts with the pinned
+SDXL stack, so it runs in its own venv and the backend shells out to
+[`backend/rfdetr_worker.py`](backend/rfdetr_worker.py). One-time setup:
+
+```bash
+cd backend
+python -m venv .venv-rfdetr
+.venv-rfdetr/Scripts/pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+.venv-rfdetr/Scripts/pip install "rfdetr[train]" onnx onnxsim
+```
+
+Without it, RF-DETR runs are rejected at launch with these instructions;
+every other architecture works as normal.
+
 Demo walkthrough: [`auto-annotator-ui/DEMO.md`](auto-annotator-ui/DEMO.md).

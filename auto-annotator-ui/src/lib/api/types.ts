@@ -124,7 +124,9 @@ export type Architecture =
   | "yolov10n" | "yolov10s" | "yolov10m" | "yolov10l" | "yolov10x"
   | "yolo11n" | "yolo11s" | "yolo11m" | "yolo11l" | "yolo11x"
   | "yolo26n" | "yolo26s" | "yolo26m" | "yolo26l" | "yolo26x"
-  | "rtdetr-l" | "rtdetr-x";
+  | "rtdetr-l" | "rtdetr-x"
+  | "rf-detr-nano" | "rf-detr-small" | "rf-detr-medium"
+  | "rf-detr-base" | "rf-detr-large";
 
 /** Weight export targets (`POST /models/{id}/export`); openvino downloads as a zip. */
 export type ModelExportFormat = "pt" | "onnx" | "torchscript" | "openvino";

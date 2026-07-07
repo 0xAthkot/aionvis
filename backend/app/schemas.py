@@ -121,6 +121,9 @@ Architecture = Literal[
     "yolo11n", "yolo11s", "yolo11m", "yolo11l", "yolo11x",
     "yolo26n", "yolo26s", "yolo26m", "yolo26l", "yolo26x",
     "rtdetr-l", "rtdetr-x",
+    # Roboflow RF-DETR — trained in an isolated venv (see rfdetr_bridge).
+    "rf-detr-nano", "rf-detr-small", "rf-detr-medium",
+    "rf-detr-base", "rf-detr-large",
 ]
 
 # What the trained model outputs. segment/obb reuse the Vision Agent's mask
