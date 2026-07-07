@@ -396,7 +396,7 @@ export default function LandingPage() {
         {/* ---- Platform ---- */}
         <section id="platform" className="scroll-mt-20 border-t border-white/5 bg-card/20 py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="grid items-center gap-12 lg:grid-cols-2">
+            <div className="grid items-start gap-12 lg:grid-cols-2">
               <div>
                 <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                   Born on AMD
@@ -435,14 +435,22 @@ export default function LandingPage() {
                   </li>
                 </ul>
               </div>
-              <div className="overflow-hidden rounded-xl border border-white/10 bg-zinc-950/90 shadow-xl">
-                <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2.5">
-                  <span className="font-mono text-xs text-zinc-500">
-                    judge-this-yourself.sh
-                  </span>
-                </div>
-                <pre className="overflow-x-auto p-4 font-mono text-xs leading-relaxed text-zinc-300">
-                  <code>{`# Full stack, your machine, your keys
+              <div>
+                <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                  Self-host it
+                </h2>
+                <p className="mt-4 text-muted-foreground">
+                  The entire stack runs on your machine with your own keys —
+                  two commands, no accounts, nothing leaves your network.
+                </p>
+                <div className="mt-6 overflow-hidden rounded-xl border border-white/10 bg-zinc-950/90 shadow-xl">
+                  <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2.5">
+                    <span className="font-mono text-xs text-zinc-500">
+                      self-host.sh
+                    </span>
+                  </div>
+                  <pre className="overflow-x-auto p-4 font-mono text-xs leading-relaxed text-zinc-300">
+                    <code>{`# Full stack, your machine, your keys
 git clone <this-repo> && cd auto-annotator
 
 # Your Fireworks key (optional — falls back
@@ -453,7 +461,8 @@ docker compose up --build
 
 # UI  → http://localhost:3000
 # API → http://localhost:8000/docs`}</code>
-                </pre>
+                  </pre>
+                </div>
               </div>
             </div>
           </div>
