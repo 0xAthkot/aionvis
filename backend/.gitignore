@@ -7,3 +7,5 @@ __pycache__/
 data/
 *.pt
 yolo11n.pt
+mobileclip_blt.ts
+*.ts
