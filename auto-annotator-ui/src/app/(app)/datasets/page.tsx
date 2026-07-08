@@ -103,7 +103,13 @@ function DatasetCard({ dataset }: { dataset: Dataset }) {
             No labels yet — launch a run to let the agents annotate it.
           </p>
         )}
-        {dataset.status === "unlabeled" && <StartRunDialog dataset={dataset} />}
+        {/* Plain uploads launch a labeling run; archives that shipped their
+            own labels (status "curating") launch an AUDIT run — the dialog
+            handles both, so both must offer it. */}
+        {(dataset.status === "unlabeled" ||
+          (dataset.status === "curating" && !!dataset.importedLabels)) && (
+          <StartRunDialog dataset={dataset} />
+        )}
       </CardContent>
     </Card>
   );

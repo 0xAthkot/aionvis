@@ -17,6 +17,12 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     # Public base URL of this backend; image/file URLs are minted against it.
     public_base_url: str = "http://localhost:8000"
+    # API key protecting /api/v1 (Authorization: Bearer or X-API-Key) and
+    # /ws/v1 (?token=). Empty = open, for same-machine dev. REQUIRED before
+    # exposing a GPU node publicly — deploy_mi300x.sh mints one and the UI's
+    # Hardware page takes it in the "Connect AMD Developer Cloud" form.
+    # /files stays public: <img> tags and weight downloads can't send headers.
+    aa_api_key: str = ""
 
     # --- Prompt Agent (any OpenAI-compatible chat endpoint) ---
     # Default: Gemma via vLLM on the same box (the MI300X profile:

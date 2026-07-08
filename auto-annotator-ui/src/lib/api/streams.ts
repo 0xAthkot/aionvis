@@ -9,6 +9,7 @@ import { features } from "@/config/features";
 import { MockRunStream } from "@/lib/mocks/simulator";
 import { MockTelemetryStream } from "@/lib/mocks/telemetry-stream";
 import { wsEndpoints } from "./endpoints";
+import { remoteBackend, type RemoteBackend } from "./remote";
 import type {
   AgentInstance,
   LogEvent,
@@ -53,8 +54,14 @@ export class WsStreamSource<E> implements StreamSource<E> {
   private ws: WebSocket;
   state: StreamState = "connecting";
 
-  constructor(path: string) {
-    this.ws = new WebSocket(`${features.wsBaseUrl}${path}`);
+  constructor(path: string, remote?: RemoteBackend) {
+    // Browsers can't set WebSocket headers, so an attached node's API key
+    // rides in ?token= (matches the backend's /ws/v1 handshake).
+    const url = remote
+      ? `${remote.wsBase}${path}` +
+        (remote.apiKey ? `?token=${encodeURIComponent(remote.apiKey)}` : "")
+      : `${features.wsBaseUrl}${path}`;
+    this.ws = new WebSocket(url);
     this.ws.onopen = () => (this.state = "open");
     this.ws.onclose = () => (this.state = "closed");
     this.ws.onmessage = (msg) => {
@@ -79,6 +86,11 @@ export class WsStreamSource<E> implements StreamSource<E> {
 // ---------------------------------------------------------------------------
 
 export function createRunStream(runId: string): StreamSource<RunStreamEvent> {
+  const remote = remoteBackend();
+  if (remote) {
+    // An attached AMD node beats mocks — live events come from the real swarm.
+    return new WsStreamSource<RunStreamEvent>(wsEndpoints.runEvents(runId), remote);
+  }
   if (features.useMocks) {
     return new MockRunStream(runId);
   }
@@ -88,6 +100,12 @@ export function createRunStream(runId: string): StreamSource<RunStreamEvent> {
 export function createTelemetryStream(
   nodeId: string,
 ): StreamSource<TelemetryStreamEvent> {
+  const remote = remoteBackend();
+  if (remote) {
+    return new WsStreamSource<TelemetryStreamEvent>(
+      wsEndpoints.telemetry(nodeId), remote,
+    );
+  }
   if (features.useMocks) {
     return new MockTelemetryStream(nodeId);
   }

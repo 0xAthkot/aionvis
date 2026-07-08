@@ -28,8 +28,18 @@ NEXT_PUBLIC_WS_BASE_URL=ws://localhost:8000
   `{ items, total, page, pageSize }`, controlled by `?page=&pageSize=`
   (defaults 1 / 50).
 - Timestamps are ISO-8601 strings.
-- Auth: TBD (the UI currently mocks login). Reserve `Authorization: Bearer`
-  handling; every route below is org-scoped by the authenticated principal.
+- Auth: when the backend runs with `AA_API_KEY` set (any publicly exposed
+  node — deploy_mi300x.sh mints one), every `/api/v1` route requires
+  `Authorization: Bearer <key>` (or `X-API-Key: <key>`) and returns the
+  standard 401 `ApiErrorBody` otherwise; WebSocket routes take the key as
+  `?token=<key>` (browsers can't set WS headers) and close with code 1008
+  on a bad token. `/files/**` (images, thumbnails, exported weights) stays
+  public by design — `<img>` tags and download links can't send headers.
+  An empty `AA_API_KEY` leaves the backend open for same-machine dev.
+  The UI stores the endpoint + key at runtime (Hardware page → "Connect
+  AMD Developer Cloud") and attaches them to every request — no env flip
+  or rebuild needed. User login stays mocked client-side; org scoping is
+  still single-tenant.
 
 ## REST endpoints
 

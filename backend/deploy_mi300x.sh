@@ -29,10 +29,16 @@ echo "== .env =="
 if [ ! -f .env ]; then
     cp .env.example .env
     node_ip=$(hostname -I | awk '{print $1}')
+    # The key the Control Plane's "Connect AMD Developer Cloud" form takes.
+    aa_key="aa_node_$(openssl rand -hex 24)"
     cat >> .env <<EOF
 
 # --- MI300X profile (appended by deploy_mi300x.sh) ---
 PUBLIC_BASE_URL=http://${node_ip}:8000
+# Protects /api/v1 + /ws/v1 on this public node; paste into the UI to attach.
+AA_API_KEY=${aa_key}
+# Allow the console to attach from anywhere (it authenticates with the key).
+CORS_ORIGINS=*
 VISION_BACKEND=sam3
 SDXL_MODEL=stabilityai/stable-diffusion-xl-base-1.0
 MAX_IMAGES_PER_RUN=500
@@ -52,11 +58,19 @@ EOF
     echo ">> Wrote .env (run huggingface-cli login for SAM 3 + gated Gemma)."
 else
     echo ">> .env exists, leaving it alone."
+    aa_key=$(grep '^AA_API_KEY=' .env | cut -d= -f2-)
+    node_ip=$(hostname -I | awk '{print $1}')
 fi
 
 echo
 echo "Done. Start the backend with:"
 echo "  source .venv/bin/activate && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+echo
+echo "== Attach the Control Plane (no rebuild needed) =="
+echo "  In the UI: Hardware -> Connect AMD Developer Cloud"
+echo "    API endpoint:  http://${node_ip}:8000"
+echo "    Access token:  ${aa_key:-<AA_API_KEY from backend/.env>}"
+echo "  The console switches every screen + live stream to this node."
 echo
 echo "Serve Gemma on this GPU (Prompt Agent + Semantic Critic, zero API cost):"
 echo "  pip install vllm && vllm serve google/gemma-3-27b-it --port 8001 \\"

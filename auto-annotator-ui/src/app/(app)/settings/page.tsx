@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Flame, KeyRound, Plus, ServerCog, Trash2 } from "lucide-react";
+import { Flame, KeyRound, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ import { api, apiDelete, apiPost } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type { ApiKey, Member, Organization } from "@/lib/api/types";
 import { features } from "@/config/features";
+import { ConnectNodeCard } from "@/components/shared/connect-node-card";
 import { useIntegrationsStore } from "@/lib/stores/integrations";
 
 function OrganizationTab() {
@@ -240,8 +241,6 @@ function IntegrationsTab() {
   const store = useIntegrationsStore();
   const [llmBaseUrl, setLlmBaseUrl] = useState(store.llmBaseUrl);
   const [llmApiKey, setLlmApiKey] = useState(store.llmApiKey);
-  const [amdCloudEndpoint, setAmdCloudEndpoint] = useState(store.amdCloudEndpoint);
-  const [amdCloudToken, setAmdCloudToken] = useState(store.amdCloudToken);
 
   return (
     <div className="space-y-6">
@@ -290,52 +289,7 @@ function IntegrationsTab() {
         </CardFooter>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <ServerCog className="size-4 text-primary" />
-            <CardTitle>AMD Developer Cloud</CardTitle>
-          </div>
-          <CardDescription>
-            MI300X tenancy used for synthesis, SAM 3 segmentation and YOLO
-            training.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="amd-url">API endpoint</Label>
-            <Input
-              id="amd-url"
-              placeholder="https://api.amd-devcloud.example/v1"
-              value={amdCloudEndpoint}
-              onChange={(e) => setAmdCloudEndpoint(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="amd-token">Access token</Label>
-            <Input
-              id="amd-token"
-              type="password"
-              placeholder="••••••••"
-              value={amdCloudToken}
-              onChange={(e) => setAmdCloudToken(e.target.value)}
-            />
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button
-            size="sm"
-            onClick={() => {
-              store.save({ amdCloudEndpoint, amdCloudToken });
-              toast.success("AMD Developer Cloud settings saved", {
-                description: "Stored locally — handed to the backend at connect time.",
-              });
-            }}
-          >
-            Save
-          </Button>
-        </CardFooter>
-      </Card>
+      <ConnectNodeCard />
 
       <Card>
         <CardHeader>

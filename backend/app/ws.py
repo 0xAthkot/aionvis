@@ -2,13 +2,27 @@
 
 import asyncio
 import contextlib
+import hmac
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from . import telemetry
+from .config import settings
 from .events import bus
 
 ws_router = APIRouter(prefix="/ws/v1")
+
+
+async def _authorized(ws: WebSocket) -> bool:
+    """Browsers can't set WebSocket headers, so AA_API_KEY rides in
+    `?token=`. Empty key = open (same-machine dev). Policy violation close
+    (1008) so the client sees an auth failure, not a network blip."""
+    if not settings.aa_api_key:
+        return True
+    if hmac.compare_digest(ws.query_params.get("token", ""), settings.aa_api_key):
+        return True
+    await ws.close(code=1008, reason="invalid or missing API key")
+    return False
 
 
 async def _pump(ws: WebSocket, queue: asyncio.Queue) -> None:
@@ -32,6 +46,8 @@ async def _pump(ws: WebSocket, queue: asyncio.Queue) -> None:
 
 @ws_router.websocket("/runs/{run_id}/events")
 async def run_events(ws: WebSocket, run_id: str) -> None:
+    if not await _authorized(ws):
+        return
     await ws.accept()
     queue = bus.subscribe_run(run_id)
     try:
@@ -44,6 +60,8 @@ async def run_events(ws: WebSocket, run_id: str) -> None:
 
 @ws_router.websocket("/hardware/{node_id}/telemetry")
 async def node_telemetry(ws: WebSocket, node_id: str) -> None:
+    if not await _authorized(ws):
+        return
     await ws.accept()
     queue = bus.subscribe_telemetry()
     try:

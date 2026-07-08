@@ -1,4 +1,5 @@
 import { features } from "@/config/features";
+import { remoteBackend, remoteHeaders } from "./remote";
 import type { ApiErrorBody } from "./types";
 
 export class ApiError extends Error {
@@ -13,15 +14,19 @@ export class ApiError extends Error {
 }
 
 /**
- * Thin typed fetch wrapper. All TanStack Query hooks go through this, so the
- * mock→real backend swap is just `NEXT_PUBLIC_API_BASE_URL` + auth headers.
+ * Thin typed fetch wrapper. All TanStack Query hooks go through this. The
+ * base URL resolves per call: an attached AMD node (Hardware page →
+ * Connect) wins over `NEXT_PUBLIC_API_BASE_URL`, and carries its API key —
+ * so a remote MI300X plugs in at runtime with no rebuild.
  */
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
+  const remote = remoteBackend();
   // FormData bodies must set their own multipart boundary header.
   const isForm = init?.body instanceof FormData;
-  const res = await fetch(`${features.apiBaseUrl}${path}`, {
+  const res = await fetch(`${remote?.apiBase ?? features.apiBaseUrl}${path}`, {
     headers: {
       ...(isForm ? {} : { "Content-Type": "application/json" }),
+      ...(remote ? remoteHeaders(remote) : {}),
       ...init?.headers,
     },
     ...init,

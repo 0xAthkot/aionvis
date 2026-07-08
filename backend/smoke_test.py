@@ -5,12 +5,17 @@ safe to fire minutes before going on stage. The one LLM call it makes
 (expand-prompt) hits the Prompt Agent's cache/fallback path and costs at
 most a fraction of a cent.
 
-    .venv/Scripts/python smoke_test.py [--base http://localhost:8000]
+    .venv/Scripts/python smoke_test.py [--base http://localhost:8000] [--key <AA_API_KEY>]
+
+When the backend runs with AA_API_KEY set, pass the key via --key or the
+AA_API_KEY env var (the local .env is read automatically as a fallback).
 """
 
 import argparse
 import io
+import os
 import sys
+from pathlib import Path
 
 import httpx
 
@@ -18,13 +23,33 @@ CHECK = "[ OK ]"
 CROSS = "[FAIL]"
 
 
+def _env_file_key() -> str:
+    """AA_API_KEY from backend/.env — the smoke test usually runs on the node."""
+    env_path = Path(__file__).resolve().parent / ".env"
+    if not env_path.exists():
+        return ""
+    for line in env_path.read_text(encoding="utf-8").splitlines():
+        if line.strip().startswith("AA_API_KEY="):
+            return line.split("=", 1)[1].strip()
+    return ""
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="http://localhost:8000")
-    base = ap.parse_args().base.rstrip("/") + "/api/v1"
+    ap.add_argument("--key", default="",
+                    help="AA_API_KEY (falls back to the env var, then backend/.env)")
+    args = ap.parse_args()
+    base = args.base.rstrip("/") + "/api/v1"
+    key = args.key or os.environ.get("AA_API_KEY", "") or _env_file_key()
 
     failures = 0
-    client = httpx.Client(timeout=120)
+    client = httpx.Client(
+        timeout=120,
+        headers={"Authorization": f"Bearer {key}"} if key else {},
+    )
+    if key:
+        print(f"(sending API key {key[:6]}…)")
 
     def check(name: str, fn):
         nonlocal failures

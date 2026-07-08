@@ -82,11 +82,16 @@ run it before any demo. `backend/reset_demo.py` resets demo state.
    is fine (~1 s/image).
 3. **Real training / inference — the intended path:** run the backend on a
    remote GPU (AMD Developer Cloud MI300X; credits were expected
-   ~2026-07-08). `backend/deploy_mi300x.sh` is the one-shot setup. Then
-   point your local UI at it:
+   ~2026-07-08). `backend/deploy_mi300x.sh` is the one-shot setup — it also
+   mints an `AA_API_KEY` and prints the endpoint + key. Attach the UI **at
+   runtime**: Hardware page → "Connect AMD Developer Cloud" → paste URL +
+   key → Connect. Every screen and live stream switches to the node — no
+   env flip, no rebuild, works even from mock mode. (The env-var route
+   still exists for permanent wiring:
    `NEXT_PUBLIC_API_BASE_URL=http://<remote>:8000`,
    `NEXT_PUBLIC_WS_BASE_URL=ws://<remote>:8000`,
-   `NEXT_PUBLIC_USE_MOCKS=false` in `auto-annotator-ui/.env.local`.
+   `NEXT_PUBLIC_USE_MOCKS=false` in `auto-annotator-ui/.env.local` — note
+   env mode sends no API key, so it's for open same-network nodes only.)
    The MI300X model lineup (decided 2026-07-08): Gemma 3 27B-IT via vLLM
    (the `LLM_BASE_URL` default — Prompt Agent + Semantic Critic + model
    cards; counts for the "Best Use of Gemma" challenge), FLUX.1-schnell
@@ -137,6 +142,16 @@ run it before any demo. `backend/reset_demo.py` resets demo state.
   interleaved logs, 2-slot concurrency, sequential regression); real VRAM
   co-residency and FLUX/SAM3/vLLM concurrency are first exercised on the
   MI300X. Landing page has the two-mode visual; the mock simulates both.
+- **API-key auth + runtime node attach** (the credential-day feature):
+  `AA_API_KEY` in the backend .env protects `/api/v1` (Bearer / X-API-Key)
+  and `/ws/v1` (`?token=`); empty = open for same-machine dev; `/files`
+  stays public (img tags can't send headers). The UI attaches a node at
+  runtime — Hardware → "Connect AMD Developer Cloud" (also in Settings →
+  Integrations): health check, persisted in localStorage, all REST +
+  WebSockets switch instantly, Disconnect returns to the local source.
+  Verified: 11 pytest cases + a 16-check Playwright e2e that attached a
+  keyed local backend from mock mode, launched a real audit run through
+  the UI, and streamed it over the authenticated WebSocket.
 - Active learning (playground "Send to Foundry" → next run targets it),
   live WebSocket Mission Control, cost estimates, GPU queue.
 
@@ -192,12 +207,18 @@ to `rfdetr_worker.py` (tagged-line protocol INFO/EPOCH/RESULT). Missing venv
 
 1. **Docker verification** — compose files exist but were never run
    (no Docker on the dev box). Judges are told to use it. Test it.
-2. **MI300X deployment** once AMD credits land: `deploy_mi300x.sh`, then
-   `vllm serve google/gemma-3-27b-it --port 8001 --gpu-memory-utilization 0.35`
-   (Gemma 3 27B), FLUX, SAM 3, and a 500-image flagship run with evidence
-   capture. First hardware exercise of the parallel swarm's VRAM
-   co-residency (streaming mode, GPU_SLOTS=2, AUTO_BATCH) — the CPU box
-   verified only the orchestration.
+2. **MI300X deployment** once AMD credits land — the runbook:
+   1. On the node: clone the repo, `bash backend/deploy_mi300x.sh` — it
+      installs the ROCm stack, writes the streaming .env profile, mints
+      `AA_API_KEY`, and prints the endpoint URL + key.
+   2. `vllm serve google/gemma-3-27b-it --port 8001 --gpu-memory-utilization 0.35`
+   3. `python smoke_test.py` on the node (picks up the key from .env).
+   4. In the console — any machine, mock mode is fine: Hardware →
+      "Connect AMD Developer Cloud" → paste URL + key → Connect.
+   5. FLUX + SAM 3 warm-up run, then the 500-image flagship run with
+      evidence capture. First hardware exercise of the parallel swarm's
+      VRAM co-residency (streaming mode, GPU_SLOTS=2, AUTO_BATCH) — the
+      CPU box verified only the orchestration.
 3. **Flagship retrain**: 48 img / 60 epochs on `yolo26m` (Simple default)
    to beat the current `model_0006` (yolov10n, mAP50 0.85) headline.
 4. RF-DETR seg variants; friendlier dataset/model pages in Simple mode;

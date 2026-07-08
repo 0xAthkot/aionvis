@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import hmac
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
@@ -36,6 +37,36 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Auto-Annotator Backend", version="1.0.0", lifespan=lifespan)
+
+
+def request_key(request: Request) -> str:
+    """The API key a REST request presented (Bearer or X-API-Key)."""
+    auth = request.headers.get("authorization", "")
+    if auth.lower().startswith("bearer "):
+        return auth[7:].strip()
+    return request.headers.get("x-api-key", "")
+
+
+@app.middleware("http")
+async def api_key_guard(request: Request, call_next):
+    """AA_API_KEY protects every /api/v1 route (the UI's remote-attach flow
+    sends it). Empty key = open, for same-machine dev. /files stays public —
+    <img> tags and weight downloads can't send headers. Registered before
+    CORSMiddleware so CORS wraps it: preflights never hit this, and 401s
+    still carry CORS headers."""
+    if settings.aa_api_key and request.url.path.startswith("/api/"):
+        if not hmac.compare_digest(request_key(request), settings.aa_api_key):
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "status": 401,
+                    "code": "unauthorized",
+                    "message": "Missing or invalid API key — send it as "
+                               "'Authorization: Bearer <key>' or 'X-API-Key'.",
+                },
+            )
+    return await call_next(request)
+
 
 app.add_middleware(
     CORSMiddleware,

@@ -1,9 +1,9 @@
 "use client";
 
-import { Cloud, Cpu } from "lucide-react";
+import { Cpu } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { ConnectNodeCard } from "@/components/shared/connect-node-card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -17,14 +17,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type { TelemetrySample } from "@/lib/api/types";
 import { useTelemetry } from "@/hooks/use-telemetry";
 
@@ -112,6 +105,10 @@ export default function HardwarePage() {
           Live telemetry for the GPU fleet running the agent swarm.
         </p>
       </header>
+
+      {/* Always reachable — attaching/detaching a node must work even when
+          the current source is down and telemetry can't load. */}
+      <ConnectNodeCard />
 
       {!node || !latest ? (
         <Skeleton className="h-96 w-full" />
@@ -231,44 +228,6 @@ export default function HardwarePage() {
             </Card>
           </div>
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Cloud className="size-4 text-muted-foreground" />
-                <CardTitle>Connect AMD Developer Cloud</CardTitle>
-              </div>
-              <CardDescription>
-                Point the control plane at your own tenancy — stored locally
-                until the backend performs the handshake.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-[1fr_1fr_auto]">
-              <div className="space-y-2">
-                <Label htmlFor="adc-endpoint">API endpoint</Label>
-                <Input
-                  id="adc-endpoint"
-                  placeholder="https://api.amd-devcloud.example/v1"
-                  disabled
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="adc-token">Access token</Label>
-                <Input id="adc-token" type="password" placeholder="••••••••" disabled />
-              </div>
-              <div className="flex items-end">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Button disabled>Connect</Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Enabled once the FastAPI backend is connected
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            </CardContent>
-          </Card>
         </>
       )}
     </main>
