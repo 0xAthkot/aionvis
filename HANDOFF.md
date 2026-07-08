@@ -167,6 +167,11 @@ to `rfdetr_worker.py` (tagged-line protocol INFO/EPOCH/RESULT). Missing venv
 ## Hard-won gotchas (each cost real debugging time)
 
 - `transformers` must stay `<5` in the main venv (see above).
+- **No first-party `import cv2`** — the swarm's geometry is pure
+  numpy/scipy (`app/agents/geometry.py`: RDP simplify, rotating-calipers
+  min-area rect, Moore-neighbor mask tracing) and video ingestion is
+  imageio/ffmpeg. opencv-python still arrives transitively with
+  ultralytics; do not add first-party usages back.
 - YOLOE zero-shot is near-blind on: dense PCB macro shots, high-altitude
   aerial views, and the class "pedestrian" (people on bikes → cyclist).
   It is solid on warehouse forklift/pallet/worker. The proven demo prompt:

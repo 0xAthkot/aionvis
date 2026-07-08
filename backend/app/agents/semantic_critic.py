@@ -1,6 +1,6 @@
 """Semantic Critic — a VLM spot-checks what the geometry can't.
 
-The OpenCV Critic proves a box fits its mask; it cannot prove the mask is
+The geometric check proves a box fits its mask; it cannot prove the mask is
 actually a forklift. This second stage crops a sample of accepted boxes and
 asks a vision-language model whether the crop shows the claimed class.
 Semantic fails remove the label — the swarm catches its own hallucinations.
@@ -148,8 +148,8 @@ def spot_check(ctx: RunContext, reviewed: list[ReviewedImage],
         img.boxes = [b for i, b in enumerate(img.boxes) if i not in drop]
         progress.masks_accepted -= len(drop)
         progress.masks_rejected += len(drop)
-        img.critique.critic = ("Critic Agent (OpenCV geometry + "
-                               f"{model_label} semantic check)")
+        img.critique.critic = ("Critic Agent (geometric checks + "
+                               f"{model_label} VLM)")
         if not img.boxes:
             img.accepted = False
             img.critique.verdict = "rejected"

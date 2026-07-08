@@ -45,7 +45,7 @@ const AGENTS: AgentSpec[] = [
   {
     icon: ShieldCheck,
     name: "Critic Agent",
-    tech: "OpenCV geometry + VLM",
+    tech: "Gemma VLM · geometric self-check",
     blurb: "Re-derives every box, rejects bad labels, VLM-verifies the semantics.",
     status: "Verifying labels…",
   },

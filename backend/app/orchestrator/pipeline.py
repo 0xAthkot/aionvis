@@ -299,7 +299,7 @@ class Pipeline:
     def _critic_stage(self, ctx: RunContext, annotated):
         from ..agents.critic_agent import critic_agent
 
-        ctx.set_stage("critic_review", "OpenCV geometric verification")
+        ctx.set_stage("critic_review", "Geometric checks + Gemma VLM verification")
         reviewed = critic_agent.review(
             ctx, annotated,
             on_progress=lambda done: self._pct(ctx, done / max(len(annotated), 1)),
@@ -444,7 +444,7 @@ class Pipeline:
                         return
                 if not stop.is_set():
                     ctx.set_agent("vision", "done")
-                    ctx.set_stage("critic_review", "OpenCV geometric verification")
+                    ctx.set_stage("critic_review", "Geometric checks + Gemma VLM verification")
             except BaseException as exc:  # noqa: BLE001 — poison the stream
                 fail(exc)
             finally:

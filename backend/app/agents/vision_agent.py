@@ -115,7 +115,6 @@ class VisionAgent:
     # --- YOLOE backend ------------------------------------------------------------
 
     def _load_yoloe(self, ctx: RunContext, prompts: list[str]):
-        import cv2
         from ultralytics import YOLOE
 
         device = device_str()
@@ -166,9 +165,10 @@ class VisionAgent:
     # --- SAM 3 backend --------------------------------------------------------------
 
     def _load_sam3(self, ctx: RunContext, prompts: list[str]):
-        import cv2
         import torch
         from PIL import Image
+
+        from .geometry import mask_to_polygon
 
         try:
             from transformers import Sam3Model, Sam3Processor
@@ -211,19 +211,16 @@ class VisionAgent:
                 for mask, score, box in zip(
                     parsed["masks"], parsed["scores"], parsed["boxes"]
                 ):
-                    mask_np = (mask.cpu().numpy() > 0).astype(np.uint8)
-                    contours, _ = cv2.findContours(
-                        mask_np, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-                    )
-                    if not contours:
+                    # Largest-blob outer boundary, traced in pure numpy.
+                    poly = mask_to_polygon(mask.cpu().numpy() > 0)
+                    if poly is None or len(poly) < 3:
                         continue
-                    poly = max(contours, key=cv2.contourArea).reshape(-1, 2)
                     x1, y1, x2, y2 = box.tolist()
                     ann.detections.append(Detection(
                         class_id=class_id,
                         confidence=float(score),
                         box_xyxyn=(x1 / w, y1 / h, x2 / w, y2 / h),
-                        polygon_px=poly.astype(np.float32),
+                        polygon_px=poly,
                     ))
             return ann
 

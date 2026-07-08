@@ -9,7 +9,8 @@ FROM python:3.12-slim
 
 ARG TORCH_INDEX=https://download.pytorch.org/whl/cpu
 
-# libgl1/libglib2.0-0 for opencv-python.
+# libgl1/libglib2.0-0 for opencv-python (a transitive ultralytics
+# dependency — first-party code never imports cv2).
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*

@@ -56,14 +56,15 @@ def _seg_line(b: BoundingBox) -> str:
 
 
 def _obb_line(b: BoundingBox, width: int, height: int) -> str:
-    import cv2
     import numpy as np
+
+    from .geometry import min_area_rect_corners
 
     if b.polygon and len(b.polygon) >= 6:
         pts = np.array(b.polygon, dtype=np.float32).reshape(-1, 2)
         pts[:, 0] *= width
         pts[:, 1] *= height
-        corners = cv2.boxPoints(cv2.minAreaRect(pts))
+        corners = min_area_rect_corners(pts)
         flat = []
         for x, y in corners:
             flat.append(min(max(float(x) / width, 0.0), 1.0))

@@ -10,7 +10,7 @@ hardware. Built for the AMD Developer Hackathon ACT II (Unicorn Track).
 Prompt Agent (Gemma · vLLM on MI300X)
    └─> Synthesis Agent (SDXL-Turbo / FLUX · diffusers)
          └─> Vision Agent (SAM 3 / YOLOE zero-shot segmentation)
-               └─> Critic Agent (OpenCV geometry + Gemma VLM semantic spot-check)
+               └─> Critic Agent (Gemma VLM semantic spot-check + geometric self-check)
                      └─> MLOps Agent (YOLOv10 training · PyTorch on ROCm)
 ```
 

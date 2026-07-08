@@ -200,7 +200,7 @@ export const handlers = [
       { kind: "prompt", displayName: "Prompt Agent", model: "Gemma 4", provider: "vLLM · MI300X" },
       { kind: "synthesis", displayName: "Synthesis Agent", model: "SDXL", provider: "MI300X · local" },
       { kind: "vision", displayName: "Vision Agent", model: "SAM 3", provider: "MI300X · local" },
-      { kind: "critic", displayName: "Critic Agent", model: "Gemma 4 + OpenCV", provider: "vLLM · MI300X" },
+      { kind: "critic", displayName: "Critic Agent", model: "Gemma 4 VLM + geometry", provider: "vLLM · MI300X" },
       { kind: "mlops", displayName: "MLOps Agent", model: "YOLOv10 · PyTorch", provider: "MI300X · ROCm" },
     ] as const;
     const active = run.path === "byod"

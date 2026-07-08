@@ -32,7 +32,7 @@ AGENT_SPECS: dict[AgentKind, tuple[str, str, str]] = {
     "prompt": ("Prompt Agent", "Gemma (vLLM)", "vLLM · MI300X"),
     "synthesis": ("Synthesis Agent", "SDXL-Turbo", "local GPU"),
     "vision": ("Vision Agent", "SAM / YOLOE open-vocab", "local GPU"),
-    "critic": ("Critic Agent", "OpenCV geometric verifier", "local CPU"),
+    "critic": ("Critic Agent", "Gemma VLM + geometric checks", "vLLM · MI300X"),
     "mlops": ("MLOps Agent", "Ultralytics YOLOv10", "local GPU"),
 }
 

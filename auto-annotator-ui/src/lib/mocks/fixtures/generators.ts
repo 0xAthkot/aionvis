@@ -58,13 +58,13 @@ export function generateAnnotatedImages(
             reason: `Mask-box IoU ${(0.4 + (seed % 10) / 100).toFixed(2)} below 0.85 threshold`,
             iou: +(0.4 + (seed % 10) / 100).toFixed(2),
             attempts: 2,
-            critic: "Critic Agent (Gemma 4 + OpenCV)",
+            critic: "Critic Agent (Gemma 4 VLM + geometric checks)",
           }
         : {
             verdict: "accepted" as const,
             iou: +(0.87 + (seed % 12) / 100).toFixed(2),
             attempts: 1,
-            critic: "Critic Agent (Gemma 4 + OpenCV)",
+            critic: "Critic Agent (Gemma 4 VLM + geometric checks)",
           },
     } satisfies AnnotatedImage;
   });

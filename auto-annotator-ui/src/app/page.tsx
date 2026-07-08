@@ -59,7 +59,7 @@ const FEATURES = [
   {
     icon: ShieldCheck,
     title: "Two-stage self-QA",
-    body: "The Critic re-derives every box geometrically with OpenCV, then a vision-language model verifies the semantics. Typical runs reject more candidate labels than they accept.",
+    body: "The Critic re-derives every box from pure mask geometry, then the Gemma vision-language model verifies the semantics. Typical runs reject more candidate labels than they accept.",
   },
   {
     icon: Activity,
@@ -149,7 +149,7 @@ function CellIcon({ cell }: { cell: Cell }) {
 const FAQS = [
   {
     q: "If no human draws a single box, who checks the labels?",
-    a: "Every label passes a two-stage Critic: an OpenCV geometric check that re-derives each box from its mask and rejects poor fits, and a VLM spot-check that confirms crops actually show the claimed class. Labels that fail are regenerated or dropped — and a run whose data doesn't survive scrutiny fails honestly instead of shipping a bad model.",
+    a: "Every label passes a two-stage Critic: a pure-geometry check that re-derives each box from its mask and rejects poor fits, and a Gemma VLM spot-check that confirms crops actually show the claimed class. Labels that fail are regenerated or dropped — and a run whose data doesn't survive scrutiny fails honestly instead of shipping a bad model.",
   },
   {
     q: "Can I use my own images instead of synthetic ones?",

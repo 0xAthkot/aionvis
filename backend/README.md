@@ -8,7 +8,7 @@ the autonomous agent swarm that the Control Plane UI drives.
 | Prompt Agent | **Gemma via vLLM** (any OpenAI-compatible chat endpoint, `LLM_BASE_URL`); deterministic local fallback when the endpoint is offline |
 | Synthesis Agent | **SDXL-Turbo** via HuggingFace diffusers (FLUX.1-schnell on MI300X) |
 | Vision Agent | **YOLOE** open-vocabulary segmentation (default) or **SAM 3** (`VISION_BACKEND=sam3`) |
-| Critic Agent | **OpenCV** geometric verification — re-derives tight boxes from mask contours, computes IoU, rejects/regenerates — plus a **VLM semantic spot-check** (Gemma via the same vLLM endpoint) that confirms crops actually show the claimed class (cost-capped per run, `SEMANTIC_CRITIC=false` to disable) |
+| Critic Agent | **Gemma VLM semantic verification** (via the same vLLM endpoint) — confirms crops actually show the claimed class (cost-capped per run, `SEMANTIC_CRITIC=false` to disable) — on top of pure-numpy geometric checks that re-derive tight boxes from mask contours, compute IoU and reject/regenerate |
 | MLOps Agent | **Ultralytics YOLOv10** training with live epoch metrics, `.pt`/ONNX export |
 
 Between stages the orchestrator flushes VRAM (`torch.cuda.empty_cache()` —
@@ -110,7 +110,8 @@ app/
     ├── prompt_agent.py     # Gemma via vLLM (OpenAI-compatible)
     ├── synthesis_agent.py  # diffusers SDXL-Turbo / FLUX
     ├── vision_agent.py     # YOLOE / SAM 3 → mask contours
-    ├── critic_agent.py     # OpenCV IoU verdicts + box regeneration
+    ├── critic_agent.py     # geometric IoU verdicts + box regeneration
+    ├── geometry.py         # pure-numpy geometry (no cv2 anywhere in app/)
     ├── dataset_compiler.py # YOLO dataset + thumbnails + API records
     ├── mlops_agent.py      # Ultralytics training + registry + export
     └── gpu.py              # VRAM flush orchestration

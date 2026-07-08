@@ -344,7 +344,7 @@ export interface CritiqueRecord {
   /** IoU between SAM mask box and Critic's geometric check. */
   iou?: number;
   attempts: number;
-  /** e.g. "Critic Agent (Gemma 4 + OpenCV)" */
+  /** e.g. "Critic Agent (Gemma 4 VLM + geometric checks)" */
   critic: string;
 }
 

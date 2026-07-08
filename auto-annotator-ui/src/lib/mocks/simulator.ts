@@ -125,7 +125,7 @@ const AGENT_ROSTER: Record<
   prompt: { displayName: "Prompt Agent", model: "Gemma 4", provider: "vLLM · MI300X" },
   synthesis: { displayName: "Synthesis Agent", model: "SDXL", provider: "MI300X · local" },
   vision: { displayName: "Vision Agent", model: "SAM 3", provider: "MI300X · local" },
-  critic: { displayName: "Critic Agent", model: "Gemma 4 + OpenCV", provider: "vLLM · MI300X" },
+  critic: { displayName: "Critic Agent", model: "Gemma 4 VLM + geometry", provider: "vLLM · MI300X" },
   mlops: { displayName: "MLOps Agent", model: "YOLOv10 · PyTorch", provider: "MI300X · ROCm" },
 };
 
@@ -354,7 +354,7 @@ export class RunSimulator {
       case "critic_review":
         this.log("stage", undefined, "━━ STAGE: CRITIC REVIEW — Critic Agent taking over ━━");
         this.setAgent("vision", "done");
-        this.setAgent("critic", "thinking", "Verifying mask geometry with OpenCV");
+        this.setAgent("critic", "thinking", "Verifying labels — geometry + Gemma VLM");
         setGpuLoad(32, 46);
         this.log("info", "critic", "Geometric verification: IoU threshold 0.85, min box area 24 px²");
         break;

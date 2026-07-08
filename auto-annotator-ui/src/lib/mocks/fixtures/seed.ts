@@ -216,13 +216,13 @@ function pcbImages(): AnnotatedImage[] {
             reason: `Mask-box IoU ${(0.35 + (i % 10) / 100).toFixed(2)} below 0.85 threshold`,
             iou: +(0.35 + (i % 10) / 100).toFixed(2),
             attempts: 2,
-            critic: "Critic Agent (Gemma 4 + OpenCV)",
+            critic: "Critic Agent (Gemma 4 VLM + geometric checks)",
           }
         : {
             verdict: "accepted",
             iou: +(0.88 + (i % 10) / 100).toFixed(2),
             attempts: 1,
-            critic: "Critic Agent (Gemma 4 + OpenCV)",
+            critic: "Critic Agent (Gemma 4 VLM + geometric checks)",
           },
     } satisfies AnnotatedImage;
   });
@@ -458,7 +458,7 @@ export const models: ModelArtifact[] = [
       "Automated optical inspection on assembly lines imaging bare or populated PCBs top-down. Not a substitute for electrical test.",
       "",
       "## Training Data",
-      "500 synthetic SDXL images with domain randomization; the Critic Agent accepted 1,371 and rejected 214 candidate labels (OpenCV IoU verification).",
+      "500 synthetic SDXL images with domain randomization; the Critic Agent accepted 1,371 and rejected 214 candidate labels (geometric IoU verification + Gemma VLM spot-check).",
       "",
       "## Evaluation",
       "mAP50 0.913 · mAP50-95 0.687 · precision 0.941 · recall 0.882 after 60 epochs (38 min on MI300X).",

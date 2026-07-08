@@ -1,11 +1,13 @@
-"""Critic Agent — OpenCV geometric verification of the Vision Agent's work.
+"""Critic Agent — self-verification of the Vision Agent's work.
 
-For every detection it independently re-derives a tight bounding box from
-the mask contour (cv2.boundingRect) and compares it to the box the vision
-model reported. Low IoU means the box does not actually fit the mask —
-the Critic REJECTS it and regenerates the box from the contour instead
-(self-correction). Degenerate masks (dust specks, full-frame blobs,
-extreme aspect ratios, low confidence) are dropped outright.
+Two stages. Geometric (pure math, see geometry.py): for every detection it
+independently re-derives a tight bounding box from the mask contour and
+compares it to the box the vision model reported. Low IoU means the box
+does not actually fit the mask — the Critic REJECTS it and regenerates the
+box from the contour instead (self-correction). Degenerate masks (dust
+specks, full-frame blobs, extreme aspect ratios, low confidence) are
+dropped outright. Semantic (AI): the Gemma VLM spot-check in
+semantic_critic.py confirms accepted crops actually show their class.
 """
 
 import time
@@ -16,9 +18,10 @@ from typing import Callable, Optional
 from ..config import settings
 from ..orchestrator.context import RunContext
 from ..schemas import BoundingBox, CritiqueRecord
+from .geometry import bounding_rect, perimeter, simplify_closed
 from .vision_agent import ImageAnnotation
 
-CRITIC_NAME = "Critic Agent (OpenCV geometric verifier)"
+CRITIC_NAME = "Critic Agent (geometric checks + Gemma VLM)"
 
 
 @dataclass
@@ -50,12 +53,8 @@ def _to_yolo(xyxyn: tuple[float, float, float, float]) -> tuple[float, float, fl
 def _simplify_polygon(polygon_px, width: int, height: int,
                       max_points: int = 80) -> list[float]:
     """Mask contour → compact normalized flat [x1, y1, …] for the contract."""
-    import cv2
-    import numpy as np
-
-    contour = np.asarray(polygon_px, dtype=np.float32).reshape(-1, 1, 2)
-    epsilon = 0.005 * max(cv2.arcLength(contour, closed=True), 1.0)
-    approx = cv2.approxPolyDP(contour, epsilon, closed=True).reshape(-1, 2)
+    epsilon = 0.005 * max(perimeter(polygon_px), 1.0)
+    approx = simplify_closed(polygon_px, epsilon)
     if len(approx) > max_points:
         step = len(approx) / max_points
         approx = approx[[int(i * step) for i in range(max_points)]]
@@ -71,8 +70,6 @@ class CriticAgent:
         """Verdict for a single annotated image; updates the run's mask
         counters and publishes progress. Both pipeline modes call this —
         sequential via review(), streaming per item as vision hands it over."""
-        import cv2
-
         progress = ctx.run.progress
         boxes: list[BoundingBox] = []
         worst_iou: Optional[float] = None
@@ -81,11 +78,11 @@ class CriticAgent:
 
         for det in ann.detections:
             # Independent geometric ground truth from the mask contour.
-            x, y, bw, bh = cv2.boundingRect(det.polygon_px.astype("float32"))
+            x, y, bw, bh = bounding_rect(det.polygon_px)
             tight = (x / ann.width, y / ann.height,
                      (x + bw) / ann.width, (y + bh) / ann.height)
             area = (tight[2] - tight[0]) * (tight[3] - tight[1])
-            aspect = max(bw, 1) / max(bh, 1)
+            aspect = max(bw, 1.0) / max(bh, 1.0)
             iou = _iou(det.box_xyxyn, tight)
             worst_iou = iou if worst_iou is None else min(worst_iou, iou)
 

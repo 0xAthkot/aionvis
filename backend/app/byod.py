@@ -8,8 +8,8 @@ pick. Three ingestion paths inside one archive:
   images + YOLO/COCO   -> labels are parsed into labels.json; a run on the
   annotation files        dataset AUDITS them (label_audit.py) instead of
                           running the Vision Agent
-  video files          -> frames are extracted (OpenCV, evenly strided) and
-                          treated as images
+  video files          -> frames are extracted (imageio/ffmpeg, evenly
+                          strided) and treated as images
 
 `register_archive_shell` keeps the contract's original JSON body working
 (metadata-only registration).
@@ -56,28 +56,42 @@ def _extract_video_frames(data: bytes, suffix: str, target_dir: Path,
                           start_index: int) -> list[str]:
     """Evenly strided frames from one video, saved as byod_*.jpg.
     Returns the safe names written."""
-    import cv2
+    import imageio.v2 as imageio
+    from PIL import Image
 
     tmp = target_dir / f"__video{suffix}"
     tmp.write_bytes(data)
     names: list[str] = []
     try:
-        cap = cv2.VideoCapture(str(tmp))
-        total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 0
+        reader = imageio.get_reader(str(tmp))
+        try:
+            total = int(reader.count_frames())
+        except Exception:
+            total = 0
         if total <= 0:
-            cap.release()
+            # Stream without a reliable frame count: estimate from metadata.
+            meta = reader.get_meta_data()
+            fps = float(meta.get("fps", 0) or 0)
+            duration = float(meta.get("duration", 0) or 0)
+            total = int(fps * duration)
+        if total <= 0:
+            reader.close()
             return names
         n = min(settings.video_max_frames, total)
         stride = max(total // n, 1)
-        for i in range(n):
-            cap.set(cv2.CAP_PROP_POS_FRAMES, i * stride)
-            ok, frame = cap.read()
-            if not ok:
+        wanted = {i * stride for i in range(n)}
+        last = max(wanted)
+        # Sequential decode (uploaded clips are short and the sample is
+        # capped) — random seeks on compressed video cost more than a pass.
+        for idx, frame in enumerate(reader):
+            if idx in wanted:
+                name = f"byod_{start_index + len(names):04d}.jpg"
+                Image.fromarray(frame).convert("RGB").save(
+                    target_dir / name, quality=92)
+                names.append(name)
+            if idx >= last:
                 break
-            name = f"byod_{start_index + len(names):04d}.jpg"
-            cv2.imwrite(str(target_dir / name), frame)
-            names.append(name)
-        cap.release()
+        reader.close()
     finally:
         tmp.unlink(missing_ok=True)
     return names

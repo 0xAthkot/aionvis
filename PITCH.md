@@ -21,8 +21,8 @@ Auto-Annotator is an autonomous agent swarm that feeds them:
    images.
 3. **Vision Agent** (SAM 3 / open-vocabulary segmentation) labels every
    object — no fixed class list, any noun works.
-4. **Critic Agent** re-derives every box geometrically (OpenCV) and rejects
-   or regenerates bad labels, then a vision-language model spot-checks
+4. **Critic Agent** re-derives every box from pure mask geometry and rejects
+   or regenerates bad labels, then a vision-language model (Gemma) spot-checks
    accepted crops semantically — geometry proves the box fits, the VLM
    proves it's actually a forklift. The swarm QAs itself; typical runs
    reject 2–3× more candidate labels than they accept.
