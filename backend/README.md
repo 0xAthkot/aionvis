@@ -5,10 +5,10 @@ the autonomous agent swarm that the Control Plane UI drives.
 
 | Agent | What actually runs |
 |---|---|
-| Prompt Agent | Gemma on **Fireworks AI** (chat completions); deterministic local fallback without a key |
+| Prompt Agent | **Gemma via vLLM** (any OpenAI-compatible chat endpoint, `LLM_BASE_URL`); deterministic local fallback when the endpoint is offline |
 | Synthesis Agent | **SDXL-Turbo** via HuggingFace diffusers (FLUX.1-schnell on MI300X) |
 | Vision Agent | **YOLOE** open-vocabulary segmentation (default) or **SAM 3** (`VISION_BACKEND=sam3`) |
-| Critic Agent | **OpenCV** geometric verification — re-derives tight boxes from mask contours, computes IoU, rejects/regenerates — plus a **Fireworks VLM semantic spot-check** that confirms crops actually show the claimed class (cost-capped per run, `SEMANTIC_CRITIC=false` to disable) |
+| Critic Agent | **OpenCV** geometric verification — re-derives tight boxes from mask contours, computes IoU, rejects/regenerates — plus a **VLM semantic spot-check** (Gemma via the same vLLM endpoint) that confirms crops actually show the claimed class (cost-capped per run, `SEMANTIC_CRITIC=false` to disable) |
 | MLOps Agent | **Ultralytics YOLOv10** training with live epoch metrics, `.pt`/ONNX export |
 
 Between stages the orchestrator flushes VRAM (`torch.cuda.empty_cache()` —
@@ -27,7 +27,7 @@ owns the GPU.
 python -m venv .venv
 .\.venv\Scripts\pip install -r requirements.txt
 .\.venv\Scripts\pip install -r requirements-ml.txt --extra-index-url https://download.pytorch.org/whl/cu126
-copy .env.example .env          # add FIREWORKS_API_KEY for the real Prompt Agent
+copy .env.example .env          # point LLM_BASE_URL at a vLLM for the real Prompt Agent
 .\.venv\Scripts\python -m uvicorn app.main:app --port 8000
 ```
 
@@ -56,7 +56,6 @@ cp .env.example .env
 Recommended `.env` on the MI300X (192 GB VRAM — no offload, bigger models):
 
 ```bash
-FIREWORKS_API_KEY=...
 PUBLIC_BASE_URL=http://<node-ip>:8000
 VISION_BACKEND=sam3                 # gated facebook/sam3 — run `huggingface-cli login`
 SDXL_MODEL=stabilityai/stable-diffusion-xl-base-1.0
@@ -64,17 +63,19 @@ MAX_IMAGES_PER_RUN=500
 MAX_EPOCHS=100
 ```
 
-Optional flex: serve **Gemma on the MI300X itself** and point the Prompt
-Agent at it — zero API spend, every agent on AMD silicon:
+Serve **Gemma on the MI300X itself** — zero API spend, every model on AMD
+silicon. This matches the `LLM_BASE_URL`/`LLM_MODEL` defaults, and Gemma 3
+is multimodal, so the same server powers the Prompt Agent, the semantic
+critic VLM, and model cards:
 
 ```bash
 pip install vllm            # ROCm build
 vllm serve google/gemma-3-27b-it --port 8001
-# .env
-FIREWORKS_BASE_URL=http://localhost:8001/v1
-FIREWORKS_MODEL=google/gemma-3-27b-it
-LLM_PROVIDER_LABEL=vLLM · MI300X (local)
 ```
+
+Without a reachable endpoint the Prompt Agent uses its deterministic
+template fallback and the semantic critic is skipped — the pipeline still
+runs end to end.
 
 Telemetry automatically switches to `amd-smi` and the hardware page shows
 the real MI300X (VRAM, hotspot temp, socket power). The node is detected as
@@ -96,7 +97,7 @@ app/
 │   ├── context.py     # per-run logging/stage/agent-state channel
 │   └── pipeline.py    # thread-per-run stage machine
 └── agents/
-    ├── prompt_agent.py     # Fireworks AI (Gemma)
+    ├── prompt_agent.py     # Gemma via vLLM (OpenAI-compatible)
     ├── synthesis_agent.py  # diffusers SDXL-Turbo / FLUX
     ├── vision_agent.py     # YOLOE / SAM 3 → mask contours
     ├── critic_agent.py     # OpenCV IoU verdicts + box regeneration

@@ -436,7 +436,7 @@ export const models: ModelArtifact[] = [
       "Labels are machine-generated and the imagery is synthetic-only; validate on photos from the actual line before production use.",
       "",
       "---",
-      "*Drafted autonomously by the MLOps Agent (Gemma via Fireworks AI).*",
+      "*Drafted autonomously by the MLOps Agent (Gemma via vLLM · MI300X).*",
     ].join("\n"),
   },
   {

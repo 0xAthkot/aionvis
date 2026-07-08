@@ -44,7 +44,7 @@ run name autofill. Type a scene prompt, e.g.:
 > Photo of a busy warehouse aisle with a yellow forklift, stacked wooden
 > pallets and workers in orange safety vests
 
-Click **Preview expansion** — "Our Prompt Agent, Gemma 4 on Fireworks AI,
+Click **Preview expansion** — "Our Prompt Agent, Gemma 4 served by vLLM on the MI300X,
 expands one sentence into hundreds of domain-randomized scenarios." Show the
 scenarios, drag a randomization slider, note the live cost estimate updating.
 

@@ -340,7 +340,7 @@ export default function FoundryPage() {
                   <div className="flex items-center gap-2">
                     <Sparkles className="size-4 text-primary" />
                     <p className="text-sm font-medium">Prompt Agent preview</p>
-                    <Badge variant="outline">Gemma 4 · Fireworks AI</Badge>
+                    <Badge variant="outline">Gemma 4 · vLLM</Badge>
                   </div>
                   <Button
                     type="button"

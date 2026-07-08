@@ -29,7 +29,7 @@ class RunCancelled(Exception):
 
 AGENT_SPECS: dict[AgentKind, tuple[str, str, str]] = {
     # kind -> (displayName, model, provider) — provider is patched at runtime
-    "prompt": ("Prompt Agent", "Gemma (Fireworks AI)", "Fireworks AI"),
+    "prompt": ("Prompt Agent", "Gemma (vLLM)", "vLLM · MI300X"),
     "synthesis": ("Synthesis Agent", "SDXL-Turbo", "local GPU"),
     "vision": ("Vision Agent", "SAM / YOLOE open-vocab", "local GPU"),
     "critic": ("Critic Agent", "OpenCV geometric verifier", "local CPU"),

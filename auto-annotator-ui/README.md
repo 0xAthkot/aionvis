@@ -52,7 +52,7 @@ Key principle: components only import from `lib/api`. Nothing outside
 
 ## Connecting the real backend
 
-The real FastAPI backend (agent swarm: Fireworks Gemma → SDXL-Turbo →
+The real FastAPI backend (agent swarm: Gemma via vLLM → SDXL-Turbo →
 YOLOE/SAM 3 → OpenCV Critic → Ultralytics YOLOv10 training) lives in
 [`../backend`](../backend/README.md) and implements
 [BACKEND_CONTRACT.md](BACKEND_CONTRACT.md). Start it, then:

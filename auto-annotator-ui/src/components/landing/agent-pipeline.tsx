@@ -15,7 +15,7 @@ const AGENTS = [
   {
     icon: MessageSquareText,
     name: "Prompt Agent",
-    tech: "LLM · Fireworks AI",
+    tech: "Gemma · vLLM",
     blurb: "One sentence becomes hundreds of domain-randomized scene descriptions.",
     status: "Expanding scenarios…",
   },

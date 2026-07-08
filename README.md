@@ -7,10 +7,10 @@ hardware. Built for the AMD Developer Hackathon ACT II (Unicorn Track).
 **One sentence in → deployable `.pt` model out. Zero human labeling.**
 
 ```
-Prompt Agent (Gemma · Fireworks AI)
+Prompt Agent (Gemma · vLLM on MI300X)
    └─> Synthesis Agent (SDXL-Turbo / FLUX · diffusers)
          └─> Vision Agent (SAM 3 / YOLOE zero-shot segmentation)
-               └─> Critic Agent (OpenCV geometry + Fireworks VLM semantic spot-check)
+               └─> Critic Agent (OpenCV geometry + Gemma VLM semantic spot-check)
                      └─> MLOps Agent (YOLOv10 training · PyTorch on ROCm)
 ```
 
@@ -30,10 +30,10 @@ click).
 ## Quick start (Docker — recommended for judges)
 
 ```bash
-# Optional but recommended: your own Fireworks key (LLM prompt expansion,
-# VLM semantic critic, model cards). Without it the swarm degrades
-# gracefully to deterministic fallbacks.
-echo "FIREWORKS_API_KEY=fw_..." > .env
+# Optional: an OpenAI-compatible LLM endpoint, e.g. vLLM serving Gemma
+# (LLM prompt expansion, VLM semantic critic, model cards). Without one
+# the swarm degrades gracefully to deterministic fallbacks.
+echo "LLM_BASE_URL=http://host.docker.internal:8001/v1" > .env
 
 docker compose up --build
 ```

@@ -19,11 +19,13 @@ class Settings(BaseSettings):
     public_base_url: str = "http://localhost:8000"
 
     # --- Prompt Agent (any OpenAI-compatible chat endpoint) ---
-    # Default: Fireworks AI serverless. On the MI300X, point base_url at a
-    # local vLLM serving Gemma (the key is then ignored by the server).
-    fireworks_api_key: str = ""
-    fireworks_base_url: str = "https://api.fireworks.ai/inference/v1"
-    fireworks_model: str = "accounts/fireworks/models/gpt-oss-120b"
+    # Default: Gemma via vLLM on the same box (the MI300X profile:
+    # `vllm serve google/gemma-3-27b-it --port 8001`). The key is optional —
+    # vLLM ignores it. If the endpoint is unreachable the Prompt Agent
+    # degrades to its deterministic template expander.
+    llm_api_key: str = ""
+    llm_base_url: str = "http://localhost:8001/v1"
+    llm_model: str = "google/gemma-3-27b-it"
     # Shown as the agent's provider in the UI; defaults by base_url.
     llm_provider_label: str = ""
 
@@ -47,10 +49,12 @@ class Settings(BaseSettings):
     critic_min_box_area: float = 0.0004  # normalized area
     critic_min_confidence: float = 0.30
     critic_iou_accept: float = 0.55
-    # Second stage: a Fireworks VLM spot-checks accepted crops semantically.
-    # Cost-capped per run; needs FIREWORKS_API_KEY and a vision-capable model.
+    # Second stage: a VLM spot-checks accepted crops semantically via the
+    # same OpenAI-compatible endpoint. Cost-capped per run. Empty model =
+    # reuse llm_model (Gemma 3 is vision-capable, so one server does both);
+    # set it only to route the critic to a different vision model.
     semantic_critic: bool = True
-    semantic_critic_model: str = "accounts/fireworks/models/kimi-k2p6"
+    semantic_critic_model: str = ""
     semantic_critic_max_checks: int = 8
 
     # --- Pose task ---

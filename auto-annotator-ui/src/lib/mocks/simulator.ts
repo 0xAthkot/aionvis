@@ -102,10 +102,10 @@ const AGENT_ROSTER: Record<
   AgentKind,
   { displayName: string; model: string; provider: string }
 > = {
-  prompt: { displayName: "Prompt Agent", model: "Gemma 4", provider: "Fireworks AI" },
+  prompt: { displayName: "Prompt Agent", model: "Gemma 4", provider: "vLLM · MI300X" },
   synthesis: { displayName: "Synthesis Agent", model: "SDXL", provider: "MI300X · local" },
   vision: { displayName: "Vision Agent", model: "SAM 3", provider: "MI300X · local" },
-  critic: { displayName: "Critic Agent", model: "Gemma 4 + OpenCV", provider: "Fireworks AI" },
+  critic: { displayName: "Critic Agent", model: "Gemma 4 + OpenCV", provider: "vLLM · MI300X" },
   mlops: { displayName: "MLOps Agent", model: "YOLOv10 · PyTorch", provider: "MI300X · ROCm" },
 };
 
@@ -267,7 +267,7 @@ export class RunSimulator {
         this.log("stage", undefined, "━━ STAGE: PROMPT EXPANSION — Prompt Agent taking over ━━");
         this.setAgent("prompt", "thinking", "Expanding base prompt with domain randomization");
         setGpuLoad(12, 8);
-        this.log("info", "prompt", `Requesting Gemma 4 via Fireworks AI · target: ${total} scenarios`);
+        this.log("info", "prompt", `Requesting Gemma 4 via vLLM on MI300X · target: ${total} scenarios`);
         break;
       case "synthesis":
         this.log("stage", undefined, "━━ STAGE: SYNTHESIS — Synthesis Agent taking over ━━");

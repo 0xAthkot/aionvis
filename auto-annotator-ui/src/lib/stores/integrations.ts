@@ -7,8 +7,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export interface IntegrationsState {
-  fireworksBaseUrl: string;
-  fireworksApiKey: string;
+  llmBaseUrl: string;
+  llmApiKey: string;
   amdCloudEndpoint: string;
   amdCloudToken: string;
   save: (patch: Partial<Omit<IntegrationsState, "save">>) => void;
@@ -17,8 +17,8 @@ export interface IntegrationsState {
 export const useIntegrationsStore = create<IntegrationsState>()(
   persist(
     (set) => ({
-      fireworksBaseUrl: "https://api.fireworks.ai/inference/v1",
-      fireworksApiKey: "",
+      llmBaseUrl: "http://localhost:8001/v1",
+      llmApiKey: "",
       amdCloudEndpoint: "",
       amdCloudToken: "",
       save: (patch) => set(patch),

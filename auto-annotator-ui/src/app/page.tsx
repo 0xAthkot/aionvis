@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 export const metadata: Metadata = {
   title: "Auto-Annotator — Training data that builds itself",
   description:
-    "An autonomous agent swarm that turns one sentence into a trained, deployable detection model. Zero human annotation. Built on AMD MI300X and Fireworks AI.",
+    "An autonomous agent swarm that turns one sentence into a trained, deployable detection model. Zero human annotation. Built entirely on AMD MI300X.",
 };
 
 const NAV_LINKS = [
@@ -150,7 +150,7 @@ const PLANS = [
     features: [
       "docker compose up — full stack locally",
       "Bring your own GPU (CUDA or ROCm)",
-      "Bring your own Fireworks API key",
+      "Bring your own OpenAI-compatible LLM (vLLM)",
       "YOLO / COCO / VOC / CSV / ONNX export",
     ],
     cta: "Run it locally",
@@ -230,7 +230,7 @@ export default function LandingPage() {
             <div className="mx-auto max-w-3xl text-center">
               <Badge variant="outline" className="mb-6 gap-1.5 border-primary/40 py-1 text-xs">
                 <span className="size-1.5 rounded-full bg-primary" />
-                Powered by AMD MI300X + Fireworks AI
+                Powered end to end by AMD MI300X
               </Badge>
               <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
                 Stop labeling data.
@@ -419,18 +419,18 @@ export default function LandingPage() {
                   <li className="flex gap-3">
                     <Check className="mt-0.5 size-4 shrink-0 text-primary" />
                     <span>
-                      <span className="font-medium">Fireworks AI</span> — Gemma-class
-                      LLMs expand prompts and write model cards; a serverless VLM
-                      semantically verifies labels. Cached and quoted: under a cent
-                      per run.
+                      <span className="font-medium">Gemma via vLLM</span> — served
+                      on the same MI300X: expands prompts, writes model cards, and
+                      semantically verifies labels as a VLM critic. Zero external
+                      API calls, zero per-token cost.
                     </span>
                   </li>
                   <li className="flex gap-3">
                     <Check className="mt-0.5 size-4 shrink-0 text-primary" />
                     <span>
-                      <span className="font-medium">Self-host option</span> — serve
-                      Gemma on the MI300X with vLLM and the swarm makes zero
-                      external API calls.
+                      <span className="font-medium">Endpoint-agnostic</span> — the
+                      swarm speaks the OpenAI chat protocol, so any compatible
+                      endpoint drops in with one env var.
                     </span>
                   </li>
                 </ul>
@@ -450,12 +450,12 @@ export default function LandingPage() {
                     </span>
                   </div>
                   <pre className="overflow-x-auto p-4 font-mono text-xs leading-relaxed text-zinc-300">
-                    <code>{`# Full stack, your machine, your keys
+                    <code>{`# Full stack, your machine, no accounts
 git clone <this-repo> && cd auto-annotator
 
-# Your Fireworks key (optional — falls back
+# Optional: point at your own LLM (falls back
 # to a deterministic template expander)
-echo "FIREWORKS_API_KEY=fw_..." > backend/.env
+echo "LLM_BASE_URL=http://localhost:8001/v1" > backend/.env
 
 docker compose up --build
 
@@ -556,8 +556,8 @@ docker compose up --build
           <p className="text-xs text-muted-foreground">
             Built for the AMD Developer Hackathon ACT II — Unicorn Track.
             <br />
-            SDXL · SAM · YOLO26 / YOLO11 / YOLOv10 / RT-DETR · Gemma on
-            Fireworks AI · PyTorch on ROCm · MI300X
+            SDXL · SAM · YOLO26 / YOLO11 / YOLOv10 / RT-DETR · Gemma via
+            vLLM · PyTorch on ROCm · MI300X
           </p>
           <p className="text-xs text-muted-foreground/60">
             © 2026 Auto-Annotator. All models trained, all labels verified, no

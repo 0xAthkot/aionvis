@@ -38,7 +38,7 @@ SDXL_MODEL=stabilityai/stable-diffusion-xl-base-1.0
 MAX_IMAGES_PER_RUN=500
 MAX_EPOCHS=100
 EOF
-    echo ">> Wrote .env — add FIREWORKS_API_KEY (and run huggingface-cli login for SAM 3)."
+    echo ">> Wrote .env (run huggingface-cli login for SAM 3 + gated Gemma)."
 else
     echo ">> .env exists, leaving it alone."
 fi
@@ -47,7 +47,7 @@ echo
 echo "Done. Start the backend with:"
 echo "  source .venv/bin/activate && uvicorn app.main:app --host 0.0.0.0 --port 8000"
 echo
-echo "Optional — serve Gemma on this GPU (zero API cost):"
+echo "Serve Gemma on this GPU (Prompt Agent + Semantic Critic, zero API cost):"
 echo "  pip install vllm && vllm serve google/gemma-3-27b-it --port 8001"
-echo "  then set FIREWORKS_BASE_URL=http://localhost:8001/v1,"
-echo "  FIREWORKS_MODEL=google/gemma-3-27b-it, LLM_PROVIDER_LABEL='vLLM · MI300X (local)'"
+echo "  (matches the LLM_BASE_URL/LLM_MODEL defaults; without it the backend"
+echo "  uses its deterministic template fallback and skips the semantic critic)"

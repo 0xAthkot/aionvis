@@ -238,8 +238,8 @@ function ApiKeysTab() {
 
 function IntegrationsTab() {
   const store = useIntegrationsStore();
-  const [fireworksBaseUrl, setFireworksBaseUrl] = useState(store.fireworksBaseUrl);
-  const [fireworksApiKey, setFireworksApiKey] = useState(store.fireworksApiKey);
+  const [llmBaseUrl, setLlmBaseUrl] = useState(store.llmBaseUrl);
+  const [llmApiKey, setLlmApiKey] = useState(store.llmApiKey);
   const [amdCloudEndpoint, setAmdCloudEndpoint] = useState(store.amdCloudEndpoint);
   const [amdCloudToken, setAmdCloudToken] = useState(store.amdCloudToken);
 
@@ -249,30 +249,29 @@ function IntegrationsTab() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Flame className="size-4 text-primary" />
-            <CardTitle>Fireworks AI</CardTitle>
+            <CardTitle>LLM endpoint (vLLM)</CardTitle>
           </div>
           <CardDescription>
-            Serves Gemma 4 for the Prompt and Critic agents on AMD-hosted
-            inference.
+            OpenAI-compatible endpoint serving Gemma 4 for the Prompt and
+            Critic agents — vLLM on the MI300X.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="fw-url">Base URL</Label>
+            <Label htmlFor="llm-url">Base URL</Label>
             <Input
-              id="fw-url"
-              value={fireworksBaseUrl}
-              onChange={(e) => setFireworksBaseUrl(e.target.value)}
+              id="llm-url"
+              value={llmBaseUrl}
+              onChange={(e) => setLlmBaseUrl(e.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="fw-key">API key</Label>
+            <Label htmlFor="llm-key">API key (optional — vLLM ignores it)</Label>
             <Input
-              id="fw-key"
+              id="llm-key"
               type="password"
-              placeholder="fw-…"
-              value={fireworksApiKey}
-              onChange={(e) => setFireworksApiKey(e.target.value)}
+              value={llmApiKey}
+              onChange={(e) => setLlmApiKey(e.target.value)}
             />
           </div>
         </CardContent>
@@ -280,8 +279,8 @@ function IntegrationsTab() {
           <Button
             size="sm"
             onClick={() => {
-              store.save({ fireworksBaseUrl, fireworksApiKey });
-              toast.success("Fireworks AI settings saved", {
+              store.save({ llmBaseUrl, llmApiKey });
+              toast.success("LLM endpoint settings saved", {
                 description: "Stored locally — handed to the backend at connect time.",
               });
             }}

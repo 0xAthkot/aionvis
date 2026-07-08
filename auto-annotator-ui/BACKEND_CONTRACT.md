@@ -78,7 +78,7 @@ carry an optional `polygon` (flat normalized pairs).
 |---|---|---|
 | POST | `/foundry/expand-prompt` | `ExpandPromptRequest` → `ExpandPromptResponse` |
 
-The Prompt Agent (Gemma 4 via Fireworks AI) expands the base prompt into
+The Prompt Agent (Gemma 4 via vLLM on the MI300X) expands the base prompt into
 domain-randomized scenario prompts; `previewCount` caps the sample returned
 (UI sends 8, cap at 12). When `projectId` is set, the project's pending
 playground feedback (unconsumed `FoundryFeedback`) is folded into the

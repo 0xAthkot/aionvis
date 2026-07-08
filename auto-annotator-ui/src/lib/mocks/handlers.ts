@@ -187,10 +187,10 @@ export const handlers = [
     const simulated = getSimulatedAgents(String(params.id));
     if (simulated) return HttpResponse.json(simulated.map((a) => ({ ...a })));
     const roster = [
-      { kind: "prompt", displayName: "Prompt Agent", model: "Gemma 4", provider: "Fireworks AI" },
+      { kind: "prompt", displayName: "Prompt Agent", model: "Gemma 4", provider: "vLLM · MI300X" },
       { kind: "synthesis", displayName: "Synthesis Agent", model: "SDXL", provider: "MI300X · local" },
       { kind: "vision", displayName: "Vision Agent", model: "SAM 3", provider: "MI300X · local" },
-      { kind: "critic", displayName: "Critic Agent", model: "Gemma 4 + OpenCV", provider: "Fireworks AI" },
+      { kind: "critic", displayName: "Critic Agent", model: "Gemma 4 + OpenCV", provider: "vLLM · MI300X" },
       { kind: "mlops", displayName: "MLOps Agent", model: "YOLOv10 · PyTorch", provider: "MI300X · ROCm" },
     ] as const;
     const active = run.path === "byod"
@@ -329,7 +329,7 @@ export const handlers = [
       scenarios,
       totalScenarios: r.scenarioCount,
       model: "Gemma 4",
-      provider: "Fireworks AI",
+      provider: "vLLM · MI300X",
     };
     return HttpResponse.json(response);
   }),

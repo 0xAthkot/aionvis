@@ -1,4 +1,4 @@
-"""Semantic Critic — a Fireworks VLM spot-checks what the geometry can't.
+"""Semantic Critic — a VLM spot-checks what the geometry can't.
 
 The OpenCV Critic proves a box fits its mask; it cannot prove the mask is
 actually a forklift. This second stage crops a sample of accepted boxes and
@@ -49,13 +49,19 @@ def _crop_b64(image_path, box, width, height) -> str:
     return base64.b64encode(buf.getvalue()).decode()
 
 
+def _critic_model() -> str:
+    """Dedicated vision model if configured, else the shared LLM (Gemma 3
+    is multimodal, so one vLLM server serves both agents)."""
+    return settings.semantic_critic_model or settings.llm_model
+
+
 def _ask(client: httpx.Client, b64: str, class_name: str) -> bool | None:
     """True = pass, False = fail, None = unusable answer."""
     resp = client.post(
-        f"{settings.fireworks_base_url}/chat/completions",
-        headers={"Authorization": f"Bearer {settings.fireworks_api_key}"},
+        f"{settings.llm_base_url}/chat/completions",
+        headers=prompt_agent._headers(),
         json={
-            "model": settings.semantic_critic_model,
+            "model": _critic_model(),
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": [
@@ -67,7 +73,6 @@ def _ask(client: httpx.Client, b64: str, class_name: str) -> bool | None:
             ],
             "temperature": 0.0,
             "max_tokens": 700,  # reasoning models think before the verdict
-            "reasoning_effort": "low",
         },
     )
     resp.raise_for_status()
@@ -82,7 +87,7 @@ def _ask(client: httpx.Client, b64: str, class_name: str) -> bool | None:
 def spot_check(ctx: RunContext, reviewed: list[ReviewedImage],
                class_names: list[str]) -> None:
     """Mutates `reviewed`: removes boxes the VLM rejects."""
-    if not (settings.semantic_critic and prompt_agent.has_key):
+    if not (settings.semantic_critic and prompt_agent.available):
         return
     candidates = [
         (img, bi) for img in reviewed if img.accepted
@@ -93,12 +98,13 @@ def spot_check(ctx: RunContext, reviewed: list[ReviewedImage],
     rng = random.Random(ctx.run.id)  # reproducible sample per run
     sample = rng.sample(
         candidates, min(settings.semantic_critic_max_checks, len(candidates)))
-    model_label = settings.semantic_critic_model.rsplit("/", 1)[-1]
+    model_label = _critic_model().rsplit("/", 1)[-1]
     ctx.set_agent("critic", "thinking",
                   f"Semantic spot-check: {len(sample)} crops → {model_label}")
     ctx.log("info",
             f"Semantic Critic sampling {len(sample)} of {len(candidates)} "
-            f"accepted boxes for VLM verification ({model_label} via Fireworks AI)",
+            f"accepted boxes for VLM verification "
+            f"({model_label} via {prompt_agent.provider_label})",
             agent="critic")
 
     to_remove: dict[int, list[int]] = {}

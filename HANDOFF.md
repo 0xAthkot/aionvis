@@ -62,11 +62,13 @@ $env:PYTHONIOENCODING='utf-8'                       # REQUIRED on Windows consol
 .venv\Scripts\python -m uvicorn app.main:app --port 8000
 ```
 
-Secrets: `backend/.env` is NOT in this archive (deliberately — it held an
-API key). Copy `backend/.env.example` → `backend/.env` and ask Stelios for
-the `FIREWORKS_API_KEY` (or create your own at fireworks.ai). Without it,
-the Prompt Agent degrades to a deterministic template fallback and the
-semantic critic is skipped — everything still runs.
+LLM: there are no API keys or third-party LLM services anymore (the old
+Fireworks AI integration was removed 2026-07-08). Copy
+`backend/.env.example` → `backend/.env`; the Prompt Agent and Semantic
+Critic talk to any OpenAI-compatible endpoint at `LLM_BASE_URL` (default:
+Gemma via vLLM on localhost:8001 — the MI300X profile). While that endpoint
+is unreachable the Prompt Agent degrades to a deterministic template
+fallback and the semantic critic is skipped — everything still runs.
 
 Preflight: `backend/smoke_test.py` checks every endpoint + LLM + inference;
 run it before any demo. `backend/reset_demo.py` resets demo state.
@@ -85,8 +87,8 @@ run it before any demo. `backend/reset_demo.py` resets demo state.
    `NEXT_PUBLIC_API_BASE_URL=http://<remote>:8000`,
    `NEXT_PUBLIC_WS_BASE_URL=ws://<remote>:8000`,
    `NEXT_PUBLIC_USE_MOCKS=false` in `auto-annotator-ui/.env.local`.
-   The MI300X plan also includes: Gemma 4 via vLLM (`FIREWORKS_BASE_URL`
-   override — counts for the "Best Use of Gemma" challenge), FLUX synthesis
+   The MI300X plan also includes: Gemma 4 via vLLM (the `LLM_BASE_URL`
+   default — counts for the "Best Use of Gemma" challenge), FLUX synthesis
    (`generator: "flux"` currently falls back to SDXL), SAM 3 vision backend
    (`VISION_BACKEND=sam3`, gated checkpoint).
 

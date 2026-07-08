@@ -1,13 +1,15 @@
 """Prompt Agent — expands a base prompt into domain-randomized scenarios.
 
-Real path: Gemma on Fireworks AI (OpenAI-compatible chat completions).
-Without FIREWORKS_API_KEY it degrades to a deterministic template expander
-and says so in its provider label, so the rest of the pipeline stays usable.
+Real path: Gemma via vLLM on the MI300X (any OpenAI-compatible chat
+endpoint, see LLM_BASE_URL). When the endpoint is unreachable it degrades
+to a deterministic template expander and says so in its provider label,
+so the rest of the pipeline stays usable on boxes without an LLM.
 """
 
 import itertools
 import json
 import re
+import time
 
 import httpx
 
@@ -23,7 +25,7 @@ according to the given intensities (0=none, 1=extreme). Keep each prompt a
 single sentence under 60 words, photographic style, no numbering.
 Respond with ONLY a JSON array of strings."""
 
-# Deterministic fallback vocabulary (used only without an API key).
+# Deterministic fallback vocabulary (used when the LLM endpoint is offline).
 _LIGHTING = ["soft studio lighting", "harsh industrial floodlights", "dim ambient light",
              "golden-hour sidelight", "cool fluorescent overheads", "high-contrast spotlights"]
 _ANGLES = ["top-down view", "45-degree elevated view", "eye-level closeup",
@@ -42,6 +44,8 @@ class PromptAgent:
         # Same params → same scenarios, one API call. The wizard preview and
         # the launched run would otherwise each pay for an identical call.
         self._cache: dict[tuple, list[str]] = {}
+        self._probe_ok: bool | None = None
+        self._probe_at: float = 0.0
 
     def _cache_key(self, base_prompt, target_classes, randomization, count,
                    hard_cases: tuple = ()) -> tuple:
@@ -60,21 +64,31 @@ class PromptAgent:
         self._cache[key] = scenarios
 
     @property
-    def has_key(self) -> bool:
-        return bool(settings.fireworks_api_key)
+    def available(self) -> bool:
+        """The LLM endpoint answers. Probed at most once a minute so labels
+        stay honest without a health check per request; starting vLLM after
+        the backend is picked up within that window."""
+        if time.monotonic() - self._probe_at > 60 or self._probe_ok is None:
+            self._probe_at = time.monotonic()
+            try:
+                httpx.get(f"{settings.llm_base_url}/models",
+                          headers=self._headers(), timeout=3).raise_for_status()
+                self._probe_ok = True
+            except httpx.HTTPError:
+                self._probe_ok = False
+        return self._probe_ok
 
     @property
     def model_label(self) -> str:
-        return settings.fireworks_model.rsplit("/", 1)[-1] if self.has_key else "template expander"
+        return settings.llm_model.rsplit("/", 1)[-1] if self.available else "template expander"
 
     @property
     def provider_label(self) -> str:
-        if not self.has_key:
-            return "local fallback (set FIREWORKS_API_KEY)"
+        if not self.available:
+            return "local fallback (LLM endpoint offline)"
         if settings.llm_provider_label:
             return settings.llm_provider_label
-        return ("Fireworks AI" if "fireworks.ai" in settings.fireworks_base_url
-                else "self-hosted (OpenAI-compatible)")
+        return "self-hosted (OpenAI-compatible)"
 
     # --- public API ------------------------------------------------------------
 
@@ -82,7 +96,7 @@ class PromptAgent:
                            randomization: DomainRandomizationConfig, count: int,
                            hard_cases: list[str] | None = None) -> list[str]:
         hard = tuple(hard_cases or ())
-        if not self.has_key:
+        if not self.available:
             return self._fallback(base_prompt, target_classes, randomization,
                                   count, hard)
         key = self._cache_key(base_prompt, target_classes, randomization, count,
@@ -94,8 +108,8 @@ class PromptAgent:
                 data = await self._chat(client, base_prompt, target_classes,
                                          randomization, count, hard)
         except httpx.HTTPError as exc:
-            # A dead key or retired model must degrade, never 500 the wizard.
-            print(f"[prompt-agent] Fireworks call failed ({exc}); using fallback")
+            # A dead endpoint or retired model must degrade, never 500 the wizard.
+            print(f"[prompt-agent] LLM call failed ({exc}); using fallback")
             return self._fallback(base_prompt, target_classes, randomization,
                                   count, hard)
         self._cache_put(key, data)
@@ -106,7 +120,7 @@ class PromptAgent:
                hard_cases: list[str] | None = None) -> list[str]:
         """Synchronous variant for the pipeline worker thread."""
         hard = tuple(hard_cases or ())
-        if not self.has_key:
+        if not self.available:
             return self._fallback(base_prompt, target_classes, randomization,
                                   count, hard)
         key = self._cache_key(base_prompt, target_classes, randomization, count,
@@ -116,7 +130,7 @@ class PromptAgent:
         try:
             with httpx.Client(timeout=60) as client:
                 resp = client.post(
-                    f"{settings.fireworks_base_url}/chat/completions",
+                    f"{settings.llm_base_url}/chat/completions",
                     headers=self._headers(),
                     json=self._payload(base_prompt, target_classes, randomization,
                                        count, hard),
@@ -125,15 +139,18 @@ class PromptAgent:
                 scenarios = self._parse(resp.json(), base_prompt, target_classes,
                                         randomization, count)
         except httpx.HTTPError as exc:
-            print(f"[prompt-agent] Fireworks call failed ({exc}); using fallback")
+            print(f"[prompt-agent] LLM call failed ({exc}); using fallback")
             return self._fallback(base_prompt, target_classes, randomization, count)
         self._cache_put(key, scenarios)
         return scenarios
 
-    # --- Fireworks call ----------------------------------------------------------
+    # --- LLM call ------------------------------------------------------------
 
     def _headers(self) -> dict:
-        return {"Authorization": f"Bearer {settings.fireworks_api_key}"}
+        # vLLM and other self-hosted servers accept keyless requests.
+        if not settings.llm_api_key:
+            return {}
+        return {"Authorization": f"Bearer {settings.llm_api_key}"}
 
     def _payload(self, base_prompt, target_classes, randomization, count,
                  hard_cases: tuple = ()) -> dict:
@@ -153,7 +170,7 @@ class PromptAgent:
                 f"observed cases — dedicate several scenarios to covering them:\n{cases}"
             )
         return {
-            "model": settings.fireworks_model,
+            "model": settings.llm_model,
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user},
@@ -162,15 +179,12 @@ class PromptAgent:
             # ~80 tokens per sub-60-word prompt + JSON overhead + headroom
             # for reasoning models that think before answering.
             "max_tokens": 100 * max(count, 1) + 700,
-            # Scenario expansion needs diversity, not deliberation; keeps
-            # reasoning models (gpt-oss) cheap. Non-reasoning slugs ignore it.
-            "reasoning_effort": "low",
         }
 
     async def _chat(self, client: httpx.AsyncClient, base_prompt, target_classes,
                     randomization, count, hard_cases: tuple = ()) -> list[str]:
         resp = await client.post(
-            f"{settings.fireworks_base_url}/chat/completions",
+            f"{settings.llm_base_url}/chat/completions",
             headers=self._headers(),
             json=self._payload(base_prompt, target_classes, randomization, count,
                                hard_cases),

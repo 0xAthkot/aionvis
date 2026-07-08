@@ -1,8 +1,8 @@
 """Model card writer — the LLM documents what the swarm just built.
 
 One cheap chat call per completed run (the same endpoint the Prompt Agent
-uses); without a key it falls back to a deterministic template so every
-model still ships with a card.
+uses); when the LLM endpoint is offline it falls back to a deterministic
+template so every model still ships with a card.
 """
 
 import httpx
@@ -71,21 +71,20 @@ def _template_card(ctx: RunContext, artifact: ModelArtifact, dataset: Dataset) -
 def write_model_card(ctx: RunContext, artifact: ModelArtifact,
                      dataset: Dataset) -> None:
     card: str | None = None
-    if prompt_agent.has_key:
+    if prompt_agent.available:
         try:
             with httpx.Client(timeout=60) as client:
                 resp = client.post(
-                    f"{settings.fireworks_base_url}/chat/completions",
-                    headers={"Authorization": f"Bearer {settings.fireworks_api_key}"},
+                    f"{settings.llm_base_url}/chat/completions",
+                    headers=prompt_agent._headers(),
                     json={
-                        "model": settings.fireworks_model,
+                        "model": settings.llm_model,
                         "messages": [
                             {"role": "system", "content": SYSTEM_PROMPT},
                             {"role": "user", "content": _facts(ctx, artifact, dataset)},
                         ],
                         "temperature": 0.4,
                         "max_tokens": 1200,
-                        "reasoning_effort": "low",
                     },
                 )
                 resp.raise_for_status()

@@ -214,7 +214,7 @@ export interface AgentInstance {
   displayName: string;
   /** Model powering the agent, e.g. "Gemma 4" or "SAM 3". */
   model: string;
-  /** Where the model runs, e.g. "Fireworks AI" or "MI300X · local". */
+  /** Where the model runs, e.g. "vLLM · MI300X" or "local GPU". */
   provider: string;
   state: AgentState;
   currentTask?: string;
