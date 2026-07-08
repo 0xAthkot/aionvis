@@ -164,13 +164,21 @@ to `rfdetr_worker.py` (tagged-line protocol INFO/EPOCH/RESULT). Missing venv
 
 ## Open roadmap (in rough priority order)
 
-1. **Docker verification** — compose files exist but were never run
+1. **Parallel swarm (`PIPELINE_MODE=streaming`)** — the unique-AMD-advantage
+   feature for the judges: agents overlap on one MI300X while other GPUs
+   keep today's sequential mode. Full implementation plan (backend →
+   dashboard → landing two-mode visual → verification):
+   **`PARALLEL_SWARM_PLAN.md`** — execute it top to bottom in a fresh
+   session, then delete the plan file.
+2. **Docker verification** — compose files exist but were never run
    (no Docker on the dev box). Judges are told to use it. Test it.
-2. **MI300X deployment** once AMD credits land: Gemma 4 via vLLM, FLUX,
-   SAM 3, and a 500-image flagship run with evidence capture.
-3. **Flagship retrain**: 48 img / 60 epochs on `yolo26m` (Simple default)
+3. **MI300X deployment** once AMD credits land: `deploy_mi300x.sh`, then
+   `vllm serve google/gemma-3-27b-it --port 8001 --gpu-memory-utilization 0.35`
+   (Gemma 3 27B), FLUX, SAM 3, and a 500-image flagship run with evidence
+   capture.
+4. **Flagship retrain**: 48 img / 60 epochs on `yolo26m` (Simple default)
    to beat the current `model_0006` (yolov10n, mAP50 0.85) headline.
-4. RF-DETR seg variants; friendlier dataset/model pages in Simple mode;
+5. RF-DETR seg variants; friendlier dataset/model pages in Simple mode;
    demo video recording.
 
 ## Getting Claude Code into context
