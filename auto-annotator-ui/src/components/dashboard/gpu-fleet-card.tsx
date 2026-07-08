@@ -146,6 +146,20 @@ export function GpuFleetCard() {
                 </span>
               )}
             </div>
+            {node?.residentModels && node.residentModels.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-xs text-muted-foreground">
+                  Resident swarm — models held in VRAM
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {node.residentModels.map((m) => (
+                    <Badge key={m} variant="outline" className="font-normal">
+                      {m}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
       </CardContent>

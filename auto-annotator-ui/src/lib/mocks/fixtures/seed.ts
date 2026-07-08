@@ -92,6 +92,9 @@ export const hardwareNodes: HardwareNode[] = [
     status: "busy",
     region: "us-east",
     provider: "amd-developer-cloud",
+    // 192 GB holds the whole swarm resident (KEEP_MODELS_WARM) — this is
+    // what makes PIPELINE_MODE=streaming possible on one card.
+    residentModels: ["Gemma 3 27B (vLLM)", "FLUX.1-schnell", "SAM 3"],
   },
 ];
 
@@ -240,6 +243,7 @@ export const runs: PipelineRun[] = [
     path: "synthetic",
     status: "succeeded",
     stage: "complete",
+    pipelineMode: "streaming",
     source: {
       path: "synthetic",
       basePrompt:
@@ -338,6 +342,7 @@ export const runs: PipelineRun[] = [
     path: "byod",
     status: "running",
     stage: "segmentation",
+    pipelineMode: "streaming",
     source: {
       path: "byod",
       datasetId: "ds_helmet_cctv",
@@ -356,6 +361,8 @@ export const runs: PipelineRun[] = [
       pct: 34,
       imagesGenerated: 0,
       imagesTotal: 1240,
+      // Streaming overlap: vision runs ahead of the critic's verdicts.
+      imagesAnnotated: 420,
       masksAccepted: 389,
       masksRejected: 31,
       currentEpoch: 0,

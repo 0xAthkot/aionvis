@@ -75,8 +75,16 @@ export function getSimulatedAgents(runId: string): AgentInstance[] | undefined {
 
 const TICK_MS = 450;
 
+/**
+ * "overlap" is the streaming-mode phase where synthesis, vision and critic
+ * all work at once; the contract-level `run.stage` walks
+ * synthesis → segmentation → critic_review inside it as each drains
+ * (bottleneck-stage semantics, see BACKEND_CONTRACT.md).
+ */
+type SimStage = PipelineStage | "overlap";
+
 interface StagePlan {
-  stage: PipelineStage;
+  stage: SimStage;
   ticks: number;
   /** Contribution to overall progress pct. */
   weight: number;
@@ -84,6 +92,18 @@ interface StagePlan {
 
 function planFor(run: PipelineRun): StagePlan[] {
   const synthetic = run.path === "synthetic";
+  if (run.pipelineMode === "streaming") {
+    // Parallel swarm on the MI300X: the middle stages run as one overlap
+    // phase; training still needs the compiled dataset, so it joins last.
+    return [
+      ...(synthetic
+        ? [{ stage: "prompt_expansion" as const, ticks: 14, weight: 5 }]
+        : []),
+      { stage: "overlap" as const, ticks: synthetic ? 80 : 62, weight: synthetic ? 60 : 55 },
+      { stage: "dataset_compile" as const, ticks: 8, weight: 5 },
+      { stage: "training" as const, ticks: 60, weight: synthetic ? 30 : 40 },
+    ];
+  }
   return [
     ...(synthetic
       ? [
@@ -124,6 +144,8 @@ export class RunSimulator {
   private stageIdx = 0;
   private tick = 0;
   private started = false;
+  /** Overlap phase bookkeeping: which streams have drained. */
+  private overlap = { synthDone: false, visionDone: false };
 
   constructor(private run: PipelineRun) {
     this.plan = planFor(run);
@@ -138,8 +160,27 @@ export class RunSimulator {
       state: "idle",
       ...AGENT_ROSTER[kind],
     }));
-    // A seeded mid-flight run resumes from its persisted stage.
-    const resumeIdx = this.plan.findIndex((p) => p.stage === run.stage);
+    // A seeded mid-flight run resumes from its persisted stage. Streaming
+    // runs persist a contract stage (synthesis/segmentation/critic_review)
+    // that lives inside the overlap phase.
+    let resumeIdx = this.plan.findIndex((p) => p.stage === run.stage);
+    if (
+      resumeIdx < 0 &&
+      run.pipelineMode === "streaming" &&
+      ["synthesis", "segmentation", "critic_review"].includes(run.stage)
+    ) {
+      resumeIdx = this.plan.findIndex((p) => p.stage === "overlap");
+      if (run.path === "synthetic" && run.stage !== "synthesis")
+        this.overlap.synthDone = true;
+      if (run.stage === "critic_review") this.overlap.visionDone = true;
+      // Rewind the tick to match the persisted vision counter so the
+      // lanes resume where the fixture left off instead of resetting.
+      const annotatedFrac =
+        (run.progress.imagesAnnotated ?? 0) / Math.max(1, run.progress.imagesTotal);
+      this.tick = Math.floor(
+        annotatedFrac * 0.9 * (this.plan[resumeIdx]?.ticks ?? 0),
+      );
+    }
     if (run.status === "running" && resumeIdx >= 0) this.stageIdx = resumeIdx;
   }
 
@@ -164,6 +205,7 @@ export class RunSimulator {
       db.dashboardStats.activeRuns += 1;
       this.emit({ kind: "status", payload: { runId: this.run.id, status: "running" } });
       this.log("info", undefined, `Run accepted — scheduling agent swarm on ${this.run.training.device}`);
+      this.transition("queued", this.entryStageOf(this.plan[this.stageIdx].stage));
     }
     this.enterStage(this.plan[this.stageIdx].stage);
     this.timer = setInterval(() => this.onTick(), TICK_MS);
@@ -246,10 +288,18 @@ export class RunSimulator {
         this.finish();
       } else {
         const next = this.plan[this.stageIdx].stage;
-        this.transition(stage.stage, next);
+        // `from` is the live contract stage: inside the overlap phase it
+        // already walked to critic_review via the internal transitions.
+        this.transition(this.run.stage, this.entryStageOf(next));
         this.enterStage(next);
       }
     }
+  }
+
+  /** Contract stage a plan phase enters at (overlap = its first stream). */
+  private entryStageOf(s: SimStage): PipelineStage {
+    if (s !== "overlap") return s;
+    return this.run.path === "synthetic" ? "synthesis" : "segmentation";
   }
 
   private transition(from: PipelineStage, to: PipelineStage) {
@@ -260,9 +310,25 @@ export class RunSimulator {
     });
   }
 
-  private enterStage(stage: PipelineStage) {
+  private enterStage(stage: SimStage) {
     const total = this.run.progress.imagesTotal;
     switch (stage) {
+      case "overlap": {
+        const synthetic = this.run.path === "synthetic";
+        this.log("stage", undefined, "━━ PARALLEL SWARM — synthesis · vision · critic streaming concurrently on one MI300X ━━");
+        this.log("info", undefined, "Entire swarm resident in 192 GB HBM3 — Gemma 3 27B, FLUX, SAM 3 — no load→use→flush choreography");
+        if (synthetic) {
+          this.setAgent("prompt", "done");
+          if (!this.overlap.synthDone)
+            this.setAgent("synthesis", "working", `Generating ${total} images (FLUX.1-schnell) → streaming to Vision`);
+        }
+        if (!this.overlap.visionDone)
+          this.setAgent("vision", "working", "Segmenting the image stream (SAM 3)");
+        this.setAgent("critic", "working", "Verifying labels as they stream in");
+        setGpuLoad(148, 97, 3.4, "img_per_s");
+        this.progress({ imagesAnnotated: this.run.progress.imagesAnnotated ?? 0 });
+        break;
+      }
       case "prompt_expansion":
         this.log("stage", undefined, "━━ STAGE: PROMPT EXPANSION — Prompt Agent taking over ━━");
         this.setAgent("prompt", "thinking", "Expanding base prompt with domain randomization");
@@ -310,12 +376,62 @@ export class RunSimulator {
     }
   }
 
-  private tickStage(stage: PipelineStage) {
+  private tickStage(stage: SimStage) {
     const p = this.run.progress;
     const plan = this.plan[this.stageIdx];
     const total = p.imagesTotal;
 
     switch (stage) {
+      case "overlap": {
+        const synthetic = this.run.path === "synthetic";
+        // Staggered drains: synthesis finishes at ~70% of the phase, vision
+        // at ~90%, critic at 100% — three counters advancing together with
+        // lag is the visual proof the agents overlap.
+        const synthFrac = Math.min(1, this.tick / (plan.ticks * 0.7));
+        const visionFrac = Math.min(1, this.tick / (plan.ticks * 0.9));
+        const criticFrac = Math.min(1, this.tick / plan.ticks);
+        const generated = Math.round(synthFrac * total);
+        const annotated = Math.round(visionFrac * total);
+        const target = Math.round(total * 0.92);
+        const accepted = Math.min(target, Math.round(criticFrac * target));
+
+        // Interleaved logs, each agent every ~2 s.
+        if (synthetic && !this.overlap.synthDone && this.tick % 4 === 0)
+          this.log("info", "synthesis", `${generated}/${total} images · ${rand(3.1, 3.7).toFixed(1)} img/s → q_vision (depth ${randInt(0, 4)})`);
+        if (!this.overlap.visionDone && this.tick % 4 === 2)
+          this.log("info", "vision", `img_${String(randInt(0, Math.max(0, annotated - 1))).padStart(4, "0")}.png → ${randInt(1, 4)} masks in ${randInt(85, 240)} ms → q_critic`);
+        if (this.tick % 4 === 1 || this.tick % 4 === 3) {
+          const idx = randInt(0, Math.max(0, annotated - 1));
+          const img = `img_${String(idx).padStart(4, "0")}.png`;
+          if (Math.random() < 0.2) {
+            this.log("critic", "critic", `REJECT ${img}: mask IoU ${rand(0.3, 0.8).toFixed(2)} < 0.85 — box re-derived from contour`);
+          } else {
+            this.log("critic", "critic", `ACCEPT ${img}: IoU ${rand(0.86, 0.98).toFixed(2)} — verified while synthesis renders ahead`);
+          }
+        }
+
+        // A stream draining moves run.stage to the next bottleneck.
+        if (synthetic && !this.overlap.synthDone && synthFrac >= 1) {
+          this.overlap.synthDone = true;
+          this.log("info", "synthesis", `Synthesis stream drained — ${total} images handed off`);
+          this.setAgent("synthesis", "done");
+          this.transition(this.run.stage, "segmentation");
+        }
+        if (!this.overlap.visionDone && visionFrac >= 1) {
+          this.overlap.visionDone = true;
+          this.log("info", "vision", `Vision stream drained — ${total} images annotated`);
+          this.setAgent("vision", "done");
+          this.transition(this.run.stage, "critic_review");
+        }
+
+        this.progress({
+          ...(synthetic ? { imagesGenerated: generated } : {}),
+          imagesAnnotated: annotated,
+          masksAccepted: accepted,
+          masksRejected: Math.round(accepted * 0.085),
+        });
+        break;
+      }
       case "prompt_expansion": {
         if (this.tick % 3 === 0) {
           const n = Math.round((this.tick / plan.ticks) * total);
@@ -391,9 +507,17 @@ export class RunSimulator {
     }
   }
 
-  private exitStage(stage: PipelineStage) {
+  private exitStage(stage: SimStage) {
     const total = this.run.progress.imagesTotal;
     switch (stage) {
+      case "overlap": {
+        this.setAgent("critic", "done");
+        this.progress({ imagesAnnotated: total });
+        const rate = ((this.run.progress.masksRejected / Math.max(1, this.run.progress.masksAccepted + this.run.progress.masksRejected)) * 100).toFixed(1);
+        this.log("critic", "critic", `Quality gate PASSED — reject rate ${rate}% < 20% threshold`);
+        this.log("info", undefined, "Streams drained — parallel phase complete, trainer joins with the full verified dataset");
+        break;
+      }
       case "prompt_expansion":
         this.log("info", "prompt", `Expansion complete — ${total} scenario prompts staged`);
         break;

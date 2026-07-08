@@ -324,6 +324,10 @@ export default function LandingPage() {
                 Each agent hands verified work to the next — and the Critic sends
                 bad labels back.
               </p>
+              <p className="mt-3 font-medium">
+                On other GPUs our agents take turns. On one MI300X they work at
+                the same time.
+              </p>
             </div>
             <AgentPipeline />
             <p className="mt-8 text-center text-sm text-muted-foreground">

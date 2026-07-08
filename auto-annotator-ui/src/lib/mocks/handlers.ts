@@ -128,6 +128,14 @@ export const handlers = [
   http.post(`${API_BASE}/runs`, async ({ request }) => {
     await lag();
     const body = (await request.json()) as CreateRunRequest;
+    // The mock node is an MI300X, so runs stream (agents overlap) — except
+    // audit runs on imported labels, which are near-instant and stay
+    // sequential. Mirrors the real backend's selection in routers.create_run.
+    const source = body.source;
+    const sourceDataset =
+      source.path === "byod"
+        ? db.datasets.find((d) => d.id === source.datasetId)
+        : undefined;
     const run: PipelineRun = {
       id: nextId("run"),
       orgId: db.organizations[0].id,
@@ -136,6 +144,7 @@ export const handlers = [
       path: body.source.path,
       status: "queued",
       stage: "queued",
+      pipelineMode: sourceDataset?.importedLabels ? "sequential" : "streaming",
       source: body.source,
       training: body.training,
       targetClasses: body.targetClasses,

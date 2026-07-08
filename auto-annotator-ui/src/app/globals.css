@@ -130,6 +130,17 @@
   }
 }
 
+/* Landing parallel-swarm visual: dashes drift along the flow edges
+   (the dash period is 12px, so one period per cycle loops seamlessly). */
+@theme {
+  --animate-flow: flow 0.9s linear infinite;
+  @keyframes flow {
+    to {
+      background-position-x: 12px;
+    }
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

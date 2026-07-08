@@ -180,6 +180,21 @@ export default function HardwarePage() {
                   </dd>
                 </div>
               </dl>
+              {node.residentModels && node.residentModels.length > 0 && (
+                <div className="mt-4 space-y-1.5 border-t pt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Resident swarm — every agent model held in VRAM at once,
+                    so the pipeline streams instead of taking turns
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {node.residentModels.map((m) => (
+                      <Badge key={m} variant="outline" className="font-normal">
+                        {m}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

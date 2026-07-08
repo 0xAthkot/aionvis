@@ -21,6 +21,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { api, apiPost } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type { AgentInstance, LogEvent, PipelineRun } from "@/lib/api/types";
@@ -100,6 +105,20 @@ export default function RunDetailPage({
             <Badge variant="secondary">
               {run.path === "synthetic" ? "Synthetic Foundry" : "BYOD"}
             </Badge>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="outline" className="cursor-default">
+                  {run.pipelineMode === "streaming"
+                    ? "Parallel swarm · MI300X"
+                    : "Sequential"}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-64">
+                {run.pipelineMode === "streaming"
+                  ? "192 GB of HBM3 holds every agent model in VRAM at once, so synthesis, vision and critic work in parallel on one MI300X. Training joins once every label is verified."
+                  : "This GPU can't hold every agent model at once, so the agents take turns owning it — each stage loads, works, and releases VRAM for the next."}
+              </TooltipContent>
+            </Tooltip>
           </div>
           {cancellable && (
             <Button
@@ -113,7 +132,13 @@ export default function RunDetailPage({
             </Button>
           )}
         </div>
-        <StageTracker path={run.path} stage={run.stage} status={run.status} />
+        <StageTracker
+          path={run.path}
+          stage={run.stage}
+          status={run.status}
+          mode={run.pipelineMode}
+          progress={run.progress}
+        />
         {run.failureReason && (
           <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
             {run.failureReason}
