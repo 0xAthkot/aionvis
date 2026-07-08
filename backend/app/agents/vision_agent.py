@@ -25,6 +25,10 @@ from ..schemas import Throughput
 from .gpu import device_str, flush_vram
 
 
+# KEEP_MODELS_WARM=true: the loaded backend stays resident across runs.
+_warm_models: dict[str, object] = {}
+
+
 @dataclass
 class Detection:
     class_id: int
@@ -90,7 +94,16 @@ class VisionAgent:
         from ultralytics import YOLOE
 
         device = device_str()
-        model = YOLOE(settings.yoloe_model)
+        cache_key = f"yoloe:{settings.yoloe_model}"
+        if settings.keep_models_warm and cache_key in _warm_models:
+            model = _warm_models[cache_key]
+            ctx.log("info", "Reusing warm YOLOE model", agent="vision")
+        else:
+            model = YOLOE(settings.yoloe_model)
+            if settings.keep_models_warm:
+                _warm_models.clear()  # one warm vision backend at a time
+                _warm_models[cache_key] = model
+        # Class embeddings are per-run even on a warm model.
         model.set_classes(prompts, model.get_text_pe(prompts))
         ctx.log("info", f"YOLOE loaded on {device}; open-vocab classes: "
                         f"{', '.join(prompts)}", agent="vision")
@@ -120,7 +133,8 @@ class VisionAgent:
 
         def teardown() -> None:
             nonlocal model
-            del model
+            if not settings.keep_models_warm:
+                del model
 
         return annotate_one, teardown
 
@@ -140,11 +154,19 @@ class VisionAgent:
             ) from exc
 
         device = device_str()
-        processor = Sam3Processor.from_pretrained(settings.sam3_model)
-        model = Sam3Model.from_pretrained(
-            settings.sam3_model,
-            torch_dtype=torch.float16 if device != "cpu" else torch.float32,
-        ).to(device)
+        cache_key = f"sam3:{settings.sam3_model}"
+        if settings.keep_models_warm and cache_key in _warm_models:
+            processor, model = _warm_models[cache_key]
+            ctx.log("info", "Reusing warm SAM 3 model", agent="vision")
+        else:
+            processor = Sam3Processor.from_pretrained(settings.sam3_model)
+            model = Sam3Model.from_pretrained(
+                settings.sam3_model,
+                torch_dtype=torch.float16 if device != "cpu" else torch.float32,
+            ).to(device)
+            if settings.keep_models_warm:
+                _warm_models.clear()  # one warm vision backend at a time
+                _warm_models[cache_key] = (processor, model)
         ctx.log("info", f"SAM 3 loaded on {device} ({settings.sam3_model})",
                 agent="vision")
 
@@ -182,7 +204,8 @@ class VisionAgent:
 
         def teardown() -> None:
             nonlocal model, processor
-            del model, processor
+            if not settings.keep_models_warm:
+                del model, processor
 
         return annotate_one, teardown
 

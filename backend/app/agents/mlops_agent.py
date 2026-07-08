@@ -50,10 +50,13 @@ class MLOpsAgent:
             return train_rfdetr(ctx, dataset, workdir, on_epoch)
         device = device_str()
         epochs = progress.total_epochs
-        imgsz = min(run.training.image_size, settings.synthesis_image_size)
-        # The RT-DETR transformer needs ~2× the VRAM per sample of a YOLO CNN.
+        imgsz = min(run.training.image_size, settings.max_train_image_size)
+        # Batch ceiling comes from .env (MAX_BATCH_SIZE) so the MI300X can
+        # actually be fed; the RT-DETR transformer needs ~2× the VRAM per
+        # sample of a YOLO CNN, so it gets half the ceiling.
+        cap = settings.max_batch_size
         batch = max(1, min(run.training.batch_size,
-                           4 if arch.startswith("rtdetr") else 8))
+                           max(cap // 2, 1) if arch.startswith("rtdetr") else cap))
 
         task = run.training.task
         base_weights = f"{arch}{TASK_SUFFIX[task]}.pt"

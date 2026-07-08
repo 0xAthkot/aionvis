@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     sdxl_model: str = "stabilityai/sdxl-turbo"
     flux_model: str = "black-forest-labs/FLUX.1-schnell"
     synthesis_image_size: int = 640
+    # FLUX runs need this much VRAM; below it (or on CPU) a "flux" run falls
+    # back to SDXL *before* downloading the 24 GB checkpoint.
+    flux_min_vram_gb: float = 24.0
 
     # --- Vision Agent ---
     # "sam3" needs the gated facebook/sam3 checkpoint + transformers support;
@@ -75,6 +78,17 @@ class Settings(BaseSettings):
     # the epoch cap must leave room for a showcase model that actually detects.
     max_images_per_run: int = 48
     max_epochs: int = 80
+    # Training batch/image-size ceilings. Defaults sized for an 8 GB card;
+    # on the MI300X set MAX_BATCH_SIZE=96 and MAX_TRAIN_IMAGE_SIZE=1024 —
+    # the 8-batch default would leave the 192 GB card >90% idle.
+    max_batch_size: int = 8
+    max_train_image_size: int = 640
+
+    # --- GPU residency ---
+    # False (8 GB card): pipelines load per stage and VRAM is flushed
+    # between stages. True (MI300X): stage models stay resident and cached
+    # across runs — no flushes, no reload cost.
+    keep_models_warm: bool = False
 
     # --- pricing model for /runs/estimate (USD per GPU-minute) ---
     gpu_usd_per_min: float = 0.033

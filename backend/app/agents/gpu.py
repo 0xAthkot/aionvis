@@ -20,6 +20,15 @@ def _torch():
 
 
 def flush_vram(ctx: Optional[RunContext] = None, quiet: bool = False) -> None:
+    from ..config import settings
+
+    if settings.keep_models_warm:
+        # MI300X profile: models stay resident between stages — flushing
+        # would only force reloads.
+        if ctx is not None and not quiet:
+            ctx.log("gpu", "keep-warm enabled — stage models stay resident, "
+                           "no VRAM flush")
+        return
     torch = _torch()
     if torch is None:
         return

@@ -87,10 +87,14 @@ run it before any demo. `backend/reset_demo.py` resets demo state.
    `NEXT_PUBLIC_API_BASE_URL=http://<remote>:8000`,
    `NEXT_PUBLIC_WS_BASE_URL=ws://<remote>:8000`,
    `NEXT_PUBLIC_USE_MOCKS=false` in `auto-annotator-ui/.env.local`.
-   The MI300X plan also includes: Gemma 4 via vLLM (the `LLM_BASE_URL`
-   default — counts for the "Best Use of Gemma" challenge), FLUX synthesis
-   (`generator: "flux"` currently falls back to SDXL), SAM 3 vision backend
-   (`VISION_BACKEND=sam3`, gated checkpoint).
+   The MI300X model lineup (decided 2026-07-08): Gemma 3 27B-IT via vLLM
+   (the `LLM_BASE_URL` default — Prompt Agent + Semantic Critic + model
+   cards; counts for the "Best Use of Gemma" challenge), FLUX.1-schnell
+   synthesis (wired; runs default to `generator: "flux"` and fall back to
+   SDXL below `FLUX_MIN_VRAM_GB` — before downloading anything), SAM 3
+   vision backend (`VISION_BACKEND=sam3`, gated checkpoint; YOLOE
+   fallback). Utilization knobs: `MAX_BATCH_SIZE`, `MAX_TRAIN_IMAGE_SIZE`,
+   `KEEP_MODELS_WARM` (deploy_mi300x.sh sets 96 / 1024 / true).
 
 ## What v0.4 can do (all verified live)
 

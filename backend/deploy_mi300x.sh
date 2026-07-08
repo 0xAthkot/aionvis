@@ -37,6 +37,12 @@ VISION_BACKEND=sam3
 SDXL_MODEL=stabilityai/stable-diffusion-xl-base-1.0
 MAX_IMAGES_PER_RUN=500
 MAX_EPOCHS=100
+# 192 GB: feed the card and keep every stage model resident.
+MAX_BATCH_SIZE=96
+MAX_TRAIN_IMAGE_SIZE=1024
+KEEP_MODELS_WARM=true
+# Local vLLM has no per-token cost — audit more crops per run.
+SEMANTIC_CRITIC_MAX_CHECKS=32
 EOF
     echo ">> Wrote .env (run huggingface-cli login for SAM 3 + gated Gemma)."
 else

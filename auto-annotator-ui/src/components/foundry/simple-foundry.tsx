@@ -87,7 +87,8 @@ export function SimpleFoundry() {
       path: "synthetic",
       basePrompt,
       negativePrompt: "blurry, watermark, text",
-      generator: "sdxl",
+      // FLUX primary; nodes without the VRAM fall back to SDXL server-side.
+      generator: "flux",
       randomization: {
         lightingVariation: 0.6,
         cameraAngleVariation: 0.4,
