@@ -94,8 +94,8 @@ export default function FoundryPage() {
   const [targetClasses, setTargetClasses] = useState<string[]>([]);
   const [basePrompt, setBasePrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("blurry, watermark, text");
-  // FLUX is the primary generator; nodes without the VRAM for it fall back
-  // to SDXL server-side (before any checkpoint download).
+  // The generator is the user's explicit choice, honored verbatim — a node
+  // that can't run FLUX rejects the run at launch (400), no silent fallback.
   const [generator, setGenerator] = useState<"sdxl" | "flux">("flux");
 
   const [lightingVariation, setLightingVariation] = useState(0.6);
@@ -304,10 +304,18 @@ export default function FoundryPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="sdxl">SDXL (diffusers)</SelectItem>
-                      <SelectItem value="flux">Flux (diffusers)</SelectItem>
+                      <SelectItem value="flux">
+                        FLUX.1-schnell — needs ≥24 GB VRAM
+                      </SelectItem>
+                      <SelectItem value="sdxl">
+                        SDXL — any GPU
+                      </SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Honored verbatim — nodes that can&apos;t run the chosen
+                    engine reject the run instead of substituting.
+                  </p>
                 </div>
               </div>
 

@@ -257,7 +257,10 @@ class Pipeline:
 
         # 2) synthesis — output goes under /files so Mission Control can
         # poll GET /runs/{id}/preview and show images as they appear.
-        ctx.set_stage("synthesis", f"{settings.sdxl_model} → {run.progress.images_total} images")
+        generator_model = (settings.flux_model if source.generator == "flux"
+                           else settings.sdxl_model)
+        ctx.set_stage("synthesis",
+                      f"{generator_model} → {run.progress.images_total} images")
         images = synthesis_agent.generate(
             ctx, scenarios, DATA_DIR / "files" / "runs" / run.id,
             count=run.progress.images_total,
@@ -471,8 +474,11 @@ class Pipeline:
                 "Parallel swarm engaged — synthesis, vision and critic stream "
                 "concurrently on the resident models (PIPELINE_MODE=streaming)")
         if synthetic:
+            generator_model = (settings.flux_model
+                               if run.source.generator == "flux"
+                               else settings.sdxl_model)
             ctx.set_stage("synthesis",
-                          f"{settings.sdxl_model} → streaming into "
+                          f"{generator_model} → streaming into "
                           f"{vision_agent.describe()}")
         else:
             ctx.set_stage("segmentation",

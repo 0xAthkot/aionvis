@@ -1,11 +1,12 @@
 """Synthesis Agent — real text-to-image generation with diffusers.
 
-Two generators, selected per run (SyntheticSourceConfig.generator):
+Two generators, the USER's choice per run (SyntheticSourceConfig.generator),
+honored verbatim — never silently substituted:
   sdxl — SDXL-Turbo by default (fits the 8 GB dev card in fp16); the
          MI300X profile sets SDXL_MODEL=stabilityai/stable-diffusion-xl-base-1.0
   flux — FLUX.1-schnell (bf16, 4-step, Apache-2.0). Needs FLUX_MIN_VRAM_GB;
-         below that (or on CPU) the run falls back to SDXL *before*
-         downloading the 24 GB checkpoint.
+         nodes below that (or CPU) REJECT flux runs at creation (see
+         routers.create_run + flux_supported) instead of falling back.
 
 Pipelines load per stage and are torn down afterwards (deliberate VRAM
 orchestration) unless KEEP_MODELS_WARM=true, where they stay cached.
@@ -27,20 +28,31 @@ from .gpu import device_str, flush_vram
 _warm_pipe: dict[str, object] = {}
 
 
+def flux_supported() -> tuple[bool, str]:
+    """Can this node run FLUX.1-schnell? (eligible, reason-if-not).
+    Checked BEFORE any checkpoint download; run creation rejects
+    ineligible flux runs so the user's generator choice is never
+    silently swapped."""
+    if device_str() == "cpu":
+        return False, "this node has no usable GPU"
+    vram = telemetry.GPU.vram_total_gb
+    if vram < settings.flux_min_vram_gb:
+        return False, (f"this node has {vram:.0f} GB VRAM and FLUX needs "
+                       f"≥ {settings.flux_min_vram_gb:.0f} GB")
+    return True, ""
+
+
 class SynthesisAgent:
     def _pick_model(self, ctx: RunContext) -> tuple[str, bool]:
-        """(checkpoint id, is_flux) for this run, with the VRAM pre-check."""
+        """(checkpoint id, is_flux) — the user's choice, honored verbatim."""
         generator = getattr(ctx.run.source, "generator", "sdxl")
         if generator != "flux":
             return settings.sdxl_model, False
-        vram = telemetry.GPU.vram_total_gb
-        if device_str() == "cpu" or vram < settings.flux_min_vram_gb:
-            ctx.log("warn",
-                    f"FLUX requested but this node has "
-                    f"{'no GPU' if device_str() == 'cpu' else f'{vram:.0f} GB VRAM'} "
-                    f"(< {settings.flux_min_vram_gb:.0f} GB) — falling back to "
-                    f"{settings.sdxl_model}", agent="synthesis")
-            return settings.sdxl_model, False
+        ok, why = flux_supported()
+        if not ok:
+            # create_run validates this; failing loudly here is the last
+            # line of defense — never substitute the user's choice.
+            raise RuntimeError(f"FLUX.1-schnell cannot run — {why}")
         return settings.flux_model, True
 
     def _load_pipe(self, ctx: RunContext, model_id: str, is_flux: bool):

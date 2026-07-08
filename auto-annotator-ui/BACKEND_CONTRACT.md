@@ -74,6 +74,10 @@ NEXT_PUBLIC_WS_BASE_URL=ws://localhost:8000
 Notes: `CreateRunRequest` is a union on `source.path` (`"synthetic"` |
 `"byod"`). BYOD runs skip the `prompt_expansion` and `synthesis` stages. On
 success the backend sets `datasetId` and `modelId` on the run.
+`source.generator` (`"flux"` | `"sdxl"`) is the user's explicit choice and
+is honored verbatim: a node that can't run FLUX (VRAM below
+`FLUX_MIN_VRAM_GB`, or no GPU) rejects the run with a 400 at creation —
+there is no server-side fallback to SDXL.
 `training.architecture` accepts the YOLOv10 / YOLO11 / YOLO26 families
 (n·s·m·l·x each) plus `rtdetr-l` / `rtdetr-x` — the `Architecture` union in
 types.ts is the source of truth; `/runs/estimate` prices bigger

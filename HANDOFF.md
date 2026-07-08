@@ -94,9 +94,10 @@ run it before any demo. `backend/reset_demo.py` resets demo state.
    env mode sends no API key, so it's for open same-network nodes only.)
    The MI300X model lineup (decided 2026-07-08): Gemma 3 27B-IT via vLLM
    (the `LLM_BASE_URL` default — Prompt Agent + Semantic Critic + model
-   cards; counts for the "Best Use of Gemma" challenge), FLUX.1-schnell
-   synthesis (wired; runs default to `generator: "flux"` and fall back to
-   SDXL below `FLUX_MIN_VRAM_GB` — before downloading anything), SAM 3
+   cards; counts for the "Best Use of Gemma" challenge), FLUX.1-schnell or
+   SDXL synthesis (the user's explicit wizard choice, honored verbatim —
+   nodes below `FLUX_MIN_VRAM_GB` reject flux runs at creation, before
+   downloading anything; no silent fallback), SAM 3
    vision backend (`VISION_BACKEND=sam3`, gated checkpoint; YOLOE
    fallback). Utilization knobs: `MAX_BATCH_SIZE`, `MAX_TRAIN_IMAGE_SIZE`,
    `KEEP_MODELS_WARM` (deploy_mi300x.sh sets 96 / 1024 / true) plus the

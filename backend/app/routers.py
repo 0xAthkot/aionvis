@@ -182,6 +182,16 @@ def create_run(body: CreateRunRequest) -> PipelineRun:
 
         if not available():
             raise HTTPException(400, SETUP_HINT)
+    if body.source.path == "synthetic" and body.source.generator == "flux":
+        # The generator is the user's explicit choice — a node that can't
+        # honor it rejects the run instead of silently substituting SDXL.
+        from .agents.synthesis_agent import flux_supported
+
+        ok, why = flux_supported()
+        if not ok:
+            raise HTTPException(
+                400, f"FLUX.1-schnell can't run here: {why}. Pick SDXL for "
+                     "this node, or attach a GPU with more VRAM.")
     target_classes = body.target_classes
     audit_mode = False
     if body.source.path == "byod":

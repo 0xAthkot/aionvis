@@ -40,8 +40,9 @@ class Settings(BaseSettings):
     sdxl_model: str = "stabilityai/sdxl-turbo"
     flux_model: str = "black-forest-labs/FLUX.1-schnell"
     synthesis_image_size: int = 640
-    # FLUX runs need this much VRAM; below it (or on CPU) a "flux" run falls
-    # back to SDXL *before* downloading the 24 GB checkpoint.
+    # FLUX runs need this much VRAM; below it (or on CPU) a "flux" run is
+    # REJECTED at creation (before downloading the 24 GB checkpoint) — the
+    # generator is the user's choice and is never silently swapped.
     flux_min_vram_gb: float = 24.0
 
     # --- Vision Agent ---

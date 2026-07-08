@@ -302,6 +302,13 @@ export class RunSimulator {
     return this.run.path === "synthetic" ? "synthesis" : "segmentation";
   }
 
+  /** The generator the user chose — the simulator honors it like the backend. */
+  private generator(): "sdxl" | "flux" {
+    return this.run.source.path === "synthetic"
+      ? this.run.source.generator
+      : "sdxl";
+  }
+
   private transition(from: PipelineStage, to: PipelineStage) {
     this.run.stage = to;
     this.emit({
@@ -320,7 +327,8 @@ export class RunSimulator {
         if (synthetic) {
           this.setAgent("prompt", "done");
           if (!this.overlap.synthDone)
-            this.setAgent("synthesis", "working", `Generating ${total} images (FLUX.1-schnell) → streaming to Vision`);
+            this.setAgent("synthesis", "working",
+              `Generating ${total} images (${this.generator() === "flux" ? "FLUX.1-schnell" : "SDXL"}) → streaming to Vision`);
         }
         if (!this.overlap.visionDone)
           this.setAgent("vision", "working", "Segmenting the image stream (SAM 3)");
@@ -335,13 +343,18 @@ export class RunSimulator {
         setGpuLoad(12, 8);
         this.log("info", "prompt", `Requesting Gemma 4 via vLLM on MI300X · target: ${total} scenarios`);
         break;
-      case "synthesis":
+      case "synthesis": {
+        const flux = this.generator() === "flux";
         this.log("stage", undefined, "━━ STAGE: SYNTHESIS — Synthesis Agent taking over ━━");
         this.setAgent("prompt", "done");
-        this.setAgent("synthesis", "working", `Generating ${total} images (SDXL fp16)`);
-        setGpuLoad(52, 96, 3.4, "img_per_s");
-        this.log("info", "synthesis", "Loading SDXL UNet + VAE (6.9 GB fp16) onto MI300X");
+        this.setAgent("synthesis", "working",
+          `Generating ${total} images (${flux ? "FLUX.1-schnell bf16" : "SDXL fp16"})`);
+        setGpuLoad(flux ? 68 : 52, 96, 3.4, "img_per_s");
+        this.log("info", "synthesis", flux
+          ? "Loading FLUX.1-schnell transformer + VAE (23.8 GB bf16) onto MI300X"
+          : "Loading SDXL UNet + VAE (6.9 GB fp16) onto MI300X");
         break;
+      }
       case "segmentation":
         this.log("stage", undefined, "━━ STAGE: SEGMENTATION — Vision Agent taking over ━━");
         this.setAgent("synthesis", "done");

@@ -54,6 +54,21 @@ const SIZES = [
 ] as const;
 type SizeId = (typeof SIZES)[number]["id"];
 
+/** The generator is the user's explicit choice — the backend honors it
+ * verbatim (a node that can't run FLUX rejects the run, no fallback). */
+const GENERATORS = [
+  {
+    id: "flux" as const,
+    label: "FLUX",
+    hint: "Sharpest scenes — needs a datacenter GPU (MI300X)",
+  },
+  {
+    id: "sdxl" as const,
+    label: "SDXL",
+    hint: "Runs on any GPU",
+  },
+];
+
 export function SimpleFoundry() {
   const { data: projects } = useQuery({
     queryKey: ["projects"],
@@ -63,6 +78,7 @@ export function SimpleFoundry() {
   const [projectId, setProjectId] = useState("");
   const [basePrompt, setBasePrompt] = useState("");
   const [size, setSize] = useState<SizeId>("medium");
+  const [generator, setGenerator] = useState<"sdxl" | "flux">("flux");
   const [architecture, setArchitecture] = useState<Architecture>(RECOMMENDED_ARCH);
   const [task, setTask] = useState<TrainingTask>("detect");
   const [showMore, setShowMore] = useState(false);
@@ -87,8 +103,7 @@ export function SimpleFoundry() {
       path: "synthetic",
       basePrompt,
       negativePrompt: "blurry, watermark, text",
-      // FLUX primary; nodes without the VRAM fall back to SDXL server-side.
-      generator: "flux",
+      generator,
       randomization: {
         lightingVariation: 0.6,
         cameraAngleVariation: 0.4,
@@ -205,6 +220,32 @@ export function SimpleFoundry() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Image engine</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {GENERATORS.map((g) => (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() => setGenerator(g.id)}
+                  className={cn(
+                    "rounded-lg border p-3 text-left transition-colors",
+                    generator === g.id
+                      ? "border-primary bg-primary/10"
+                      : "hover:border-muted-foreground/40",
+                  )}
+                >
+                  <p className="text-sm font-medium">{g.label}</p>
+                  <p className="text-xs text-muted-foreground">{g.hint}</p>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Your choice is final — a node that can&apos;t run FLUX declines
+              the run instead of quietly switching engines.
+            </p>
           </div>
 
           <div className="space-y-2">
