@@ -45,31 +45,56 @@ class ImageAnnotation:
     detections: list[Detection] = field(default_factory=list)
 
 
+class VisionSession:
+    """A loaded vision backend with per-image annotation.
+
+    Both pipeline modes drive this: sequential loops annotate_one over the
+    finished image list; streaming calls it per image as synthesis hands
+    them over. close() releases the model (a no-op under keep-warm).
+    """
+
+    def __init__(self, annotate_one: Callable[[Path], ImageAnnotation],
+                 teardown: Callable[[], None]) -> None:
+        self._annotate_one = annotate_one
+        self._teardown = teardown
+
+    def annotate_one(self, path: Path) -> ImageAnnotation:
+        return self._annotate_one(path)
+
+    def close(self) -> None:
+        self._teardown()
+
+
 class VisionAgent:
     def describe(self) -> str:
         return ("SAM 3 concept segmentation" if settings.vision_backend == "sam3"
                 else f"YOLOE open-vocab segmentation ({settings.yoloe_model})")
+
+    def start(self, ctx: RunContext, target_classes: list[str]) -> VisionSession:
+        """Load the configured backend, primed with this run's concepts."""
+        prompts = [c.replace("_", " ") for c in target_classes]
+        if settings.vision_backend == "sam3":
+            annotate_one, teardown = self._load_sam3(ctx, prompts)
+        else:
+            annotate_one, teardown = self._load_yoloe(ctx, prompts)
+        return VisionSession(annotate_one, teardown)
 
     def annotate(self, ctx: RunContext, image_paths: list[Path],
                  target_classes: list[str],
                  on_progress: Callable[[int], None]) -> list[ImageAnnotation]:
         ctx.set_agent("vision", "waiting_gpu", f"Loading {self.describe()}")
         flush_vram(ctx)
-        prompts = [c.replace("_", " ") for c in target_classes]
-        if settings.vision_backend == "sam3":
-            annotate_one, teardown = self._load_sam3(ctx, prompts)
-        else:
-            annotate_one, teardown = self._load_yoloe(ctx, prompts)
+        session = self.start(ctx, target_classes)
 
         ctx.set_agent("vision", "working",
                       f"Segmenting {len(image_paths)} images, "
-                      f"{len(prompts)} target concepts")
+                      f"{len(target_classes)} target concepts")
         results: list[ImageAnnotation] = []
         started = time.monotonic()
         try:
             for i, path in enumerate(image_paths):
                 ctx.check_cancelled()
-                ann = annotate_one(path)
+                ann = session.annotate_one(path)
                 results.append(ann)
                 rate = (i + 1) / (time.monotonic() - started)
                 telemetry.throughput = Throughput(kind="img_per_s", value=round(rate, 2))
@@ -79,7 +104,7 @@ class VisionAgent:
                         agent="vision")
                 on_progress(i + 1)
         finally:
-            teardown()
+            session.close()
             telemetry.throughput = None
         total = sum(len(r.detections) for r in results)
         ctx.log("info", f"Segmentation done — {total} candidate instances "

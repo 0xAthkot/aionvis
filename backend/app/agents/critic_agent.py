@@ -67,108 +67,117 @@ def _simplify_polygon(polygon_px, width: int, height: int,
 
 
 class CriticAgent:
-    def review(self, ctx: RunContext, annotated: list[ImageAnnotation],
-               on_progress: Callable[[int], None]) -> list[ReviewedImage]:
+    def review_one(self, ctx: RunContext, ann: ImageAnnotation) -> ReviewedImage:
+        """Verdict for a single annotated image; updates the run's mask
+        counters and publishes progress. Both pipeline modes call this —
+        sequential via review(), streaming per item as vision hands it over."""
         import cv2
 
+        progress = ctx.run.progress
+        boxes: list[BoundingBox] = []
+        worst_iou: Optional[float] = None
+        regenerated = 0
+        dropped = 0
+
+        for det in ann.detections:
+            # Independent geometric ground truth from the mask contour.
+            x, y, bw, bh = cv2.boundingRect(det.polygon_px.astype("float32"))
+            tight = (x / ann.width, y / ann.height,
+                     (x + bw) / ann.width, (y + bh) / ann.height)
+            area = (tight[2] - tight[0]) * (tight[3] - tight[1])
+            aspect = max(bw, 1) / max(bh, 1)
+            iou = _iou(det.box_xyxyn, tight)
+            worst_iou = iou if worst_iou is None else min(worst_iou, iou)
+
+            if det.confidence < settings.critic_min_confidence:
+                dropped += 1
+                ctx.log("critic",
+                        f"REJECT {ann.path.name} class={det.class_id} — "
+                        f"confidence {det.confidence:.2f} below "
+                        f"{settings.critic_min_confidence:.2f}",
+                        agent="critic")
+                continue
+            if area < settings.critic_min_box_area or area > 0.98:
+                dropped += 1
+                ctx.log("critic",
+                        f"REJECT {ann.path.name} class={det.class_id} — "
+                        f"degenerate area {area:.4f}", agent="critic")
+                continue
+            if aspect > 20 or aspect < 0.05:
+                dropped += 1
+                ctx.log("critic",
+                        f"REJECT {ann.path.name} class={det.class_id} — "
+                        f"implausible aspect ratio {aspect:.1f}", agent="critic")
+                continue
+
+            if iou < settings.critic_iou_accept:
+                # Box doesn't fit its own mask — regenerate from contour.
+                regenerated += 1
+                cx, cy, w, h = _to_yolo(tight)
+                ctx.log("critic",
+                        f"REJECT {ann.path.name} class={det.class_id} — "
+                        f"IoU {iou:.2f} < {settings.critic_iou_accept:.2f}; "
+                        "regenerating box from mask contour", agent="critic")
+            else:
+                cx, cy, w, h = _to_yolo(det.box_xyxyn)
+                ctx.log("critic",
+                        f"ACCEPT {ann.path.name} class={det.class_id} "
+                        f"IoU {iou:.2f} conf {det.confidence:.2f}",
+                        agent="critic")
+            poly = (_simplify_polygon(det.polygon_px, ann.width, ann.height)
+                    if len(det.polygon_px) >= 3 else None)
+            boxes.append(BoundingBox(
+                class_id=det.class_id, cx=round(cx, 4), cy=round(cy, 4),
+                w=round(w, 4), h=round(h, 4),
+                confidence=round(det.confidence, 3),
+                polygon=poly if poly and len(poly) >= 6 else None,
+            ))
+
+        accepted = len(boxes) > 0
+        if accepted:
+            progress.masks_accepted += len(boxes)
+        progress.masks_rejected += dropped + regenerated
+        verdict = ("regenerated" if regenerated else "accepted") if accepted else "rejected"
+        reason = None
+        if not accepted:
+            reason = ("No detections survived geometric review"
+                      if ann.detections else "Vision Agent found no target instances")
+            ctx.log("critic", f"REJECT {ann.path.name} — {reason}", agent="critic")
+        elif regenerated:
+            reason = f"{regenerated} box(es) re-derived from mask contours"
+        ctx.publish_progress()
+        return ReviewedImage(
+            path=ann.path, width=ann.width, height=ann.height, boxes=boxes,
+            critique=CritiqueRecord(
+                verdict=verdict, reason=reason,
+                iou=round(worst_iou, 3) if worst_iou is not None else None,
+                attempts=2 if regenerated else 1, critic=CRITIC_NAME,
+            ),
+            accepted=accepted,
+        )
+
+    def review(self, ctx: RunContext, annotated: list[ImageAnnotation],
+               on_progress: Callable[[int], None]) -> list[ReviewedImage]:
         ctx.set_agent("critic", "thinking",
                       f"Verifying geometry of {sum(len(a.detections) for a in annotated)} "
                       "candidate boxes")
         reviewed: list[ReviewedImage] = []
-        progress = ctx.run.progress
-
         for i, ann in enumerate(annotated):
             ctx.check_cancelled()
-            boxes: list[BoundingBox] = []
-            worst_iou: Optional[float] = None
-            regenerated = 0
-            dropped = 0
-
-            for det in ann.detections:
-                # Independent geometric ground truth from the mask contour.
-                x, y, bw, bh = cv2.boundingRect(det.polygon_px.astype("float32"))
-                tight = (x / ann.width, y / ann.height,
-                         (x + bw) / ann.width, (y + bh) / ann.height)
-                area = (tight[2] - tight[0]) * (tight[3] - tight[1])
-                aspect = max(bw, 1) / max(bh, 1)
-                iou = _iou(det.box_xyxyn, tight)
-                worst_iou = iou if worst_iou is None else min(worst_iou, iou)
-
-                if det.confidence < settings.critic_min_confidence:
-                    dropped += 1
-                    ctx.log("critic",
-                            f"REJECT {ann.path.name} class={det.class_id} — "
-                            f"confidence {det.confidence:.2f} below "
-                            f"{settings.critic_min_confidence:.2f}",
-                            agent="critic")
-                    continue
-                if area < settings.critic_min_box_area or area > 0.98:
-                    dropped += 1
-                    ctx.log("critic",
-                            f"REJECT {ann.path.name} class={det.class_id} — "
-                            f"degenerate area {area:.4f}", agent="critic")
-                    continue
-                if aspect > 20 or aspect < 0.05:
-                    dropped += 1
-                    ctx.log("critic",
-                            f"REJECT {ann.path.name} class={det.class_id} — "
-                            f"implausible aspect ratio {aspect:.1f}", agent="critic")
-                    continue
-
-                if iou < settings.critic_iou_accept:
-                    # Box doesn't fit its own mask — regenerate from contour.
-                    regenerated += 1
-                    cx, cy, w, h = _to_yolo(tight)
-                    ctx.log("critic",
-                            f"REJECT {ann.path.name} class={det.class_id} — "
-                            f"IoU {iou:.2f} < {settings.critic_iou_accept:.2f}; "
-                            "regenerating box from mask contour", agent="critic")
-                else:
-                    cx, cy, w, h = _to_yolo(det.box_xyxyn)
-                    ctx.log("critic",
-                            f"ACCEPT {ann.path.name} class={det.class_id} "
-                            f"IoU {iou:.2f} conf {det.confidence:.2f}",
-                            agent="critic")
-                poly = (_simplify_polygon(det.polygon_px, ann.width, ann.height)
-                        if len(det.polygon_px) >= 3 else None)
-                boxes.append(BoundingBox(
-                    class_id=det.class_id, cx=round(cx, 4), cy=round(cy, 4),
-                    w=round(w, 4), h=round(h, 4),
-                    confidence=round(det.confidence, 3),
-                    polygon=poly if poly and len(poly) >= 6 else None,
-                ))
-
-            accepted = len(boxes) > 0
-            if accepted:
-                progress.masks_accepted += len(boxes)
-            progress.masks_rejected += dropped + regenerated
-            verdict = ("regenerated" if regenerated else "accepted") if accepted else "rejected"
-            reason = None
-            if not accepted:
-                reason = ("No detections survived geometric review"
-                          if ann.detections else "Vision Agent found no target instances")
-                ctx.log("critic", f"REJECT {ann.path.name} — {reason}", agent="critic")
-            elif regenerated:
-                reason = f"{regenerated} box(es) re-derived from mask contours"
-            reviewed.append(ReviewedImage(
-                path=ann.path, width=ann.width, height=ann.height, boxes=boxes,
-                critique=CritiqueRecord(
-                    verdict=verdict, reason=reason,
-                    iou=round(worst_iou, 3) if worst_iou is not None else None,
-                    attempts=2 if regenerated else 1, critic=CRITIC_NAME,
-                ),
-                accepted=accepted,
-            ))
-            ctx.publish_progress()
+            reviewed.append(self.review_one(ctx, ann))
             on_progress(i + 1)
             time.sleep(0)  # yield
 
+        self.log_summary(ctx, reviewed)
+        return reviewed
+
+    def log_summary(self, ctx: RunContext, reviewed: list[ReviewedImage]) -> None:
+        progress = ctx.run.progress
         kept = sum(r.accepted for r in reviewed)
         ctx.log("info",
                 f"Critic review done — {kept}/{len(reviewed)} images usable, "
                 f"{progress.masks_accepted} boxes accepted, "
                 f"{progress.masks_rejected} rejected/regenerated", agent="critic")
-        return reviewed
 
 
 critic_agent = CriticAgent()

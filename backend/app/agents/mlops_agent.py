@@ -87,6 +87,10 @@ class MLOpsAgent:
         def on_fit_epoch_end(trainer) -> None:
             if trainer.epoch + 1 > epochs:
                 return  # final-validation pass re-fires this callback
+            if curves and curves[-1].epoch == trainer.epoch + 1:
+                # ultralytics 8.4 re-fires the final epoch during the
+                # closing validation pass (epoch not bumped, losses zeroed).
+                return
             metrics = {k.split("/")[-1].rstrip("(B)"): float(v)
                        for k, v in trainer.metrics.items()}
             loss_items = getattr(trainer, "label_loss_items", None)
@@ -256,8 +260,10 @@ def run_inference(artifact: ModelArtifact, image_path: Path) -> dict:
             str(weights))
     model = _inference_cache[artifact.id]
 
-    # A training pipeline owns the GPU; playground requests yield to CPU.
-    gpu_busy = pipeline.any_active()
+    # On a single-slot GPU a training pipeline owns the card and playground
+    # requests yield to CPU. With GPU_SLOTS > 1 (MI300X) the card has room —
+    # inference stays on GPU alongside active pipelines.
+    gpu_busy = pipeline.any_active() and settings.gpu_slots == 1
     device = "cpu" if gpu_busy or device_str() == "cpu" else 0
 
     start = time.monotonic()

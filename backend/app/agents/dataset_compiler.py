@@ -33,6 +33,17 @@ CLASS_COLORS = ["#d97706", "#0284c7", "#65a30d", "#c026d3",
 THUMB_SIZE = 320
 
 
+def _copy_shared(src: Path, dst: Path) -> None:
+    """Copy an image whose source other runs may hold open concurrently.
+
+    shutil.copy2 delegates to CopyFile2 on Windows, which conflicts with a
+    sibling run's handle on the same source when GPU_SLOTS > 1 and two runs
+    compile from one dataset (WinError 32); plain buffered streams share fine.
+    """
+    with open(src, "rb") as f_in, open(dst, "wb") as f_out:
+        shutil.copyfileobj(f_in, f_out)
+
+
 def _box_corners(b: BoundingBox) -> list[float]:
     x1, y1 = b.cx - b.w / 2, b.cy - b.h / 2
     x2, y2 = b.cx + b.w / 2, b.cy + b.h / 2
@@ -138,7 +149,7 @@ def _write_rfdetr_coco(pairs: list[tuple[ReviewedImage, str]], workdir: Path,
         coco = {"images": [], "annotations": [], "categories": categories}
         ann_id = 1
         for idx, item in enumerate(items):
-            shutil.copy2(item.path, split_dir / item.path.name)
+            _copy_shared(item.path, split_dir / item.path.name)
             coco["images"].append({
                 "id": idx, "file_name": item.path.name,
                 "width": item.width, "height": item.height,
@@ -265,7 +276,7 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
     for i, item in enumerate(reviewed):
         ctx.check_cancelled()
         file_name = item.path.name
-        shutil.copy2(item.path, img_dir / file_name)
+        _copy_shared(item.path, img_dir / file_name)
         total_bytes += item.path.stat().st_size
         with Image.open(item.path) as im:
             im.thumbnail((THUMB_SIZE, THUMB_SIZE))
@@ -275,7 +286,7 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
             usable_pos = usable.index(item)
             split = "val" if usable_pos in val_idx else "train"
             split_pairs.append((item, split))
-            shutil.copy2(item.path, yolo_dir / "images" / split / file_name)
+            _copy_shared(item.path, yolo_dir / "images" / split / file_name)
             label_lines = []
             for b in item.boxes:
                 if task == "segment":

@@ -103,6 +103,39 @@ def _torch_version() -> str:
         return "not installed"
 
 
+def resident_models() -> list[str]:
+    """Human labels for the models currently held warm in VRAM — the
+    'resident swarm' readout on the hardware page. Empty when the node
+    runs load-and-flush (KEEP_MODELS_WARM=false)."""
+    from .config import settings
+
+    if not settings.keep_models_warm:
+        return []
+    labels: list[str] = []
+    try:
+        from .agents.prompt_agent import prompt_agent
+
+        if prompt_agent.available:  # cached probe, at most 1/min
+            labels.append(f"{settings.llm_model.rsplit('/', 1)[-1]} (vLLM)")
+    except Exception:
+        pass
+    try:
+        from .agents.synthesis_agent import _warm_pipe
+
+        labels += [model_id.rsplit("/", 1)[-1] for model_id in _warm_pipe]
+    except Exception:
+        pass
+    try:
+        from .agents.vision_agent import _warm_models
+
+        for key in _warm_models:
+            backend, _, model = key.partition(":")
+            labels.append("SAM 3" if backend == "sam3" else f"YOLOE ({model})")
+    except Exception:
+        pass
+    return labels
+
+
 def build_node(busy: bool) -> HardwareNode:
     is_mi300 = GPU.vendor == "amd" and "MI300" in GPU.name.upper()
     return HardwareNode(
@@ -116,6 +149,7 @@ def build_node(busy: bool) -> HardwareNode:
         status="busy" if busy else "online",
         region="amd-developer-cloud" if is_mi300 else "local",
         provider="amd-developer-cloud" if is_mi300 else "on-prem",
+        resident_models=resident_models() or None,
     )
 
 

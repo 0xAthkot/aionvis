@@ -85,6 +85,7 @@ class SynthesisAgent:
         negative_prompt: Optional[str],
         guidance_scale: float,
         on_progress: Callable[[int], None],
+        on_image: Optional[Callable[[Path, str], None]] = None,
     ) -> list[Path]:
         out_dir.mkdir(parents=True, exist_ok=True)
         model_id, is_flux = self._pick_model(ctx)
@@ -142,6 +143,10 @@ class SynthesisAgent:
                     f"[{i + 1}/{count}] {dt:.1f}s — \"{prompt[:88]}…\"",
                     agent="synthesis")
             on_progress(i + 1)
+            if on_image is not None:
+                # Streaming mode: hand the finished image straight to the
+                # vision stream (may block on queue backpressure).
+                on_image(path, prompt)
 
         if not settings.keep_models_warm:
             del pipe

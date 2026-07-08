@@ -42,6 +42,9 @@ class RunContext:
         self.run = run
         self.cancel_event = threading.Event()
         self._log_seq = 0
+        # Streaming mode logs from three agent threads at once; ids must
+        # stay unique (the UI dedupes the live stream by LogEvent.id).
+        self._log_lock = threading.Lock()
         self._stage_entered_at = time.monotonic()
         self.agents: dict[AgentKind, AgentInstance] = {}
         kinds: list[AgentKind] = (
@@ -70,9 +73,11 @@ class RunContext:
     # --- logging ------------------------------------------------------------------
 
     def log(self, level: LogLevel, message: str, agent: Optional[AgentKind] = None) -> None:
-        self._log_seq += 1
+        with self._log_lock:
+            self._log_seq += 1
+            seq = self._log_seq
         event = LogEvent(
-            id=f"{self.run.id}-log-{self._log_seq:05d}",
+            id=f"{self.run.id}-log-{seq:05d}",
             run_id=self.run.id,
             at=now_iso(),
             level=level,
