@@ -27,7 +27,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
+      // data-scroll-behavior tells Next 16 to suppress the smooth scroll
+      // during SPA route transitions, so only anchor jumps animate.
+      data-scroll-behavior="smooth"
+      className={`${geistSans.variable} ${geistMono.variable} dark h-full scroll-smooth antialiased`}
     >
       {/* suppressHydrationWarning: browser extensions inject attributes on
           <body> before hydration; attribute-only, children still checked. */}

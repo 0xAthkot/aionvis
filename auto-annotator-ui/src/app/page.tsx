@@ -4,6 +4,7 @@ import {
   Activity,
   ArrowRight,
   Check,
+  ChevronDown,
   Cpu,
   Crosshair,
   Download,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import { AgentPipeline } from "@/components/landing/agent-pipeline";
 import { HeroVisual } from "@/components/landing/hero-visual";
+import { IndustryMarquee } from "@/components/landing/industry-marquee";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -32,6 +34,8 @@ const NAV_LINKS = [
   { href: "#compare", label: "Compare" },
   { href: "#platform", label: "Platform" },
   { href: "#pricing", label: "Pricing" },
+  { href: "#industries", label: "Industries" },
+  { href: "#faq", label: "FAQ" },
 ];
 
 const STATS = [
@@ -141,6 +145,37 @@ function CellIcon({ cell }: { cell: Cell }) {
   if (cell.bad) return <X className="size-3.5 shrink-0 text-muted-foreground/60" />;
   return <Minus className="size-3.5 shrink-0 text-muted-foreground/40" />;
 }
+
+const FAQS = [
+  {
+    q: "If no human draws a single box, who checks the labels?",
+    a: "Every label passes a two-stage Critic: an OpenCV geometric check that re-derives each box from its mask and rejects poor fits, and a VLM spot-check that confirms crops actually show the claimed class. Labels that fail are regenerated or dropped — and a run whose data doesn't survive scrutiny fails honestly instead of shipping a bad model.",
+  },
+  {
+    q: "Can I use my own images instead of synthetic ones?",
+    a: "Yes — upload a zip of your own imagery and the swarm takes it from there: labeling, verification, and training, no annotation required. Flag a missed detection in the playground and the next run generates scenarios targeting exactly that failure.",
+  },
+  {
+    q: "What formats can I export?",
+    a: "Datasets export as YOLO, COCO (with segmentation), Pascal VOC, and CSV — parity with what Label Studio offers. Trained models ship as .pt, ONNX, TorchScript, and OpenVINO, ready for deployment.",
+  },
+  {
+    q: "Can I run it on my own hardware?",
+    a: "The whole stack self-hosts with one docker compose up — CUDA or ROCm — and the LLM is any OpenAI-compatible endpoint you point it at; vLLM serving Gemma keeps everything on your own silicon. Nothing leaves your network.",
+  },
+  {
+    q: "How long does a run take, and what will it cost?",
+    a: "Every run shows a GPU-minute quote and duration estimate before you launch, and Mission Control streams progress live. On an MI300X, one sentence becomes deployable weights in minutes, not hours.",
+  },
+  {
+    q: "What is image annotation?",
+    a: "Labeling images — boxes, masks, keypoints — so a model can learn what to look for. It's traditionally the slowest and most expensive step in computer vision, and it's the step Auto-Annotator removes entirely: the agents draw and verify every label themselves.",
+  },
+  {
+    q: "What is model training?",
+    a: "Showing a model thousands of labeled examples until it can find those objects in images it has never seen. The MLOps Agent handles it end to end — architecture selection to exported weights — with live epoch metrics streaming to Mission Control.",
+  },
+];
 
 const PLANS = [
   {
@@ -517,6 +552,63 @@ docker compose up --build
           </div>
         </section>
 
+        {/* ---- Industries marquee ---- */}
+        <section id="industries" className="scroll-mt-20 border-t border-white/5 py-24">
+          <div className="mx-auto mb-12 max-w-6xl px-4 sm:px-6">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                One swarm, every industry
+              </h2>
+              <p className="mt-4 text-muted-foreground">
+                From factory floors to farm fields — if you can describe it,
+                the swarm can detect it.
+              </p>
+            </div>
+          </div>
+          <IndustryMarquee />
+        </section>
+
+        {/* ---- FAQ ---- */}
+        <section id="faq" className="scroll-mt-20 border-t border-white/5 bg-card/20 py-24">
+          <div className="mx-auto max-w-3xl px-4 sm:px-6">
+            <div className="mx-auto mb-12 max-w-2xl text-center">
+              <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                Frequently asked questions
+              </h2>
+            </div>
+            <div className="space-y-3">
+              {FAQS.map((f) => (
+                <details
+                  key={f.q}
+                  className="group rounded-xl border border-white/10 bg-card/40 px-5"
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-sm font-medium [&::-webkit-details-marker]:hidden">
+                    {f.q}
+                    <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+                  </summary>
+                  <p className="pb-5 text-sm leading-relaxed text-muted-foreground">
+                    {f.a}
+                  </p>
+                </details>
+              ))}
+            </div>
+          </div>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                mainEntity: FAQS.map((f) => ({
+                  "@type": "Question",
+                  name: f.q,
+                  acceptedAnswer: { "@type": "Answer", text: f.a },
+                })),
+              }),
+            }}
+          />
+        </section>
+
         {/* ---- Final CTA ---- */}
         <section className="pb-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -554,14 +646,11 @@ docker compose up --build
             <span className="text-sm font-semibold">Auto-Annotator</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Built for the AMD Developer Hackathon ACT II — Unicorn Track.
-            <br />
             SDXL · SAM · YOLO26 / YOLO11 / YOLOv10 / RT-DETR · Gemma via
             vLLM · PyTorch on ROCm · MI300X
           </p>
           <p className="text-xs text-muted-foreground/60">
-            © 2026 Auto-Annotator. All models trained, all labels verified, no
-            humans harmed in the making of this data.
+            © 2026 Auto-Annotator.
           </p>
         </div>
       </footer>
