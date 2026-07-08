@@ -106,6 +106,14 @@ run it before any demo. `backend/reset_demo.py` resets demo state.
 
 ## What v0.4 can do (all verified live)
 
+- **Use-case-first input** (the core interaction): the user types what the
+  model is FOR — "my drone needs to detect rotten potatoes" — never a
+  diffusion prompt. The Prompt Agent infers the deployment viewpoint and
+  environment and designs the scene prompts (Gemma path); offline, a
+  platform-aware template designer does it deterministically (drone →
+  aerial view, CCTV → high-mounted, line/AOI → top-down macro …). Wire
+  field `source.useCase`; the old `basePrompt` name is still accepted on
+  load so pre-v0.5 state.json and requests keep working.
 - **22 trainable architectures**: YOLOv10/YOLO11/YOLO26 (n·s·m·l·x each),
   RT-DETR (l/x), RF-DETR (nano/small/medium/base/large).
 - **5 task types** (`training.task`): detect · segment · obb · pose ·
@@ -175,9 +183,12 @@ to `rfdetr_worker.py` (tagged-line protocol INFO/EPOCH/RESULT). Missing venv
   ultralytics; do not add first-party usages back.
 - YOLOE zero-shot is near-blind on: dense PCB macro shots, high-altitude
   aerial views, and the class "pedestrian" (people on bikes → cyclist).
-  It is solid on warehouse forklift/pallet/worker. The proven demo prompt:
-  "a yellow forklift moving wooden pallets in a busy warehouse aisle with
-  workers in safety vests".
+  It is solid on warehouse forklift/pallet/worker. The proven demo use
+  case: "our warehouse safety cameras need to spot forklifts, wooden
+  pallets and workers in safety vests in the aisles" (users type the USE
+  CASE since v0.5 — the Prompt Agent designs the scene prompts; the
+  underlying scene that YOLOE labels reliably is still the busy warehouse
+  aisle).
 - The semantic critic (VLM) will honestly kill a whole run if crops don't
   look like their labels — farm prompts need low side-angle framing.
 - YOLO cls confidence is ~0 below ~40 epochs on tiny datasets even when

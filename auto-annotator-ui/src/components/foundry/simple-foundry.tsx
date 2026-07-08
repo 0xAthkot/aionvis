@@ -76,7 +76,7 @@ export function SimpleFoundry() {
   });
 
   const [projectId, setProjectId] = useState("");
-  const [basePrompt, setBasePrompt] = useState("");
+  const [useCase, setUseCase] = useState("");
   const [size, setSize] = useState<SizeId>("medium");
   const [generator, setGenerator] = useState<"sdxl" | "flux">("flux");
   const [architecture, setArchitecture] = useState<Architecture>(RECOMMENDED_ARCH);
@@ -90,8 +90,8 @@ export function SimpleFoundry() {
 
   const project = projects?.find((p) => p.id === projectId);
   const sizeCfg = SIZES.find((s) => s.id === size) ?? SIZES[1];
-  const isValid = !!project && basePrompt.trim().length > 15;
-  useReportUnsaved("simple-foundry", basePrompt.trim().length > 0);
+  const isValid = !!project && useCase.trim().length > 15;
+  useReportUnsaved("simple-foundry", useCase.trim().length > 0);
 
   const request: CreateSyntheticRunRequest = {
     projectId,
@@ -101,7 +101,7 @@ export function SimpleFoundry() {
     targetClasses: project?.targetClasses ?? [],
     source: {
       path: "synthetic",
-      basePrompt,
+      useCase,
       negativePrompt: "blurry, watermark, text",
       generator,
       randomization: {
@@ -134,7 +134,7 @@ export function SimpleFoundry() {
   const expansion = useMutation({
     mutationFn: () =>
       apiPost<ExpandPromptResponse>(endpoints.foundry.expandPrompt(), {
-        basePrompt,
+        useCase,
         targetClasses: request.targetClasses,
         randomization: request.source.randomization,
         previewCount: 4,
@@ -157,11 +157,12 @@ export function SimpleFoundry() {
     <div className="mx-auto w-full max-w-2xl space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>What should your model detect?</CardTitle>
+          <CardTitle>What is your model for?</CardTitle>
           <CardDescription>
-            Describe it in one sentence — the agent swarm generates the
-            training data, labels it, checks its own work and trains the
-            model. You do nothing else.
+            Say the job in one sentence — &ldquo;my drone needs to detect
+            rotten potatoes&rdquo;. The Prompt Agent works out the scenes,
+            then the swarm generates the training data, labels it, checks
+            its own work and trains the model. You do nothing else.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -188,14 +189,18 @@ export function SimpleFoundry() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="simple-prompt">The scene</Label>
+            <Label htmlFor="simple-prompt">The job</Label>
             <Textarea
               id="simple-prompt"
               rows={3}
-              value={basePrompt}
-              onChange={(e) => setBasePrompt(e.target.value)}
-              placeholder="A busy warehouse aisle with a yellow forklift, stacked wooden pallets and workers in safety vests"
+              value={useCase}
+              onChange={(e) => setUseCase(e.target.value)}
+              placeholder="My warehouse cameras need to spot forklifts, stacked pallets and workers without safety vests"
             />
+            <p className="text-xs text-muted-foreground">
+              Describe the deployment, not the picture — the Prompt Agent
+              infers the camera viewpoint and environment for you.
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -358,7 +363,7 @@ export function SimpleFoundry() {
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={basePrompt.trim().length < 16 || expansion.isPending}
+                disabled={useCase.trim().length < 16 || expansion.isPending}
                 onClick={() => expansion.mutate()}
               >
                 {expansion.isPending ? "Thinking…" : "Preview"}

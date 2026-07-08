@@ -105,7 +105,7 @@ export interface DomainRandomizationConfig {
   cameraAngleVariation: number;
   backgroundDiversity: number;
   occlusionRate: number;
-  /** How many scenario prompts the Prompt Agent expands the base prompt into. */
+  /** How many scenario prompts the Prompt Agent designs from the use case. */
   scenarioCount: number;
   /** Total images to synthesize. */
   imageCount: number;
@@ -115,7 +115,14 @@ export interface DomainRandomizationConfig {
 
 export interface SyntheticSourceConfig {
   path: "synthetic";
-  basePrompt: string;
+  /**
+   * WHAT THE MODEL IS FOR, in the user's words — "my drone needs to detect
+   * rotten potatoes in the field". The Prompt Agent infers the deployment
+   * viewpoint and environment and designs the scene prompts itself; the
+   * user never writes diffusion prompts. (Wire compat: the backend also
+   * accepts the pre-v0.5 name `basePrompt` when loading old runs.)
+   */
+  useCase: string;
   negativePrompt?: string;
   generator: "sdxl" | "flux";
   randomization: DomainRandomizationConfig;
@@ -603,9 +610,9 @@ export interface CurateImageRequest {
   curationState: "accepted" | "rejected";
 }
 
-/** Prompt Agent (Gemma 4) dry-run: expand a base prompt into scenario prompts. */
+/** Prompt Agent (Gemma 4) dry-run: design scene prompts from the use case. */
 export interface ExpandPromptRequest {
-  basePrompt: string;
+  useCase: string;
   targetClasses: string[];
   randomization: DomainRandomizationConfig;
   /** How many scenarios to return in the preview (backend caps at 12). */

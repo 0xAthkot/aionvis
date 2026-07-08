@@ -45,7 +45,8 @@ def make_run(run_id: str, n_images: int) -> PipelineRun:
         path="synthetic", status="running", stage="queued",
         pipeline_mode="streaming",
         source=SyntheticSourceConfig(
-            path="synthetic", base_prompt="a widget on a bench",
+            path="synthetic",
+            use_case="our bench camera needs to detect widgets",
             generator="sdxl",
             randomization=DomainRandomizationConfig(
                 lighting_variation=0.2, camera_angle_variation=0.2,

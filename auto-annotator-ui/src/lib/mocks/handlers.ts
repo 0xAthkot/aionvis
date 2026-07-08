@@ -46,6 +46,42 @@ function paginate<T>(items: T[], url: string): Paginated<T> {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Use-case understanding (mirrors backend/app/agents/prompt_agent.py): the
+// user says what the model is FOR; the mock "Gemma" infers the deployment
+// viewpoint and turns the rest into scene context.
+// ---------------------------------------------------------------------------
+
+const PLATFORM_VIEWS: [RegExp, string][] = [
+  [/\b(drone|uav|quadcopter|aerial)\b/i, "seen from a low-altitude aerial drone view"],
+  [/\b(cctv|surveillance|security camera|dome camera)\b/i, "seen from a high-mounted security camera"],
+  [/\b(assembly|conveyor|production line|inspection|aoi|pcb|circuit)\b/i, "in a sharp top-down inspection view"],
+  [/\b(dashcam|windshield|vehicle|truck|car)\b/i, "seen from a vehicle-mounted camera at road level"],
+  [/\b(robot|robotic arm|gripper|cobot)\b/i, "seen from a robot-mounted camera at close working distance"],
+];
+
+const INTENT_WORDS =
+  /\b(my|our|your|the|a|an|i|we|it|to|that|which|should|must|can|will|wants?|needs?|has|have|detects?|detecting|detection|finds?|finding|spots?|spotting|identif(?:y|ies|ying)|recogni[sz]es?|counts?|counting|locates?|flags?|flagging|model|camera|system|app|drone|uav|cctv|surveillance|robot|dashcam|vehicle)\b/gi;
+
+/** Viewpoint implied by the platform named in the use case ("" if none). */
+export function deploymentView(useCase: string): string {
+  for (const [pattern, view] of PLATFORM_VIEWS) {
+    if (pattern.test(useCase)) return view;
+  }
+  return "";
+}
+
+/** The use case minus its intent phrasing — environment words only. */
+export function sceneContext(useCase: string): string {
+  return useCase
+    .replace(INTENT_WORDS, " ")
+    .replace(/,/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .join(" ")
+    .replace(/[.!?\s]+$/, "");
+}
+
 export const handlers = [
   // -- Dashboard ------------------------------------------------------------
   http.get(`${API_BASE}/dashboard/stats`, async () => {
@@ -235,11 +271,13 @@ export const handlers = [
     if (!run) return notFound("not_found", `Run '${params.id}' not found`);
     if (run.source.path !== "synthetic") return HttpResponse.json([]);
     const count = Math.min(run.progress.imagesGenerated, 48);
-    const basePrompt = run.source.basePrompt;
+    const view = deploymentView(run.source.useCase);
+    const scene = sceneContext(run.source.useCase) ||
+      run.targetClasses.join(", ").replace(/_/g, " ");
     const previews: RunPreviewImage[] = Array.from({ length: count }, (_, i) => ({
       fileName: `img_${String(i).padStart(4, "0")}.jpg`,
       url: placeholderImage(i + 7, `foundry ${i}`, 320, 320),
-      scenario: basePrompt,
+      scenario: `Photorealistic scene of ${scene}${view ? `, ${view}` : ""} — variation ${i + 1}`,
     }));
     return HttpResponse.json(previews);
   }),
@@ -283,27 +321,36 @@ export const handlers = [
     const body = (await request.json()) as ExpandPromptRequest;
     const r = body.randomization;
 
+    // Mirror the real Prompt Agent: the user's USE CASE ("my drone needs to
+    // detect rotten potatoes") becomes scene prompts — deployment viewpoint
+    // inferred, intent phrasing stripped, classes always depicted.
+    const view = deploymentView(body.useCase);
+    const context = sceneContext(body.useCase);
+    const classes = body.targetClasses.map((c) => c.replace(/_/g, " ")).join(", ");
+
     const lighting = [
       "under harsh industrial overhead lighting",
-      "in dim warehouse lighting with strong shadows",
+      "in dim lighting with strong shadows",
       "under diffuse overcast daylight",
       "with warm low-angle evening light",
-      "under flickering fluorescent light",
-      "backlit by a bright inspection lamp",
+      "under flickering artificial light",
+      "backlit by a bright light source",
     ];
-    const angles = [
-      "top-down orthographic view",
-      "45-degree oblique angle",
-      "low side angle close-up",
-      "slightly tilted handheld perspective",
-      "wide shot from a fixed mount",
-    ];
+    const angles = view
+      ? [view, `${view}, directly overhead`, `${view}, at a low oblique angle`]
+      : [
+          "top-down orthographic view",
+          "45-degree oblique angle",
+          "low side angle close-up",
+          "slightly tilted handheld perspective",
+          "wide shot from a fixed mount",
+        ];
     const backgrounds = [
-      "on a cluttered workbench",
-      "on a clean conveyor belt",
-      "against an out-of-focus factory floor",
-      "surrounded by tools and cabling",
-      "on an anti-static mat",
+      "with a cluttered real-world background",
+      "against a clean uniform background",
+      "in the middle of the working environment",
+      "with natural surroundings out of focus",
+      "with equipment visible in the background",
     ];
     const conditions = [
       "with light dust on the surface",
@@ -324,7 +371,7 @@ export const handlers = [
     const count = Math.min(body.previewCount ?? 8, 12);
     const scenarios = Array.from({ length: count }, (_, i) => {
       const parts = [
-        body.basePrompt.trim().replace(/\.$/, ""),
+        `Photorealistic scene of ${context || classes}`,
         pick(angles, i + 1, r.cameraAngleVariation),
         pick(lighting, i + 2, r.lightingVariation),
         pick(backgrounds, i + 3, r.backgroundDiversity),
@@ -332,7 +379,7 @@ export const handlers = [
       if (r.occlusionRate > 0.15) parts.push(pick(conditions, i + 4, r.occlusionRate));
       if (i < hardCases.length)
         parts.push(`emphasizing this observed failure: ${hardCases[i]}`);
-      return `${parts.join(", ")}, photorealistic, 8k detail`;
+      return `${parts.join(", ")}, clearly showing ${classes}, sharp focus`;
     });
 
     const response: ExpandPromptResponse = {

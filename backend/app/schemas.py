@@ -8,7 +8,7 @@ by default; `populate_by_name` lets server code construct with snake_case).
 
 from typing import Annotated, Generic, Literal, Optional, TypeVar, Union
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
 
@@ -105,7 +105,12 @@ class DomainRandomizationConfig(ApiModel):
 
 class SyntheticSourceConfig(ApiModel):
     path: Literal["synthetic"]
-    base_prompt: str
+    # What the model is FOR, in the user's words ("my drone needs to detect
+    # rotten potatoes") — the Prompt Agent designs the scene prompts from it.
+    # Accepts the pre-v0.5 wire name "basePrompt" so old state.json loads.
+    use_case: str = Field(
+        validation_alias=AliasChoices("useCase", "basePrompt", "use_case")
+    )
     negative_prompt: Optional[str] = None
     generator: Literal["sdxl", "flux"]
     randomization: DomainRandomizationConfig
@@ -500,7 +505,9 @@ class CurateImageRequest(ApiModel):
 
 
 class ExpandPromptRequest(ApiModel):
-    base_prompt: str
+    use_case: str = Field(
+        validation_alias=AliasChoices("useCase", "basePrompt", "use_case")
+    )
     target_classes: list[str]
     randomization: DomainRandomizationConfig
     preview_count: Optional[int] = None

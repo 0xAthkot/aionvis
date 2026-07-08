@@ -25,8 +25,8 @@ const AGENTS: AgentSpec[] = [
     icon: MessageSquareText,
     name: "Prompt Agent",
     tech: "Gemma · vLLM",
-    blurb: "One sentence becomes hundreds of domain-randomized scene descriptions.",
-    status: "Expanding scenarios…",
+    blurb: "“My drone needs to detect rotten potatoes” becomes hundreds of deployment-matched, domain-randomized scenes.",
+    status: "Designing scenes…",
   },
   {
     icon: ImageIcon,

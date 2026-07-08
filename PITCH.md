@@ -15,8 +15,10 @@ themselves.
 
 Auto-Annotator is an autonomous agent swarm that feeds them:
 
-1. **Prompt Agent** (LLM) turns one plain-English sentence into hundreds of
-   domain-randomized scene descriptions.
+1. **Prompt Agent** (LLM) takes the use case in the customer's words — "my
+   drone needs to detect rotten potatoes" — infers the deployment viewpoint
+   and environment, and designs hundreds of domain-randomized scene prompts
+   itself. Nobody writes a diffusion prompt.
 2. **Synthesis Agent** (SDXL/FLUX) renders them into photorealistic training
    images.
 3. **Vision Agent** (SAM 3 / open-vocabulary segmentation) labels every

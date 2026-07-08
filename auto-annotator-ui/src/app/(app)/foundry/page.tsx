@@ -92,7 +92,7 @@ export default function FoundryPage() {
   const [projectId, setProjectId] = useState("");
   const [name, setName] = useState("");
   const [targetClasses, setTargetClasses] = useState<string[]>([]);
-  const [basePrompt, setBasePrompt] = useState("");
+  const [useCase, setUseCase] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("blurry, watermark, text");
   // The generator is the user's explicit choice, honored verbatim — a node
   // that can't run FLUX rejects the run at launch (400), no silent fallback.
@@ -153,7 +153,7 @@ export default function FoundryPage() {
     targetClasses,
     source: {
       path: "synthetic",
-      basePrompt,
+      useCase,
       negativePrompt: negativePrompt || undefined,
       generator,
       randomization,
@@ -165,13 +165,13 @@ export default function FoundryPage() {
     !!projectId &&
     name.trim().length > 2 &&
     targetClasses.length > 0 &&
-    basePrompt.trim().length > 15;
+    useCase.trim().length > 15;
 
   // Slider tweaks are one flick to redo; typed text is the progress worth
   // guarding when a mode switch would unmount the wizard.
   useReportUnsaved(
     "pro-foundry",
-    basePrompt.trim().length > 0 ||
+    useCase.trim().length > 0 ||
       name.trim().length > 0 ||
       targetClasses.length > 0,
   );
@@ -268,21 +268,22 @@ export default function FoundryPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>2 · Base prompt</CardTitle>
+              <CardTitle>2 · Use case</CardTitle>
               <CardDescription>
-                The Prompt Agent expands this into {imageCount.toLocaleString()}{" "}
-                domain-randomized scenarios before synthesis.
+                Say what the model is for — the Prompt Agent infers the
+                deployment viewpoint and environment, then designs{" "}
+                {imageCount.toLocaleString()} domain-randomized scenes itself.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="base-prompt">Scene description</Label>
+                <Label htmlFor="use-case">What is this model for?</Label>
                 <Textarea
-                  id="base-prompt"
+                  id="use-case"
                   rows={3}
-                  value={basePrompt}
-                  onChange={(e) => setBasePrompt(e.target.value)}
-                  placeholder="Top-down macro photo of a green printed circuit board on an assembly line with visible solder defects"
+                  value={useCase}
+                  onChange={(e) => setUseCase(e.target.value)}
+                  placeholder="Our assembly-line AOI camera needs to catch solder bridges and missing components on PCBs"
                 />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -356,10 +357,10 @@ export default function FoundryPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    disabled={basePrompt.trim().length < 16 || expansion.isPending}
+                    disabled={useCase.trim().length < 16 || expansion.isPending}
                     onClick={() =>
                       expansion.mutate({
-                        basePrompt,
+                        useCase,
                         targetClasses,
                         randomization,
                         previewCount: 8,
@@ -367,7 +368,7 @@ export default function FoundryPage() {
                       })
                     }
                   >
-                    {expansion.isPending ? "Expanding…" : "Preview expansion"}
+                    {expansion.isPending ? "Designing…" : "Preview scenes"}
                   </Button>
                 </div>
                 {expansion.isPending ? (

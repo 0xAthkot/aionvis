@@ -339,7 +339,7 @@ export class RunSimulator {
       }
       case "prompt_expansion":
         this.log("stage", undefined, "━━ STAGE: PROMPT EXPANSION — Prompt Agent taking over ━━");
-        this.setAgent("prompt", "thinking", "Expanding base prompt with domain randomization");
+        this.setAgent("prompt", "thinking", "Designing scene prompts from the use case");
         setGpuLoad(12, 8);
         this.log("info", "prompt", `Requesting Gemma 4 via vLLM on MI300X · target: ${total} scenarios`);
         break;

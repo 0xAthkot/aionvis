@@ -356,7 +356,7 @@ async def expand_prompt(body: ExpandPromptRequest) -> ExpandPromptResponse:
         if f.project_id == body.project_id and f.consumed_by_run_id is None
     ] if body.project_id else []
     scenarios = await prompt_agent.expand_async(
-        base_prompt=body.base_prompt,
+        use_case=body.use_case,
         target_classes=body.target_classes,
         randomization=body.randomization,
         count=preview,

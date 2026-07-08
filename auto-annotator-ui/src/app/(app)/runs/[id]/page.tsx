@@ -284,9 +284,9 @@ export default function RunDetailPage({
                 {run.source.path === "synthetic" ? (
                   <>
                     <div>
-                      <dt className="text-muted-foreground">Base prompt</dt>
+                      <dt className="text-muted-foreground">Use case</dt>
                       <dd className="mt-0.5 font-mono text-xs">
-                        {run.source.basePrompt}
+                        {run.source.useCase}
                       </dd>
                     </div>
                     <div className="flex justify-between">

@@ -104,7 +104,8 @@ def main() -> int:
 
     def _expand():
         r = client.post(f"{base}/foundry/expand-prompt", json={
-            "basePrompt": "A forklift moving pallets in a warehouse aisle",
+            "useCase": "Our warehouse safety cameras need to spot forklifts "
+                       "and pallets in the aisles",
             "targetClasses": ["forklift", "pallet"],
             "randomization": {
                 "lightingVariation": 0.5, "cameraAngleVariation": 0.5,

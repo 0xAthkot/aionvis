@@ -39,14 +39,16 @@ and the stat tiles.
 
 **0:15 — Foundry.** Sidebar → Synthetic Foundry. Pick *Warehouse Safety*
 in real mode (*PCB Defect Detection* reads well in mock mode); classes and
-run name autofill. Type a scene prompt, e.g.:
+run name autofill. Type the USE CASE — the job, not a picture:
 
-> Photo of a busy warehouse aisle with a yellow forklift, stacked wooden
-> pallets and workers in orange safety vests
+> Our warehouse safety cameras need to spot forklifts, stacked wooden
+> pallets and workers in orange safety vests in the aisles
 
-Click **Preview expansion** — "Our Prompt Agent, Gemma 4 served by vLLM on the MI300X,
-expands one sentence into hundreds of domain-randomized scenarios." Show the
-scenarios, drag a randomization slider, note the live cost estimate updating.
+Click **Preview scenes** — "You told it what the model is FOR. Our Prompt
+Agent, Gemma 4 served by vLLM on the MI300X, works out the camera
+viewpoint and the environment, then designs hundreds of domain-randomized
+scenes itself — nobody here writes a diffusion prompt." Show the scenes,
+drag a randomization slider, note the live cost estimate updating.
 
 **0:40 — Launch.** Click **Launch autonomous run**. "From here, zero human
 intervention." You land in Mission Control.

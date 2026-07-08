@@ -1,9 +1,16 @@
-"""Prompt Agent — expands a base prompt into domain-randomized scenarios.
+"""Prompt Agent — designs training-scene prompts from the user's USE CASE.
+
+The user says what the model is FOR ("my drone needs to detect rotten
+potatoes in the field") — never a diffusion prompt. This agent infers the
+deployment viewpoint (drone → aerial, CCTV → high-angle, inspection line →
+macro), the environment, and how the target classes appear there, then
+writes the domain-randomized text-to-image prompts itself.
 
 Real path: Gemma via vLLM on the MI300X (any OpenAI-compatible chat
 endpoint, see LLM_BASE_URL). When the endpoint is unreachable it degrades
-to a deterministic template expander and says so in its provider label,
-so the rest of the pipeline stays usable on boxes without an LLM.
+to a deterministic template designer (platform keywords → viewpoint, the
+distilled use-case context → scene) and says so in its provider label, so
+the rest of the pipeline stays usable on boxes without an LLM.
 """
 
 import itertools
@@ -17,24 +24,65 @@ from ..config import settings
 from ..schemas import DomainRandomizationConfig
 
 SYSTEM_PROMPT = """You are the Prompt Agent of an autonomous data-generation swarm.
-Expand the user's base scene description into diverse, concrete prompts for a
-text-to-image diffusion model (SDXL), applying domain randomization. Every
-prompt MUST clearly depict the target object classes so they can be detected
-and labeled afterwards. Vary lighting, camera angle, background and occlusion
-according to the given intensities (0=none, 1=extreme). Keep each prompt a
-single sentence under 60 words, photographic style, no numbering.
+The user tells you what their detection model is FOR — its deployment, in
+plain language (e.g. "my drone needs to detect rotten potatoes in the field").
+You design the training imagery for that deployment:
+1. Infer the camera platform and viewpoint (drone -> low-altitude aerial,
+   CCTV -> high-mounted oblique, assembly line -> top-down macro, vehicle ->
+   dash-level, handheld -> eye-level) and the environment it operates in.
+2. Write diverse, concrete prompts for a text-to-image diffusion model that
+   depict the TARGET CLASSES exactly as that camera would see them, applying
+   domain randomization. Never echo the user's intent wording ("needs to
+   detect") — describe scenes, not goals.
+Every prompt MUST clearly depict the target object classes so they can be
+detected and labeled afterwards. Vary lighting, camera angle, background and
+occlusion according to the given intensities (0=none, 1=extreme). Keep each
+prompt a single sentence under 60 words, photographic style, no numbering.
 Respond with ONLY a JSON array of strings."""
 
-# Deterministic fallback vocabulary (used when the LLM endpoint is offline).
-_LIGHTING = ["soft studio lighting", "harsh industrial floodlights", "dim ambient light",
-             "golden-hour sidelight", "cool fluorescent overheads", "high-contrast spotlights"]
+# --- deterministic fallback vocabulary (LLM endpoint offline) ----------------
+
+_LIGHTING = ["soft natural light", "harsh direct light", "dim ambient light",
+             "golden-hour sidelight", "cool overcast light", "high-contrast light"]
 _ANGLES = ["top-down view", "45-degree elevated view", "eye-level closeup",
            "wide-angle overview", "low oblique angle", "macro detail shot"]
-_BACKDROPS = ["on a factory conveyor line", "on a cluttered workbench",
-              "in a bright inspection bay", "against an industrial backdrop",
-              "inside a busy production hall", "on an anti-static work mat"]
-_OCCLUSION = ["partially occluded by tooling", "with overlapping parts",
-              "half-covered by protective film", "with cables crossing the frame"]
+_BACKDROPS = ["with a cluttered background", "against a plain background",
+              "in a busy real-world scene", "with natural surroundings",
+              "in the working environment", "with equipment in the background"]
+_OCCLUSION = ["partially occluded", "with overlapping objects",
+              "half-hidden behind foreground elements", "with objects crossing the frame"]
+
+# Platform keywords -> the viewpoint that camera actually has. First match wins.
+_PLATFORM_VIEWS: list[tuple[str, str, list[str]]] = [
+    (r"\b(drone|uav|quadcopter|aerial|crop.?duster)\b",
+     "seen from a low-altitude aerial drone view",
+     ["directly overhead", "at a slight oblique from above", "banking low over the scene"]),
+    (r"\b(cctv|surveillance|security camera|dome camera)\b",
+     "seen from a high-mounted security camera",
+     ["from a ceiling corner", "down a long sightline", "with a wide surveillance angle"]),
+    (r"\b(assembly|conveyor|production line|inspection|aoi|pcb|circuit)\b",
+     "in a sharp top-down inspection view",
+     ["macro close-up", "flat overhead framing", "at a shallow inspection angle"]),
+    (r"\b(dashcam|windshield|vehicle|truck|forklift camera|car)\b",
+     "seen from a vehicle-mounted camera at road level",
+     ["through the windshield", "from a front bumper mount", "at intersection distance"]),
+    (r"\b(robot|robotic arm|gripper|cobot)\b",
+     "seen from a robot-mounted camera at close working distance",
+     ["from the gripper's approach angle", "at bin-picking distance", "over the work cell"]),
+    (r"\b(microscope|micro|lab)\b",
+     "in an extreme macro laboratory view",
+     ["at high magnification", "on a lab stage", "under controlled lab light"]),
+]
+
+# Intent phrasing the fallback strips before using the words as scene context.
+_INTENT_WORDS = re.compile(
+    r"\b(my|our|your|the|a|an|i|we|it|to|that|which|should|must|can|will|"
+    r"want(s|ed)?|need(s|ed)?|has|have|detect(s|ing|ion)?|find(s|ing)?|"
+    r"spot(s|ting)?|identify(ing)?|identifies|recognize(s|d)?|count(s|ing)?|"
+    r"locate(s|d)?|flag(s|ging)?|model|camera|system|app|drone|uav|cctv|"
+    r"surveillance|robot|dashcam|vehicle|microscope)\b",
+    re.IGNORECASE,
+)
 
 
 class PromptAgent:
@@ -47,10 +95,10 @@ class PromptAgent:
         self._probe_ok: bool | None = None
         self._probe_at: float = 0.0
 
-    def _cache_key(self, base_prompt, target_classes, randomization, count,
+    def _cache_key(self, use_case, target_classes, randomization, count,
                    hard_cases: tuple = ()) -> tuple:
         return (
-            base_prompt.strip().lower(), tuple(target_classes), hard_cases,
+            use_case.strip().lower(), tuple(target_classes), hard_cases,
             round(randomization.lighting_variation, 2),
             round(randomization.camera_angle_variation, 2),
             round(randomization.background_diversity, 2),
@@ -80,7 +128,7 @@ class PromptAgent:
 
     @property
     def model_label(self) -> str:
-        return settings.llm_model.rsplit("/", 1)[-1] if self.available else "template expander"
+        return settings.llm_model.rsplit("/", 1)[-1] if self.available else "template designer"
 
     @property
     def provider_label(self) -> str:
@@ -92,38 +140,38 @@ class PromptAgent:
 
     # --- public API ------------------------------------------------------------
 
-    async def expand_async(self, base_prompt: str, target_classes: list[str],
+    async def expand_async(self, use_case: str, target_classes: list[str],
                            randomization: DomainRandomizationConfig, count: int,
                            hard_cases: list[str] | None = None) -> list[str]:
         hard = tuple(hard_cases or ())
         if not self.available:
-            return self._fallback(base_prompt, target_classes, randomization,
+            return self._fallback(use_case, target_classes, randomization,
                                   count, hard)
-        key = self._cache_key(base_prompt, target_classes, randomization, count,
+        key = self._cache_key(use_case, target_classes, randomization, count,
                               hard)
         if key in self._cache:
             return self._cache[key]
         try:
             async with httpx.AsyncClient(timeout=60) as client:
-                data = await self._chat(client, base_prompt, target_classes,
+                data = await self._chat(client, use_case, target_classes,
                                          randomization, count, hard)
         except httpx.HTTPError as exc:
             # A dead endpoint or retired model must degrade, never 500 the wizard.
             print(f"[prompt-agent] LLM call failed ({exc}); using fallback")
-            return self._fallback(base_prompt, target_classes, randomization,
+            return self._fallback(use_case, target_classes, randomization,
                                   count, hard)
         self._cache_put(key, data)
         return data
 
-    def expand(self, base_prompt: str, target_classes: list[str],
+    def expand(self, use_case: str, target_classes: list[str],
                randomization: DomainRandomizationConfig, count: int,
                hard_cases: list[str] | None = None) -> list[str]:
         """Synchronous variant for the pipeline worker thread."""
         hard = tuple(hard_cases or ())
         if not self.available:
-            return self._fallback(base_prompt, target_classes, randomization,
+            return self._fallback(use_case, target_classes, randomization,
                                   count, hard)
-        key = self._cache_key(base_prompt, target_classes, randomization, count,
+        key = self._cache_key(use_case, target_classes, randomization, count,
                               hard)
         if key in self._cache:
             return self._cache[key]
@@ -132,15 +180,15 @@ class PromptAgent:
                 resp = client.post(
                     f"{settings.llm_base_url}/chat/completions",
                     headers=self._headers(),
-                    json=self._payload(base_prompt, target_classes, randomization,
+                    json=self._payload(use_case, target_classes, randomization,
                                        count, hard),
                 )
                 resp.raise_for_status()
-                scenarios = self._parse(resp.json(), base_prompt, target_classes,
+                scenarios = self._parse(resp.json(), use_case, target_classes,
                                         randomization, count)
         except httpx.HTTPError as exc:
             print(f"[prompt-agent] LLM call failed ({exc}); using fallback")
-            return self._fallback(base_prompt, target_classes, randomization, count)
+            return self._fallback(use_case, target_classes, randomization, count)
         self._cache_put(key, scenarios)
         return scenarios
 
@@ -152,11 +200,12 @@ class PromptAgent:
             return {}
         return {"Authorization": f"Bearer {settings.llm_api_key}"}
 
-    def _payload(self, base_prompt, target_classes, randomization, count,
+    def _payload(self, use_case, target_classes, randomization, count,
                  hard_cases: tuple = ()) -> dict:
         user = (
-            f"Base scene: {base_prompt}\n"
-            f"Target classes (must all be plausibly present): {', '.join(target_classes)}\n"
+            f"Use case — what the model is for: {use_case}\n"
+            f"Target classes (every prompt must plausibly show them, as the "
+            f"deployed camera would see them): {', '.join(target_classes)}\n"
             f"Randomization intensities — lighting: {randomization.lighting_variation:.2f}, "
             f"camera angle: {randomization.camera_angle_variation:.2f}, "
             f"background: {randomization.background_diversity:.2f}, "
@@ -181,18 +230,18 @@ class PromptAgent:
             "max_tokens": 100 * max(count, 1) + 700,
         }
 
-    async def _chat(self, client: httpx.AsyncClient, base_prompt, target_classes,
+    async def _chat(self, client: httpx.AsyncClient, use_case, target_classes,
                     randomization, count, hard_cases: tuple = ()) -> list[str]:
         resp = await client.post(
             f"{settings.llm_base_url}/chat/completions",
             headers=self._headers(),
-            json=self._payload(base_prompt, target_classes, randomization, count,
+            json=self._payload(use_case, target_classes, randomization, count,
                                hard_cases),
         )
         resp.raise_for_status()
-        return self._parse(resp.json(), base_prompt, target_classes, randomization, count)
+        return self._parse(resp.json(), use_case, target_classes, randomization, count)
 
-    def _parse(self, data: dict, base_prompt, target_classes,
+    def _parse(self, data: dict, use_case, target_classes,
                randomization, count) -> list[str]:
         msg = data.get("choices", [{}])[0].get("message", {})
         # Reasoning models may put everything in reasoning_content when the
@@ -210,23 +259,47 @@ class PromptAgent:
         lines = [ln.strip("-•* \t") for ln in text.splitlines() if len(ln.strip()) > 20]
         if lines:
             return lines[:count]
-        return self._fallback(base_prompt, target_classes, randomization, count)
+        return self._fallback(use_case, target_classes, randomization, count)
 
     # --- deterministic fallback ---------------------------------------------------
 
-    def _fallback(self, base_prompt: str, target_classes: list[str],
+    @staticmethod
+    def _deployment_view(use_case: str) -> tuple[str, list[str]]:
+        """Viewpoint implied by the platform named in the use case."""
+        for pattern, view, variants in _PLATFORM_VIEWS:
+            if re.search(pattern, use_case, re.IGNORECASE):
+                return view, variants
+        return "", []
+
+    @staticmethod
+    def _scene_context(use_case: str) -> str:
+        """The use case minus its intent phrasing — environment words only
+        ('my drone needs to detect rotten potatoes in the field before
+        harvest' → 'rotten potatoes in field before harvest')."""
+        words = _INTENT_WORDS.sub(" ", use_case)
+        return " ".join(words.replace(",", " ").split()).strip(" .!?")
+
+    def _fallback(self, use_case: str, target_classes: list[str],
                   randomization: DomainRandomizationConfig, count: int,
                   hard_cases: tuple = ()) -> list[str]:
         def take(pool: list[str], intensity: float) -> list[str]:
             n = max(1, round(1 + intensity * (len(pool) - 1)))
             return pool[:n]
 
+        view, view_variants = self._deployment_view(use_case)
+        context = self._scene_context(use_case)
+        classes = ", ".join(c.replace("_", " ") for c in target_classes)
+        scene = context or classes
+        # A named platform fixes the viewpoint; the angle slider then varies
+        # framing within it instead of contradicting it.
+        angle_pool = ([f"{view}, {v}" for v in view_variants] if view
+                      else _ANGLES)
+
         combos = itertools.cycle(itertools.product(
             take(_LIGHTING, randomization.lighting_variation),
-            take(_ANGLES, randomization.camera_angle_variation),
+            take(angle_pool, randomization.camera_angle_variation),
             take(_BACKDROPS, randomization.background_diversity),
         ))
-        classes = ", ".join(c.replace("_", " ") for c in target_classes)
         out = []
         for i, (light, angle, backdrop) in zip(range(count), combos):
             occ = (
@@ -237,8 +310,8 @@ class PromptAgent:
             hard = (f", emphasizing this failure case: {hard_cases[i]}"
                     if i < len(hard_cases) else "")
             out.append(
-                f"{base_prompt}, {angle}, {light}, {backdrop}{occ}{hard}, "
-                f"showing {classes}, photorealistic, sharp focus"
+                f"Photorealistic scene of {scene}, {angle}, {light}, "
+                f"{backdrop}{occ}{hard}, clearly showing {classes}, sharp focus"
             )
         return out
 

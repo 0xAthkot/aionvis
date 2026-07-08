@@ -106,11 +106,16 @@ three middle agents report `state: "working"` concurrently.
 |---|---|---|
 | POST | `/foundry/expand-prompt` | `ExpandPromptRequest` → `ExpandPromptResponse` |
 
-The Prompt Agent (Gemma 4 via vLLM on the MI300X) expands the base prompt into
-domain-randomized scenario prompts; `previewCount` caps the sample returned
-(UI sends 8, cap at 12). When `projectId` is set, the project's pending
-playground feedback (unconsumed `FoundryFeedback`) is folded into the
-expansion so the preview matches what the launched run will generate.
+The Prompt Agent (Gemma 4 via vLLM on the MI300X) takes the USE CASE — what
+the model is for, in the user's words ("my drone needs to detect rotten
+potatoes") — infers the deployment viewpoint and environment, and designs
+the domain-randomized scene prompts itself; `previewCount` caps the sample
+returned (UI sends 8, cap at 12). When `projectId` is set, the project's
+pending playground feedback (unconsumed `FoundryFeedback`) is folded into
+the design so the preview matches what the launched run will generate.
+Wire compat: `useCase` replaced the pre-v0.5 `basePrompt` field; the
+backend still accepts the old name on input and always serializes the new
+one.
 
 ### Datasets
 | Method | Path | Request → Response |

@@ -246,8 +246,8 @@ export const runs: PipelineRun[] = [
     pipelineMode: "streaming",
     source: {
       path: "synthetic",
-      basePrompt:
-        "Top-down macro photo of a green printed circuit board on an assembly line with visible solder defects",
+      useCase:
+        "Our assembly-line AOI camera needs to catch solder bridges, missing components and scratches on PCBs",
       negativePrompt: "blurry, watermark, hands",
       generator: "sdxl",
       randomization: {
@@ -296,7 +296,7 @@ export const runs: PipelineRun[] = [
     stage: "training",
     source: {
       path: "synthetic",
-      basePrompt: "Photo of a circuit board with defects",
+      useCase: "Find defects on circuit boards",
       generator: "sdxl",
       randomization: {
         lightingVariation: 0.3,
@@ -331,7 +331,7 @@ export const runs: PipelineRun[] = [
     startedAt: daysAgo(14),
     finishedAt: daysAgo(14),
     failureReason:
-      "Critic rejection rate 23% exceeded quality gate (20%) — dataset too noisy to train. Increase guidance scale or refine base prompt.",
+      "Critic rejection rate 23% exceeded quality gate (20%) — dataset too noisy to train. Increase guidance scale or describe the use case more specifically.",
     costEstimateUsd: 6.8,
   },
   {

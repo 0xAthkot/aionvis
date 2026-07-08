@@ -221,7 +221,8 @@ class Pipeline:
 
         ctx.set_stage("prompt_expansion",
                       f"{prompt_agent.model_label} via {prompt_agent.provider_label}")
-        ctx.set_agent("prompt", "thinking", "Expanding base prompt with domain randomization")
+        ctx.set_agent("prompt", "thinking",
+                      "Designing scene prompts from the use case")
         ctx.check_cancelled()
         n_scenarios = min(rand.scenario_count, run.progress.images_total, 16)
         # Active learning: hard cases flagged in the playground steer this
@@ -235,7 +236,7 @@ class Pipeline:
             for f in pending:
                 f.consumed_by_run_id = run.id
         scenarios = prompt_agent.expand(
-            source.base_prompt, run.target_classes, rand, n_scenarios,
+            source.use_case, run.target_classes, rand, n_scenarios,
             hard_cases=[f.note for f in pending],
         )
         for i, s in enumerate(scenarios[:5]):

@@ -29,7 +29,7 @@ def _facts(ctx: RunContext, artifact: ModelArtifact, dataset: Dataset) -> str:
     )
     source = ""
     if run.source.path == "synthetic":
-        source = (f'Synthetic images from SDXL, base prompt: "{run.source.base_prompt}". '
+        source = (f'Synthetic images designed for this use case: "{run.source.use_case}". '
                   f"Domain randomization applied (lighting/angle/background/occlusion).")
     else:
         source = f"Customer-supplied archive {run.source.archive_name} labeled by the swarm."
