@@ -64,6 +64,12 @@ PipelinePath = Literal["synthetic", "byod"]
 
 RunStatus = Literal["queued", "running", "paused", "succeeded", "failed", "cancelled"]
 
+# sequential: agents take turns owning the GPU (default, any card).
+# streaming: synthesis → vision → critic overlap as producer/consumer streams
+# on a card that holds the whole swarm resident (MI300X). Chosen by the
+# backend from hardware config at run creation, never by the user.
+PipelineMode = Literal["sequential", "streaming"]
+
 PipelineStage = Literal[
     "queued",
     "prompt_expansion",
@@ -146,6 +152,9 @@ class RunProgress(ApiModel):
     pct: float
     images_generated: int
     images_total: int
+    # Streaming mode only: vision throughput, visible separately from the
+    # critic's masks_accepted while both agents work concurrently.
+    images_annotated: Optional[int] = None
     masks_accepted: int
     masks_rejected: int
     current_epoch: int
@@ -161,6 +170,8 @@ class PipelineRun(ApiModel):
     path: PipelinePath
     status: RunStatus
     stage: PipelineStage
+    # Optional so state.json written before the field existed still loads.
+    pipeline_mode: Optional[PipelineMode] = None
     source: SourceConfig
     training: TrainingConfig
     target_classes: list[str]
@@ -398,6 +409,9 @@ class HardwareNode(ApiModel):
     status: Literal["online", "busy", "offline"]
     region: str
     provider: Literal["amd-developer-cloud", "on-prem"]
+    # Models held resident in VRAM (KEEP_MODELS_WARM); absent/empty on
+    # sequential nodes that load-and-flush per stage.
+    resident_models: Optional[list[str]] = None
 
 
 class Throughput(ApiModel):

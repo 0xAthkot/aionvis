@@ -183,12 +183,19 @@ def create_run(body: CreateRunRequest) -> PipelineRun:
         if not available():
             raise HTTPException(400, SETUP_HINT)
     target_classes = body.target_classes
+    audit_mode = False
     if body.source.path == "byod":
         # Imported-label datasets are audited: the labels' class ids define
         # the class list, so the run trains on exactly those names.
         imported = store.datasets[body.source.dataset_id].imported_labels
         if imported:
             target_classes = imported.class_names
+            audit_mode = True
+    # Streaming overlaps synthesis/vision/critic on the resident swarm.
+    # Audit runs stay sequential — they're near-instant, no overlap to win.
+    pipeline_mode = ("streaming"
+                     if settings.pipeline_mode == "streaming" and not audit_mode
+                     else "sequential")
     org = store.organizations[0]
     run = PipelineRun(
         id=store.next_id("run"),
@@ -198,6 +205,7 @@ def create_run(body: CreateRunRequest) -> PipelineRun:
         path=body.source.path,
         status="queued",
         stage="queued",
+        pipeline_mode=pipeline_mode,
         source=body.source,
         training=body.training,
         target_classes=target_classes,

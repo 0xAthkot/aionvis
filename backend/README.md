@@ -61,6 +61,12 @@ VISION_BACKEND=sam3                 # gated facebook/sam3 — run `huggingface-c
 SDXL_MODEL=stabilityai/stable-diffusion-xl-base-1.0
 MAX_IMAGES_PER_RUN=500
 MAX_EPOCHS=100
+MAX_BATCH_SIZE=96
+MAX_TRAIN_IMAGE_SIZE=1024
+KEEP_MODELS_WARM=true               # swarm stays resident in the 192 GB
+PIPELINE_MODE=streaming             # synthesis/vision/critic overlap (needs keep-warm)
+GPU_SLOTS=2                         # two runs share the card concurrently
+AUTO_BATCH=true                     # training sizes its batch to free VRAM
 ```
 
 Serve **Gemma on the MI300X itself** — zero API spend, every model on AMD
@@ -70,8 +76,12 @@ critic VLM, and model cards:
 
 ```bash
 pip install vllm            # ROCm build
-vllm serve google/gemma-3-27b-it --port 8001
+vllm serve google/gemma-3-27b-it --port 8001 --gpu-memory-utilization 0.35
 ```
+
+`--gpu-memory-utilization 0.35` is required when vLLM shares the card with
+the swarm: its 0.9 default would grab ~170 GB of the 192 GB and starve
+FLUX, SAM 3 and training.
 
 Without a reachable endpoint the Prompt Agent uses its deterministic
 template fallback and the semantic critic is skipped — the pipeline still

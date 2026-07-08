@@ -41,6 +41,11 @@ MAX_EPOCHS=100
 MAX_BATCH_SIZE=96
 MAX_TRAIN_IMAGE_SIZE=1024
 KEEP_MODELS_WARM=true
+# Parallel swarm: synthesis/vision/critic overlap on the resident models,
+# two runs share the card, training sizes its batch to the free VRAM.
+PIPELINE_MODE=streaming
+GPU_SLOTS=2
+AUTO_BATCH=true
 # Local vLLM has no per-token cost — audit more crops per run.
 SEMANTIC_CRITIC_MAX_CHECKS=32
 EOF
@@ -54,6 +59,9 @@ echo "Done. Start the backend with:"
 echo "  source .venv/bin/activate && uvicorn app.main:app --host 0.0.0.0 --port 8000"
 echo
 echo "Serve Gemma on this GPU (Prompt Agent + Semantic Critic, zero API cost):"
-echo "  pip install vllm && vllm serve google/gemma-3-27b-it --port 8001"
-echo "  (matches the LLM_BASE_URL/LLM_MODEL defaults; without it the backend"
+echo "  pip install vllm && vllm serve google/gemma-3-27b-it --port 8001 \\"
+echo "      --gpu-memory-utilization 0.35"
+echo "  (--gpu-memory-utilization 0.35 is REQUIRED on the shared card: vLLM's"
+echo "  0.9 default would grab ~170 GB and starve FLUX/SAM 3/training."
+echo "  Matches the LLM_BASE_URL/LLM_MODEL defaults; without it the backend"
 echo "  uses its deterministic template fallback and skips the semantic critic)"

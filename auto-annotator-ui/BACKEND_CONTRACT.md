@@ -73,6 +73,20 @@ polygons, pose keypoints come from a pretrained teacher at compile time,
 and non-detect tasks require YOLO11/YOLO26 (400 otherwise). Verified boxes
 carry an optional `polygon` (flat normalized pairs).
 
+**Pipeline mode.** The backend sets `PipelineRun.pipelineMode` at run
+creation from its hardware config (`PIPELINE_MODE`), never from the request:
+`"sequential"` (default — agents take turns owning the GPU) or
+`"streaming"` (MI300X — synthesis → vision → critic overlap as
+producer/consumer streams on the resident swarm; training still runs last).
+The field is optional; runs recorded before it existed mean `"sequential"`.
+Stage semantics in streaming mode (the `PipelineStage` enum is unchanged):
+`run.stage` is the earliest stage that still has pending items (the
+bottleneck stage), and `StageTransition` events still fire in order as each
+stage fully drains — so a stage tracker driven by transitions stays correct.
+While the overlap is active, `RunProgress.imagesAnnotated` reports Vision
+Agent throughput separately from the critic's `masksAccepted`, and all
+three middle agents report `state: "working"` concurrently.
+
 ### Foundry
 | Method | Path | Request → Response |
 |---|---|---|
@@ -131,6 +145,11 @@ curve points carry per-epoch `top1` (mAP/precision/recall are 0), and
 |---|---|---|
 | GET | `/hardware/nodes` | → `HardwareNode[]` |
 | GET | `/hardware/nodes/{nodeId}/telemetry` | → `TelemetrySample[]` (recent history, ~30 min @ 15 s) |
+
+`HardwareNode.residentModels` lists the models currently held in VRAM when
+the node runs with `KEEP_MODELS_WARM` (e.g. `["Gemma 3 27B (vLLM)",
+"FLUX.1-schnell", "SAM 3"]`) — the "resident swarm" readout. Absent or
+empty on sequential nodes that load-and-flush per stage.
 
 ### Settings
 | Method | Path | Request → Response |

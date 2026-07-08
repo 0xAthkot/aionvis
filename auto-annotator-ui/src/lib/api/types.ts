@@ -63,6 +63,18 @@ export type RunStatus =
   | "cancelled";
 
 /**
+ * How the swarm executes the middle stages. `sequential` (default): agents
+ * take turns owning the GPU — synthesis, then vision, then critic.
+ * `streaming` (MI300X, requires the whole swarm resident in VRAM):
+ * synthesis → vision → critic overlap as producer/consumer streams; training
+ * still runs last. Chosen by the backend from hardware config, never by the
+ * user. In streaming mode `PipelineRun.stage` reports the earliest stage
+ * that still has pending items (the bottleneck stage); `StageTransition`s
+ * fire in order as each stage drains.
+ */
+export type PipelineMode = "sequential" | "streaming";
+
+/**
  * Stages of the agent pipeline, in execution order. BYOD runs skip
  * `prompt_expansion` and `synthesis`.
  */
@@ -155,6 +167,12 @@ export interface RunProgress {
   pct: number;
   imagesGenerated: number;
   imagesTotal: number;
+  /**
+   * Images the Vision Agent has annotated so far. Only populated in
+   * streaming mode, where vision throughput is visible separately from the
+   * critic's masksAccepted while both agents work concurrently.
+   */
+  imagesAnnotated?: number;
   masksAccepted: number;
   masksRejected: number;
   currentEpoch: number;
@@ -170,6 +188,8 @@ export interface PipelineRun {
   path: PipelinePath;
   status: RunStatus;
   stage: PipelineStage;
+  /** Set by the backend at run creation from hardware config; absent on runs recorded before the field existed (= "sequential"). */
+  pipelineMode?: PipelineMode;
   source: SourceConfig;
   training: TrainingConfig;
   targetClasses: string[];
@@ -496,6 +516,12 @@ export interface HardwareNode {
   status: "online" | "busy" | "offline";
   region: string;
   provider: "amd-developer-cloud" | "on-prem";
+  /**
+   * Models currently held resident in VRAM (KEEP_MODELS_WARM), e.g.
+   * ["Gemma 3 27B (vLLM)", "FLUX.1-schnell", "SAM 3"]. Absent/empty on
+   * sequential nodes that load-and-flush per stage.
+   */
+  residentModels?: string[];
 }
 
 export interface TelemetrySample {

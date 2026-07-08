@@ -90,8 +90,37 @@ class Settings(BaseSettings):
     # across runs — no flushes, no reload cost.
     keep_models_warm: bool = False
 
+    # --- pipeline execution mode ---
+    # "sequential": agents take turns owning the GPU (default, any card).
+    # "streaming": synthesis → vision → critic overlap as producer/consumer
+    # streams — only valid when the whole swarm is resident, so it requires
+    # keep_models_warm (deploy_mi300x.sh sets both).
+    pipeline_mode: str = "sequential"
+    # Concurrent pipeline runs sharing the card. 1 on small GPUs; the MI300X
+    # profile sets 2 (192 GB holds two runs' working sets comfortably).
+    gpu_slots: int = 1
+    # Fractional ultralytics batch sizing: instead of an int batch, pass the
+    # share of free VRAM training may claim — ultralytics measures at train
+    # start (after the warm swarm took its share) and sizes the batch to fit.
+    auto_batch: bool = False
+
     # --- pricing model for /runs/estimate (USD per GPU-minute) ---
     gpu_usd_per_min: float = 0.033
+
+    def model_post_init(self, __context) -> None:
+        # Config problems degrade, never crash the server.
+        if self.pipeline_mode not in ("sequential", "streaming"):
+            print(f"[config] Unknown PIPELINE_MODE '{self.pipeline_mode}' — "
+                  "falling back to sequential")
+            self.pipeline_mode = "sequential"
+        if self.pipeline_mode == "streaming" and not self.keep_models_warm:
+            print("[config] PIPELINE_MODE=streaming requires KEEP_MODELS_WARM=true "
+                  "(the overlap only pays off with the swarm resident) — "
+                  "falling back to sequential")
+            self.pipeline_mode = "sequential"
+        if self.gpu_slots < 1:
+            print(f"[config] GPU_SLOTS={self.gpu_slots} is invalid — using 1")
+            self.gpu_slots = 1
 
 
 settings = Settings()

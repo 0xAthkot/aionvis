@@ -55,8 +55,13 @@ class MLOpsAgent:
         # actually be fed; the RT-DETR transformer needs ~2× the VRAM per
         # sample of a YOLO CNN, so it gets half the ceiling.
         cap = settings.max_batch_size
-        batch = max(1, min(run.training.batch_size,
-                           max(cap // 2, 1) if arch.startswith("rtdetr") else cap))
+        batch: float = max(1, min(run.training.batch_size,
+                                  max(cap // 2, 1) if arch.startswith("rtdetr") else cap))
+        if settings.auto_batch and device != "cpu":
+            # Fractional batch: ultralytics measures free VRAM at train start
+            # (after the warm swarm claimed its share — mem_get_info is
+            # HIP-backed on ROCm) and sizes the batch to fit this share of it.
+            batch = round(min(0.6 / settings.gpu_slots, 0.9), 2)
 
         task = run.training.task
         base_weights = f"{arch}{TASK_SUFFIX[task]}.pt"
@@ -126,15 +131,36 @@ class MLOpsAgent:
         # YOLO-format dataset. Classify crops are small — cap imgsz at 224.
         data_arg = (str(workdir / "cls") if task == "classify"
                     else str(workdir / "yolo" / "data.yaml"))
-        results = model.train(
-            data=data_arg,
-            epochs=epochs, imgsz=min(imgsz, 224) if task == "classify" else imgsz,
-            batch=batch,
-            device=0 if device != "cpu" else "cpu",
-            workers=0,  # required on Windows inside a non-main thread
-            project=str(workdir / "train"), name="yolo", exist_ok=True,
-            verbose=False, plots=False,
-        )
+
+        def fit(b):
+            return model.train(
+                data=data_arg,
+                epochs=epochs, imgsz=min(imgsz, 224) if task == "classify" else imgsz,
+                batch=b,
+                device=0 if device != "cpu" else "cpu",
+                workers=0,  # required on Windows inside a non-main thread
+                project=str(workdir / "train"), name="yolo", exist_ok=True,
+                verbose=False, plots=False,
+            )
+
+        try:
+            results = fit(batch)
+        except Exception as exc:
+            import torch
+
+            if device == "cpu" or not isinstance(exc, torch.cuda.OutOfMemoryError):
+                raise
+            # Degrade instead of dying: halve the batch (or fraction),
+            # flush, retry exactly once.
+            halved = round(batch / 2, 2) if isinstance(batch, float) else max(batch // 2, 1)
+            ctx.log("warn",
+                    f"Out of GPU memory at batch {batch} — flushing VRAM and "
+                    f"retrying once at batch {halved}", agent="mlops")
+            flush_vram(ctx)
+            curves.clear()
+            progress.current_epoch = 0
+            batch = halved
+            results = fit(batch)
         if ctx.cancel_event.is_set():
             raise RunCancelled()
         telemetry.throughput = None
