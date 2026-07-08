@@ -52,8 +52,14 @@ scenarios, drag a randomization slider, note the live cost estimate updating.
 intervention." You land in Mission Control.
 
 **0:45 — Mission Control.** Narrate as it streams:
-- The agent swarm panel: Prompt → Synthesis → Vision (SAM 3) → Critic → MLOps,
-  each lighting up as it takes over.
+- **The parallel-swarm moment** (the AMD money shot): the header badge
+  reads **Parallel swarm · MI300X**, and the stage tracker splits into
+  three simultaneous lanes — Generated / Annotated / Verified counters all
+  advancing at once while Synthesis, Vision *and* Critic show "Working"
+  together. *"On other GPUs our agents take turns. On one MI300X they work
+  at the same time — 192 GB holds the whole swarm resident."*
+- The agent swarm panel: Prompt hands off, then three agents run
+  concurrently; the MLOps trainer joins only once every label is verified.
 - The **live foundry preview**: synthetic images appear in the grid the moment
   the diffusion model produces them — *"this data did not exist four seconds
   ago."*
@@ -65,7 +71,8 @@ intervention." You land in Mission Control.
   first with a live queue position instead of fighting for VRAM.)
 
 *(While training runs, flip briefly to **Hardware** for the full-size VRAM
-cliff chart, or to the Dashboard tab showing the same load.)*
+cliff chart and the **Resident swarm** chip row — Gemma 3 27B, FLUX, SAM 3
+held in VRAM at once — or to the Dashboard tab showing the same load.)*
 
 **2:15 — Completion.** Toast fires; the green banner appears. Click
 **View dataset**: bounding boxes drawn on every image, Critic verdicts on
@@ -89,6 +96,8 @@ model's mistakes. That's the flywheel."
 ## One-liners worth landing
 
 - "Roboflow needs your data and your clicks. We need one sentence."
+- "On other GPUs our agents take turns. On one MI300X they work at the
+  same time."
 - "Ninety seconds ago this model didn't exist. Neither did its training data."
 - "Every rejected label you saw was caught by our own Critic — no human QA."
 - "One click on a failure, and the next dataset is built to fix it."

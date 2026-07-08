@@ -94,7 +94,9 @@ run it before any demo. `backend/reset_demo.py` resets demo state.
    SDXL below `FLUX_MIN_VRAM_GB` — before downloading anything), SAM 3
    vision backend (`VISION_BACKEND=sam3`, gated checkpoint; YOLOE
    fallback). Utilization knobs: `MAX_BATCH_SIZE`, `MAX_TRAIN_IMAGE_SIZE`,
-   `KEEP_MODELS_WARM` (deploy_mi300x.sh sets 96 / 1024 / true).
+   `KEEP_MODELS_WARM` (deploy_mi300x.sh sets 96 / 1024 / true) plus the
+   parallel-swarm profile: `PIPELINE_MODE=streaming`, `GPU_SLOTS=2`,
+   `AUTO_BATCH=true`.
 
 ## What v0.4 can do (all verified live)
 
@@ -124,6 +126,17 @@ run it before any demo. `backend/reset_demo.py` resets demo state.
 - **Simple/Pro modes** (Coinbase pattern): capability parity, Simple only
   removes jargon and mandatory decisions. Doctrine: rename/explain/disclose,
   NEVER hide features. Fresh browsers default to Simple; DEMO.md needs Pro.
+- **Parallel swarm** (`PIPELINE_MODE=streaming`, the AMD-unique pitch):
+  synthesis → vision → critic overlap as bounded producer/consumer streams
+  on one card holding the whole swarm resident (requires
+  `KEEP_MODELS_WARM=true`); training joins after the streams drain.
+  `run.pipelineMode` on the wire; Mission Control shows concurrent lanes;
+  `GPU_SLOTS` runs share the card; `AUTO_BATCH` sizes the training batch to
+  the VRAM actually free. Sequential mode (default) is exactly the old
+  pipeline. Verified on CPU (unit tests, streaming BYOD e2e with
+  interleaved logs, 2-slot concurrency, sequential regression); real VRAM
+  co-residency and FLUX/SAM3/vLLM concurrency are first exercised on the
+  MI300X. Landing page has the two-mode visual; the mock simulates both.
 - Active learning (playground "Send to Foundry" → next run targets it),
   live WebSocket Mission Control, cost estimates, GPU queue.
 
@@ -161,24 +174,33 @@ to `rfdetr_worker.py` (tagged-line protocol INFO/EPOCH/RESULT). Missing venv
   confirm the running backend is current code before debugging "lost" data.
 - rfdetr 1.8: `model.callbacks` is dead code; live epochs are regex-parsed
   from its console tables in `rfdetr_bridge.py`.
+- `PIPELINE_MODE=streaming` requires `KEEP_MODELS_WARM=true` — the config
+  falls back to sequential with a console warning otherwise. And vLLM on
+  the shared card MUST be started with `--gpu-memory-utilization 0.35`:
+  its 0.9 default grabs ~170 of the 192 GB and starves FLUX/SAM 3/training.
+- `AUTO_BATCH=true` passes ultralytics a fractional batch
+  (`0.6 / GPU_SLOTS` of free VRAM, measured at train start); `MAX_BATCH_SIZE`
+  only caps integer mode. OOM during training auto-halves and retries once.
+- ultralytics 8.4 re-fires `on_fit_epoch_end` during the closing validation
+  pass (same epoch number, zeroed losses) — `mlops_agent` dedupes curve
+  points by epoch; re-check curves whenever ultralytics is bumped.
+- Windows + `GPU_SLOTS>1`: `shutil.copy2` is `CopyFile2`, which throws
+  WinError 32 when two concurrent runs copy the same source image —
+  `dataset_compiler._copy_shared` streams shared sources instead.
 
 ## Open roadmap (in rough priority order)
 
-1. **Parallel swarm (`PIPELINE_MODE=streaming`)** — the unique-AMD-advantage
-   feature for the judges: agents overlap on one MI300X while other GPUs
-   keep today's sequential mode. Full implementation plan (backend →
-   dashboard → landing two-mode visual → verification):
-   **`PARALLEL_SWARM_PLAN.md`** — execute it top to bottom in a fresh
-   session, then delete the plan file.
-2. **Docker verification** — compose files exist but were never run
+1. **Docker verification** — compose files exist but were never run
    (no Docker on the dev box). Judges are told to use it. Test it.
-3. **MI300X deployment** once AMD credits land: `deploy_mi300x.sh`, then
+2. **MI300X deployment** once AMD credits land: `deploy_mi300x.sh`, then
    `vllm serve google/gemma-3-27b-it --port 8001 --gpu-memory-utilization 0.35`
    (Gemma 3 27B), FLUX, SAM 3, and a 500-image flagship run with evidence
-   capture.
-4. **Flagship retrain**: 48 img / 60 epochs on `yolo26m` (Simple default)
+   capture. First hardware exercise of the parallel swarm's VRAM
+   co-residency (streaming mode, GPU_SLOTS=2, AUTO_BATCH) — the CPU box
+   verified only the orchestration.
+3. **Flagship retrain**: 48 img / 60 epochs on `yolo26m` (Simple default)
    to beat the current `model_0006` (yolov10n, mAP50 0.85) headline.
-5. RF-DETR seg variants; friendlier dataset/model pages in Simple mode;
+4. RF-DETR seg variants; friendlier dataset/model pages in Simple mode;
    demo video recording.
 
 ## Getting Claude Code into context

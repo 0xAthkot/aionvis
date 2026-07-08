@@ -40,14 +40,19 @@ doesn't just label data; it learns from its models' mistakes.
 
 ## Why now, why AMD
 
-The whole swarm — diffusion model, segmentation model, trainer, and
-optionally the LLM itself — fits **resident in one MI300X's 192 GB of VRAM**.
-No model juggling, no multi-node orchestration: one box is a complete
-data-to-model factory. Our orchestrator schedules the GPU explicitly
-(`hip.empty_cache()` between stages, run queue, live VRAM telemetry via
-`amd-smi`), so a single MI300X serves a whole team. That's the unit
-economics: one GPU-hour of MI300X replaces roughly a thousand dollars of
-human labeling.
+**On other GPUs our agents take turns. On one MI300X they work at the same
+time.** The swarm's working set is ~110–115 GB — Gemma 3 27B via vLLM,
+FLUX.1-schnell, SAM 3, plus training headroom. No NVIDIA card holds that;
+even an H100's 80 GB forces the load→use→flush choreography we run in
+sequential mode. One MI300X's **192 GB of HBM3 holds the entire swarm
+resident**, so the pipeline switches to streaming mode
+(`PIPELINE_MODE=streaming`): synthesis, vision and critic overlap as
+producer/consumer streams on one device, two runs share the card
+(`GPU_SLOTS=2`), and training sizes its batch to the VRAM actually free.
+Our orchestrator schedules the GPU explicitly either way (run queue, live
+VRAM telemetry via `amd-smi`), so a single MI300X serves a whole team.
+That's the unit economics: one GPU-hour of MI300X replaces roughly a
+thousand dollars of human labeling.
 
 ## Business model
 
