@@ -64,6 +64,11 @@ class Settings(BaseSettings):
     pose_teacher_conf: float = 0.30
     pose_match_iou: float = 0.40
 
+    # --- BYOD ingestion ---
+    # Videos in an upload are sampled to at most this many evenly-spaced
+    # frames each (keeps a 10-minute clip from flooding a run).
+    video_max_frames: int = 32
+
     # --- MLOps Agent ---
     # Caps applied on this dev box so a demo run stays minutes, not hours.
     # YOLO confidence stays near zero below ~40 epochs on tiny datasets, so

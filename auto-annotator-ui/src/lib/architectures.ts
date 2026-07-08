@@ -51,6 +51,7 @@ export const TASKS: { id: TrainingTask; label: string; hint: string }[] = [
   { id: "segment", label: "Masks", hint: "pixel-perfect outlines" },
   { id: "obb", label: "Rotated boxes", hint: "angled objects, aerial views" },
   { id: "pose", label: "Pose", hint: "body keypoints on people" },
+  { id: "classify", label: "Labels", hint: "one class per image crop" },
 ];
 
 /** YOLOv10 and RT-DETR ship detection heads only. */

@@ -24,6 +24,7 @@ from .schemas import (
     CurateImageRequest,
     DashboardStats,
     Dataset,
+    DatasetAnalytics,
     DatasetExportRequest,
     ExpandPromptRequest,
     ExpandPromptResponse,
@@ -181,6 +182,13 @@ def create_run(body: CreateRunRequest) -> PipelineRun:
 
         if not available():
             raise HTTPException(400, SETUP_HINT)
+    target_classes = body.target_classes
+    if body.source.path == "byod":
+        # Imported-label datasets are audited: the labels' class ids define
+        # the class list, so the run trains on exactly those names.
+        imported = store.datasets[body.source.dataset_id].imported_labels
+        if imported:
+            target_classes = imported.class_names
     org = store.organizations[0]
     run = PipelineRun(
         id=store.next_id("run"),
@@ -192,7 +200,7 @@ def create_run(body: CreateRunRequest) -> PipelineRun:
         stage="queued",
         source=body.source,
         training=body.training,
-        target_classes=body.target_classes,
+        target_classes=target_classes,
         progress=RunProgress(
             pct=0,
             images_generated=0,
@@ -368,6 +376,16 @@ def dataset_images(
         raise _not_found("Dataset", dataset_id)
     images = store.images.get(dataset_id, [])
     return Paginated[AnnotatedImage].model_validate(_paginate(images, page, pageSize))
+
+
+@router.get("/datasets/{dataset_id}/analytics")
+def dataset_analytics(dataset_id: str) -> DatasetAnalytics:
+    ds = store.datasets.get(dataset_id)
+    if ds is None:
+        raise _not_found("Dataset", dataset_id)
+    from .agents.dataset_analytics import compute_analytics
+
+    return compute_analytics(ds, store.images.get(dataset_id, []))
 
 
 @router.post("/datasets/{dataset_id}/export")

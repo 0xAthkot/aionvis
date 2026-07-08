@@ -7,7 +7,7 @@ import { ArrowLeft, ChevronDown, Download, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { InferencePlayground } from "@/components/registry/inference-playground";
 import { ModelCardView } from "@/components/registry/model-card";
-import { LossCurves, MapCurves } from "@/components/registry/training-curves";
+import { AccuracyCurves, LossCurves, MapCurves } from "@/components/registry/training-curves";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -167,10 +167,21 @@ export default function ModelDetailPage({
       </header>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <MetricTile label="mAP@50" value={model.metrics.map50.toFixed(3)} />
-        <MetricTile label="mAP@50–95" value={model.metrics.map5095.toFixed(3)} />
-        <MetricTile label="Precision" value={model.metrics.precision.toFixed(3)} />
-        <MetricTile label="Recall" value={model.metrics.recall.toFixed(3)} />
+        {model.metrics.top1 !== undefined && model.metrics.top1 !== null ? (
+          <>
+            <MetricTile label="Top-1 accuracy" value={model.metrics.top1.toFixed(3)} />
+            <MetricTile label="Top-5 accuracy" value={(model.metrics.top5 ?? 0).toFixed(3)} />
+            <MetricTile label="Classes" value={String(model.classes.length)} />
+            <MetricTile label="Epochs" value={String(model.metrics.epochsRun)} />
+          </>
+        ) : (
+          <>
+            <MetricTile label="mAP@50" value={model.metrics.map50.toFixed(3)} />
+            <MetricTile label="mAP@50–95" value={model.metrics.map5095.toFixed(3)} />
+            <MetricTile label="Precision" value={model.metrics.precision.toFixed(3)} />
+            <MetricTile label="Recall" value={model.metrics.recall.toFixed(3)} />
+          </>
+        )}
       </div>
 
       <div className="grid items-start gap-6 xl:grid-cols-2">
@@ -185,11 +196,17 @@ export default function ModelDetailPage({
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Validation mAP</CardTitle>
+            <CardTitle>
+              {model.task === "classify" ? "Validation accuracy" : "Validation mAP"}
+            </CardTitle>
             <CardDescription>Accuracy convergence per epoch</CardDescription>
           </CardHeader>
           <CardContent>
-            <MapCurves curves={model.curves} />
+            {model.task === "classify" ? (
+              <AccuracyCurves curves={model.curves} />
+            ) : (
+              <MapCurves curves={model.curves} />
+            )}
           </CardContent>
         </Card>
       </div>

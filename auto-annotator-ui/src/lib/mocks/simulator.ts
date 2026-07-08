@@ -478,15 +478,25 @@ export class RunSimulator {
       fileName: `${baseName}_v${priorVersions + 1}_${run.training.architecture}.pt`,
       fileSizeMb: +rand(15, 34).toFixed(1),
       classes: run.targetClasses,
+      task: run.training.task ?? "detect",
       metrics: {
-        map50,
-        map5095,
-        precision: +rand(0.9, 0.96).toFixed(3),
-        recall: +rand(0.84, 0.91).toFixed(3),
+        // Classifiers report accuracy; detectors report mAP — mirror the
+        // backend's ModelMetrics semantics.
+        map50: run.training.task === "classify" ? 0 : map50,
+        map5095: run.training.task === "classify" ? 0 : map5095,
+        precision: run.training.task === "classify" ? 0 : +rand(0.9, 0.96).toFixed(3),
+        recall: run.training.task === "classify" ? 0 : +rand(0.84, 0.91).toFixed(3),
         epochsRun: run.training.epochs,
         trainingTimeMin: randInt(18, 42),
+        ...(run.training.task === "classify"
+          ? { top1: map50, top5: +Math.min(map50 + 0.06, 0.999).toFixed(3) }
+          : {}),
       },
-      curves: trainingCurves(run.training.epochs, map50, map5095),
+      curves: trainingCurves(run.training.epochs, map50, map5095).map((p) =>
+        run.training.task === "classify"
+          ? { ...p, map50: 0, map5095: 0, precision: 0, recall: 0, top1: p.map50 }
+          : p,
+      ),
       trainedOn: {
         nodeName: db.hardwareNodes[0].name,
         gpu: db.hardwareNodes[0].gpu,

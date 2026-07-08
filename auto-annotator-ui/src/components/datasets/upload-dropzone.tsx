@@ -50,8 +50,18 @@ export function UploadDropzone() {
       if (xhr.status >= 200 && xhr.status < 300) {
         const dataset = JSON.parse(xhr.responseText) as Dataset;
         queryClient.invalidateQueries({ queryKey: ["datasets"] });
+        const extras = [
+          dataset.videoFrameCount
+            ? `${dataset.videoFrameCount.toLocaleString()} video frames extracted`
+            : null,
+          dataset.importedLabels
+            ? `${dataset.importedLabels.boxCount.toLocaleString()} ${dataset.importedLabels.format.toUpperCase()} labels detected — runs will audit them`
+            : null,
+        ].filter(Boolean);
         toast.success("Dataset uploaded", {
-          description: `${dataset.name} · ${dataset.imageCount.toLocaleString()} images extracted.`,
+          description:
+            `${dataset.name} · ${dataset.imageCount.toLocaleString()} images` +
+            (extras.length ? ` · ${extras.join(" · ")}` : "."),
         });
       } else {
         let message = xhr.statusText;
@@ -92,11 +102,15 @@ export function UploadDropzone() {
     }, 120);
   }
 
+  const ACCEPTED = [".zip", ".mp4", ".mov", ".avi", ".mkv", ".webm"];
+
   function handleFile(file: File | undefined) {
     if (!file) return;
-    if (!file.name.toLowerCase().endsWith(".zip")) {
+    const lower = file.name.toLowerCase();
+    if (!ACCEPTED.some((s) => lower.endsWith(s))) {
       toast.error("Unsupported file", {
-        description: "Upload a .zip archive of unlabeled images.",
+        description:
+          "Upload a .zip of images (labels and videos welcome) or a bare video file.",
       });
       return;
     }
@@ -128,7 +142,7 @@ export function UploadDropzone() {
         <input
           ref={inputRef}
           type="file"
-          accept=".zip"
+          accept=".zip,.mp4,.mov,.avi,.mkv,.webm"
           className="hidden"
           onChange={(e) => {
             handleFile(e.target.files?.[0]);
@@ -155,11 +169,12 @@ export function UploadDropzone() {
             </div>
             <div className="space-y-1 text-center">
               <p className="text-sm font-medium">
-                Drop a .zip of unlabeled images, or click to browse
+                Drop a .zip of images or a video, or click to browse
               </p>
               <p className="text-xs text-muted-foreground">
-                Proprietary data never leaves your deployment — processed
-                locally on MI300X.
+                Unlabeled images get labeled by the swarm · YOLO/COCO labels in
+                the zip get audited · videos become frames. Proprietary data
+                never leaves your deployment.
               </p>
             </div>
           </button>

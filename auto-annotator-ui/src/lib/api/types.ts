@@ -133,10 +133,11 @@ export type ModelExportFormat = "pt" | "onnx" | "torchscript" | "openvino";
 
 /**
  * What the trained model outputs. segment/obb reuse the Critic-verified mask
- * polygons; pose keypoints come from a pretrained teacher at compile time.
+ * polygons; pose keypoints come from a pretrained teacher at compile time;
+ * classify trains on per-class crops cut from the verified boxes.
  * Non-detect tasks require YOLO11/YOLO26 (YOLOv10 and RT-DETR are detect-only).
  */
-export type TrainingTask = "detect" | "segment" | "obb" | "pose";
+export type TrainingTask = "detect" | "segment" | "obb" | "pose" | "classify";
 
 export interface TrainingConfig {
   architecture: Architecture;
@@ -271,6 +272,17 @@ export interface DatasetClass {
   instanceCount: number;
 }
 
+/**
+ * Set when a BYOD upload contained annotation files (YOLO txt or COCO json).
+ * A run on such a dataset AUDITS the provided labels — geometric sanity +
+ * VLM semantic spot-check — instead of labeling from scratch.
+ */
+export interface ImportedLabels {
+  format: "yolo" | "coco";
+  classNames: string[];
+  boxCount: number;
+}
+
 export interface Dataset {
   id: string;
   orgId: string;
@@ -285,6 +297,10 @@ export interface Dataset {
   createdAt: ISODateString;
   /** Run that produced/consumed this dataset, if any. */
   runId?: string;
+  /** Present when the BYOD archive included labels (audit mode). */
+  importedLabels?: ImportedLabels;
+  /** BYOD archives with videos: how many frames were extracted from them. */
+  videoFrameCount?: number;
 }
 
 /** YOLO-normalized box: center x/y and width/height, all 0–1. */
@@ -337,6 +353,9 @@ export interface ModelMetrics {
   recall: number;
   epochsRun: number;
   trainingTimeMin: number;
+  /** Classification models only (task = "classify"): top-1/top-5 accuracy. */
+  top1?: number;
+  top5?: number;
 }
 
 export interface TrainingCurvePoint {
@@ -347,6 +366,8 @@ export interface TrainingCurvePoint {
   map5095: number;
   precision: number;
   recall: number;
+  /** Classification models only: per-epoch top-1 accuracy. */
+  top1?: number;
 }
 
 export interface HardwareSummary {
@@ -399,6 +420,44 @@ export interface CreateFeedbackRequest {
   modelId: string;
   note: string;
   detections: number;
+}
+
+/** Per-split share of a dataset (`DatasetAnalytics.splits`). */
+export interface SplitStat {
+  split: "train" | "val" | "test";
+  images: number;
+  instances: number;
+}
+
+/** One distinct image resolution and how many images have it. */
+export interface DimensionStat {
+  width: number;
+  height: number;
+  count: number;
+}
+
+/**
+ * Aggregate label statistics for a dataset (`GET /datasets/{id}/analytics`).
+ * Computed server-side from the annotated images; empty dataset → 404-free
+ * zeros so the UI can always render the tab.
+ */
+export interface DatasetAnalytics {
+  datasetId: string;
+  /** Instance count per class (same ids/colors as Dataset.classes). */
+  classDistribution: DatasetClass[];
+  splits: SplitStat[];
+  /**
+   * Row-major heatmapSize×heatmapSize grid of annotation spatial density:
+   * each box adds its coverage to the cells it overlaps; the grid is then
+   * max-normalized so every cell is 0–1.
+   */
+  heatmapSize: number;
+  heatmap: number[];
+  dimensions: DimensionStat[];
+  /** Mean box area as a fraction of image area (0–1). */
+  meanBoxArea: number;
+  /** Mean labeled boxes per accepted image. */
+  boxesPerImage: number;
 }
 
 /**

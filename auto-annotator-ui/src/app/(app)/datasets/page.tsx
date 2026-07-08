@@ -56,6 +56,16 @@ function DatasetCard({ dataset }: { dataset: Dataset }) {
             <Badge variant="secondary">
               {dataset.origin === "synthetic" ? "Synthetic" : "BYOD"}
             </Badge>
+            {dataset.importedLabels && (
+              <Badge variant="outline" className="font-mono text-xs uppercase">
+                {dataset.importedLabels.format} labels
+              </Badge>
+            )}
+            {dataset.videoFrameCount ? (
+              <Badge variant="outline" className="text-xs">
+                video · {dataset.videoFrameCount} frames
+              </Badge>
+            ) : null}
             <Badge variant={dataset.status === "ready" ? "default" : "outline"}>
               {statusLabel[dataset.status]}
             </Badge>

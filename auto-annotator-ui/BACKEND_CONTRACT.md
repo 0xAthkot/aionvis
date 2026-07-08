@@ -90,14 +90,27 @@ expansion so the preview matches what the launched run will generate.
 | GET | `/datasets` | → `Dataset[]` |
 | GET | `/datasets/{id}` | → `Dataset` |
 | GET | `/datasets/{id}/images` | → `Paginated<AnnotatedImage>` |
+| GET | `/datasets/{id}/analytics` | → `DatasetAnalytics` (class distribution, split balance, coverage-weighted label heatmap, image dimensions) |
 | PATCH | `/datasets/{datasetId}/images/{imageId}` | `CurateImageRequest` → `AnnotatedImage` |
 | POST | `/datasets/upload` | `{ archiveName, sizeMb }` → `Dataset` (201) |
 | POST | `/datasets/{id}/export` | `DatasetExportRequest` (`{ format: "yolo" \| "coco" \| "voc" \| "csv" }`) → `{ downloadUrl }` (zip; accepted labeled images only; 409 if none; Label Studio format parity) |
 
 Note: `/datasets/upload` accepts both the JSON registration above and a real
-multipart upload (field `archive`, a .zip of images) — the UI sends multipart
-with genuine progress when mocks are off, and the backend extracts the archive
-for the pipeline. Bounding boxes are YOLO-normalized (`cx cy w h` ∈ 0–1).
+multipart upload (field `archive`) — the UI sends multipart with genuine
+progress when mocks are off, and the backend extracts the archive for the
+pipeline. The archive may contain, in any mix:
+
+- **images** (jpg/png/bmp/webp) — labeled by the swarm as usual;
+- **videos** (mp4/mov/avi/mkv/webm) — sampled to ≤ `VIDEO_MAX_FRAMES` evenly
+  spaced frames each (`Dataset.videoFrameCount`); a bare video file also
+  uploads without zipping;
+- **YOLO txt or COCO json annotations** — parsed and recorded as
+  `Dataset.importedLabels`; a run on such a dataset runs in **audit mode**:
+  the Vision Agent yields, the Critic audits the provided boxes (bounds,
+  degenerate area, aspect ratio, duplicates + the VLM semantic spot-check)
+  and the run's `targetClasses` are overridden with the labels' class names.
+
+Bounding boxes are YOLO-normalized (`cx cy w h` ∈ 0–1).
 
 ### Models
 | Method | Path | Request → Response |
@@ -105,7 +118,13 @@ for the pipeline. Bounding boxes are YOLO-normalized (`cx cy w h` ∈ 0–1).
 | GET | `/models` | → `ModelArtifact[]` |
 | GET | `/models/{id}` | → `ModelArtifact` |
 | POST | `/models/{id}/export` | `{ format: "pt" \| "onnx" \| "torchscript" \| "openvino" }` → `{ downloadUrl }` (openvino downloads as a zipped model dir) |
-| POST | `/models/{id}/predict` | multipart (field `image`) → `PredictionResult` (live inference with the trained weights) |
+| POST | `/models/{id}/predict` | multipart (field `image`) → `PredictionResult` (live inference with the trained weights; classify models return one full-frame box carrying the top-1 class + confidence) |
+
+`TrainingConfig.task` accepts `detect · segment · obb · pose · classify`
+(non-detect requires YOLO11/YOLO26). `classify` trains on per-class crops cut
+from the Critic-verified boxes; its `ModelMetrics` carry `top1`/`top5` and its
+curve points carry per-epoch `top1` (mAP/precision/recall are 0), and
+`ModelArtifact.classes` follows the sorted crop-folder order.
 
 ### Hardware
 | Method | Path | Request → Response |

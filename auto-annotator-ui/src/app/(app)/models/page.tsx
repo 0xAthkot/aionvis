@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Boxes } from "lucide-react";
+import { ArrowRight, Boxes, GitCompareArrows, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -27,13 +29,29 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ModelCard({ model }: { model: ModelArtifact }) {
+function ModelCard({
+  model,
+  selected,
+  selectionFull,
+  onToggle,
+}: {
+  model: ModelArtifact;
+  selected: boolean;
+  selectionFull: boolean;
+  onToggle: (id: string) => void;
+}) {
   return (
-    <Card className="flex flex-col">
+    <Card className={`flex flex-col ${selected ? "border-primary/50" : ""}`}>
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1.5">
             <CardTitle className="flex items-center gap-2">
+              <Checkbox
+                checked={selected}
+                disabled={!selected && selectionFull}
+                onCheckedChange={() => onToggle(model.id)}
+                aria-label={`Select ${model.name} for comparison`}
+              />
               {model.name}
               <span className="text-muted-foreground">v{model.version}</span>
             </CardTitle>
@@ -62,10 +80,21 @@ function ModelCard({ model }: { model: ModelArtifact }) {
       </CardHeader>
       <CardContent className="flex-1 space-y-4">
         <div className="grid grid-cols-4 gap-3">
-          <Metric label="mAP@50" value={model.metrics.map50.toFixed(3)} />
-          <Metric label="mAP@50–95" value={model.metrics.map5095.toFixed(3)} />
-          <Metric label="Precision" value={model.metrics.precision.toFixed(3)} />
-          <Metric label="Recall" value={model.metrics.recall.toFixed(3)} />
+          {model.metrics.top1 !== undefined && model.metrics.top1 !== null ? (
+            <>
+              <Metric label="Top-1" value={model.metrics.top1.toFixed(3)} />
+              <Metric label="Top-5" value={(model.metrics.top5 ?? 0).toFixed(3)} />
+              <Metric label="Classes" value={String(model.classes.length)} />
+              <Metric label="Epochs" value={String(model.metrics.epochsRun)} />
+            </>
+          ) : (
+            <>
+              <Metric label="mAP@50" value={model.metrics.map50.toFixed(3)} />
+              <Metric label="mAP@50–95" value={model.metrics.map5095.toFixed(3)} />
+              <Metric label="Precision" value={model.metrics.precision.toFixed(3)} />
+              <Metric label="Recall" value={model.metrics.recall.toFixed(3)} />
+            </>
+          )}
         </div>
         <div className="flex flex-wrap gap-1.5">
           {model.classes.map((cls) => (
@@ -91,19 +120,59 @@ function ModelCard({ model }: { model: ModelArtifact }) {
   );
 }
 
+/** Compare caps at 4 — one fixed-order hue per model on the compare page. */
+const MAX_COMPARE = 4;
+
 export default function ModelsPage() {
   const { data: models } = useQuery({
     queryKey: ["models"],
     queryFn: () => api<ModelArtifact[]>(endpoints.models.list()),
   });
+  const [selected, setSelected] = useState<string[]>([]);
+
+  const toggle = (id: string) =>
+    setSelected((prev) =>
+      prev.includes(id)
+        ? prev.filter((x) => x !== id)
+        : prev.length >= MAX_COMPARE
+          ? prev
+          : [...prev, id],
+    );
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-6">
-      <header className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">Model Registry</h1>
-        <p className="text-sm text-muted-foreground">
-          Deployable YOLO weights produced by the agent swarm.
-        </p>
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div className="space-y-1">
+          <h1 className="text-xl font-semibold tracking-tight">Model Registry</h1>
+          <p className="text-sm text-muted-foreground">
+            Deployable YOLO weights produced by the agent swarm — tick two or
+            more to compare experiments.
+          </p>
+        </div>
+        {selected.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              {selected.length}/{MAX_COMPARE} selected
+            </span>
+            <Button variant="ghost" size="sm" onClick={() => setSelected([])}>
+              <X className="size-3.5" />
+              Clear
+            </Button>
+            <Button size="sm" disabled={selected.length < 2} asChild={selected.length >= 2}>
+              {selected.length >= 2 ? (
+                <Link href={`/models/compare?ids=${selected.join(",")}`}>
+                  <GitCompareArrows className="size-3.5" />
+                  Compare {selected.length}
+                </Link>
+              ) : (
+                <>
+                  <GitCompareArrows className="size-3.5" />
+                  Compare
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </header>
 
       {!models ? (
@@ -121,7 +190,13 @@ export default function ModelsPage() {
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {models.map((model) => (
-            <ModelCard key={model.id} model={model} />
+            <ModelCard
+              key={model.id}
+              model={model}
+              selected={selected.includes(model.id)}
+              selectionFull={selected.length >= MAX_COMPARE}
+              onToggle={toggle}
+            />
           ))}
         </div>
       )}

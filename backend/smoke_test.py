@@ -66,6 +66,17 @@ def main() -> int:
         check(f"GET /projects/{pid}/feedback",
               lambda: f"{sum(1 for f in get(f'/projects/{pid}/feedback') if not f.get('consumedByRunId'))} pending hard cases")
 
+    def _analytics():
+        labeled = [d for d in get("/datasets") if d.get("labeledCount")]
+        if not labeled:
+            return "skipped — no labeled dataset yet"
+        a = get(f"/datasets/{labeled[0]['id']}/analytics")
+        assert len(a["heatmap"]) == a["heatmapSize"] ** 2, "bad heatmap shape"
+        return (f"{labeled[0]['id']}: {len(a['classDistribution'])} classes, "
+                f"{len(a['splits'])} splits, {a['boxesPerImage']} boxes/img")
+
+    check("GET /datasets/{id}/analytics", _analytics)
+
     def _expand():
         r = client.post(f"{base}/foundry/expand-prompt", json={
             "basePrompt": "A forklift moving pallets in a warehouse aisle",

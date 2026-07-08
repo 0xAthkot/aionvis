@@ -127,9 +127,10 @@ Architecture = Literal[
 ]
 
 # What the trained model outputs. segment/obb reuse the Vision Agent's mask
-# polygons; pose keypoints come from a pretrained teacher at compile time.
+# polygons; pose keypoints come from a pretrained teacher at compile time;
+# classify trains on per-class crops cut from the verified boxes.
 # Only YOLO11/YOLO26 ship non-detect heads (YOLOv10 and RT-DETR are detect-only).
-TrainingTask = Literal["detect", "segment", "obb", "pose"]
+TrainingTask = Literal["detect", "segment", "obb", "pose", "classify"]
 
 
 class TrainingConfig(ApiModel):
@@ -236,6 +237,15 @@ class DatasetClass(ApiModel):
     instance_count: int
 
 
+class ImportedLabels(ApiModel):
+    """Set when a BYOD archive included YOLO/COCO annotation files; a run on
+    such a dataset audits the provided labels instead of labeling from scratch."""
+
+    format: Literal["yolo", "coco"]
+    class_names: list[str]
+    box_count: int
+
+
 class Dataset(ApiModel):
     id: str
     org_id: str
@@ -249,6 +259,9 @@ class Dataset(ApiModel):
     size_mb: float
     created_at: str
     run_id: Optional[str] = None
+    imported_labels: Optional[ImportedLabels] = None
+    # BYOD archives with videos: how many frames were extracted from them.
+    video_frame_count: Optional[int] = None
 
 
 class BoundingBox(ApiModel):
@@ -261,6 +274,33 @@ class BoundingBox(ApiModel):
     # Simplified mask contour as flat normalized pairs [x1, y1, x2, y2, …];
     # present on Critic-verified labels, powers segment/obb training + export.
     polygon: Optional[list[float]] = None
+
+
+class SplitStat(ApiModel):
+    split: Literal["train", "val", "test"]
+    images: int
+    instances: int
+
+
+class DimensionStat(ApiModel):
+    width: int
+    height: int
+    count: int
+
+
+class DatasetAnalytics(ApiModel):
+    """Aggregate label statistics (GET /datasets/{id}/analytics)."""
+
+    dataset_id: str
+    class_distribution: list[DatasetClass]
+    splits: list[SplitStat]
+    # Row-major heatmap_size² grid of annotation spatial density, 0–1
+    # (each box adds its coverage to the cells it overlaps; max-normalized).
+    heatmap_size: int
+    heatmap: list[float]
+    dimensions: list[DimensionStat]
+    mean_box_area: float
+    boxes_per_image: float
 
 
 class CritiqueRecord(ApiModel):
@@ -297,6 +337,9 @@ class ModelMetrics(ApiModel):
     recall: float
     epochs_run: int
     training_time_min: float
+    # Classification models only (task="classify"): top-1/top-5 accuracy.
+    top1: Optional[float] = None
+    top5: Optional[float] = None
 
 
 class TrainingCurvePoint(ApiModel):
@@ -307,6 +350,8 @@ class TrainingCurvePoint(ApiModel):
     map5095: float
     precision: float
     recall: float
+    # Classification models only: per-epoch top-1 accuracy.
+    top1: Optional[float] = None
 
 
 class HardwareSummary(ApiModel):

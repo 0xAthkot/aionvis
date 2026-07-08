@@ -55,6 +55,8 @@ export const endpoints = {
     get: (id: string) => `${API_BASE}/datasets/${id}`,
     /** GET → Paginated<AnnotatedImage> */
     images: (id: string) => `${API_BASE}/datasets/${id}/images`,
+    /** GET → DatasetAnalytics (class/split distributions, heatmap, dimensions) */
+    analytics: (id: string) => `${API_BASE}/datasets/${id}/analytics`,
     /** PATCH CurateImageRequest → AnnotatedImage */
     curateImage: (datasetId: string, imageId: string) =>
       `${API_BASE}/datasets/${datasetId}/images/${imageId}`,

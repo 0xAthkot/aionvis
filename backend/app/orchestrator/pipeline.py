@@ -145,11 +145,18 @@ class Pipeline:
 
             if run.path == "synthetic":
                 image_paths = self._synthetic_stages(ctx, workdir)
+                source_dataset = None
             else:
                 image_paths = self._byod_source(ctx)
+                source_dataset = store.datasets.get(run.source.dataset_id)
 
-            annotated = self._segmentation_stage(ctx, image_paths)
-            reviewed = self._critic_stage(ctx, annotated)
+            if source_dataset is not None and source_dataset.imported_labels:
+                # Audit mode: the archive shipped labels — verify them
+                # instead of relabeling (Vision Agent yields).
+                reviewed = self._audit_stages(ctx, source_dataset, image_paths)
+            else:
+                annotated = self._segmentation_stage(ctx, image_paths)
+                reviewed = self._critic_stage(ctx, annotated)
             dataset = self._compile_stage(ctx, reviewed, workdir)
             self._training_stage(ctx, dataset, workdir)
 
@@ -270,6 +277,35 @@ class Pipeline:
         reviewed = critic_agent.review(
             ctx, annotated,
             on_progress=lambda done: self._pct(ctx, done / max(len(annotated), 1)),
+        )
+        try:
+            from ..agents.semantic_critic import spot_check
+
+            spot_check(ctx, reviewed, ctx.run.target_classes)
+        except RunCancelled:
+            raise
+        except Exception as exc:  # semantic stage is best-effort by design
+            ctx.log("warn", f"Semantic Critic skipped: {exc}", agent="critic")
+        ctx.set_agent("critic", "done")
+        return reviewed
+
+    def _audit_stages(self, ctx: RunContext, dataset, image_paths: list[Path]):
+        """Imported-label runs: segmentation is a no-op handoff, critic_review
+        audits the provided annotations. Same stage machine, same output shape."""
+        from ..agents.label_audit import audit_labels
+
+        fmt = dataset.imported_labels.format.upper()
+        ctx.set_stage("segmentation", f"{fmt} labels provided — audit mode")
+        ctx.log("info",
+                f"Archive shipped {dataset.imported_labels.box_count} {fmt} "
+                "labels — Vision Agent yields to the Label Audit", agent="vision")
+        ctx.set_agent("vision", "done")
+        self._pct(ctx, 1.0)
+
+        ctx.set_stage("critic_review", "Auditing imported annotations")
+        reviewed = audit_labels(
+            ctx, dataset, image_paths,
+            on_progress=lambda done: self._pct(ctx, done / max(len(image_paths), 1)),
         )
         try:
             from ..agents.semantic_critic import spot_check

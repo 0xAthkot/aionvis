@@ -96,18 +96,32 @@ run it before any demo. `backend/reset_demo.py` resets demo state.
 
 - **22 trainable architectures**: YOLOv10/YOLO11/YOLO26 (n·s·m·l·x each),
   RT-DETR (l/x), RF-DETR (nano/small/medium/base/large).
-- **4 task types** (`training.task`): detect · segment · obb · pose.
-  Segment/OBB reuse the Critic-verified mask polygons
+- **5 task types** (`training.task`): detect · segment · obb · pose ·
+  classify. Segment/OBB reuse the Critic-verified mask polygons
   (`BoundingBox.polygon`); pose keypoints come from a `yolo11m-pose`
-  teacher at compile time. Non-detect requires YOLO11/YOLO26.
+  teacher at compile time; classify trains YOLO-cls on per-class crops cut
+  from the verified boxes (metrics: top1/top5; classes follow sorted crop
+  folders). Non-detect requires YOLO11/YOLO26.
 - **Model exports**: .pt, ONNX, TorchScript, OpenVINO (RF-DETR: .pt + ONNX).
 - **Dataset exports**: YOLO, COCO (with segmentation), Pascal VOC, CSV —
   Label Studio format parity.
+- **BYOD ingestion, three flavors** (one upload endpoint): plain images
+  (swarm labels them); **YOLO/COCO-labeled archives** → audit mode (Vision
+  Agent yields, the Critic audits the provided labels, `targetClasses` come
+  from the labels — see `label_audit.py`); **videos** (in the zip or bare) →
+  ≤ `VIDEO_MAX_FRAMES` evenly-sampled frames each.
+- **Dataset analytics** (`GET /datasets/{id}/analytics` + dataset page):
+  class distribution, split balance, coverage-weighted label heatmap,
+  dimension stats. Mock (`mocks/analytics.ts`) and backend
+  (`dataset_analytics.py`) compute identically.
+- **Experiment comparison**: tick 2–4 models in the registry →
+  `/models/compare` — metric table with best-in-row trophies + overlaid
+  mAP/loss/top-1 curves. Pure frontend over `GET /models`.
 - **Simple/Pro modes** (Coinbase pattern): capability parity, Simple only
   removes jargon and mandatory decisions. Doctrine: rename/explain/disclose,
   NEVER hide features. Fresh browsers default to Simple; DEMO.md needs Pro.
 - Active learning (playground "Send to Foundry" → next run targets it),
-  live WebSocket Mission Control, cost estimates, GPU queue, BYOD uploads.
+  live WebSocket Mission Control, cost estimates, GPU queue.
 
 ## RF-DETR sidecar (important)
 

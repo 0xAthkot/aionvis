@@ -20,6 +20,7 @@ import type {
   PredictionResult,
   RunPreviewImage,
 } from "@/lib/api/types";
+import { computeAnalytics } from "./analytics";
 import { db, nextId } from "./db";
 import { placeholderImage } from "./fixtures/placeholder";
 import { getSimulatedAgents } from "./simulator";
@@ -354,6 +355,16 @@ export const handlers = [
       (img) => img.datasetId === params.id,
     );
     return HttpResponse.json(paginate(images, request.url));
+  }),
+
+  http.get(`${API_BASE}/datasets/:id/analytics`, async ({ params }) => {
+    await lag();
+    const dataset = db.datasets.find((d) => d.id === params.id);
+    if (!dataset) return notFound("dataset_not_found", `No dataset ${params.id}`);
+    const images = db.annotatedImages.filter(
+      (img) => img.datasetId === params.id,
+    );
+    return HttpResponse.json(computeAnalytics(dataset, images));
   }),
 
   http.patch(

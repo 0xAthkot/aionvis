@@ -22,6 +22,10 @@ const mapConfig = {
   map5095: { label: "mAP@50–95", color: "#199e70" },
 } satisfies ChartConfig;
 
+const accuracyConfig = {
+  top1: { label: "Top-1 accuracy", color: "#3987e5" },
+} satisfies ChartConfig;
+
 function CurveChart({
   data,
   config,
@@ -76,4 +80,9 @@ export function LossCurves({ curves }: { curves: TrainingCurvePoint[] }) {
 
 export function MapCurves({ curves }: { curves: TrainingCurvePoint[] }) {
   return <CurveChart data={curves} config={mapConfig} yDomain={[0, 1]} />;
+}
+
+/** Classification models: top-1 accuracy instead of mAP. */
+export function AccuracyCurves({ curves }: { curves: TrainingCurvePoint[] }) {
+  return <CurveChart data={curves} config={accuracyConfig} yDomain={[0, 1]} />;
 }

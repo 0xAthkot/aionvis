@@ -5,10 +5,12 @@ Produces
   {workdir}/yolo/{images,labels}/{train,val}/ + data.yaml (for training)
 
 Label format follows run.training.task:
-  detect  — cls cx cy w h
-  segment — cls x1 y1 x2 y2 …            (Critic-verified mask polygon)
-  obb     — cls 4 corner pairs           (min-area rect around the polygon)
-  pose    — detect line + 17 COCO kpts   (pretrained teacher, see config)
+  detect   — cls cx cy w h
+  segment  — cls x1 y1 x2 y2 …            (Critic-verified mask polygon)
+  obb      — cls 4 corner pairs           (min-area rect around the polygon)
+  pose     — detect line + 17 COCO kpts   (pretrained teacher, see config)
+  classify — detect labels as usual PLUS {workdir}/cls/{split}/{class}/ crops
+             cut from the verified boxes (imagefolder layout for YOLO-cls)
 """
 
 import random
@@ -156,6 +158,60 @@ def _write_rfdetr_coco(pairs: list[tuple[ReviewedImage, str]], workdir: Path,
             json.dumps(coco), encoding="utf-8")
 
 
+MIN_CROP_PX = 16  # skip classification crops smaller than this on either side
+
+
+def _write_cls_crops(ctx: RunContext, pairs: list[tuple[ReviewedImage, str]],
+                     workdir: Path, class_names: list[str]) -> None:
+    """Per-class crop folders from the verified boxes — the imagefolder
+    layout `YOLO(...-cls.pt).train(data=...)` expects. Class indices in the
+    trained model follow the SORTED folder names; mlops reads them back."""
+    root = workdir / "cls"
+    counts: dict[str, int] = {}
+    for item, split in pairs:
+        with Image.open(item.path) as im:
+            im = im.convert("RGB")
+            for i, b in enumerate(item.boxes):
+                if b.class_id >= len(class_names):
+                    continue
+                # Denormalize with 8% context padding, clamped to the frame.
+                bw, bh = b.w * item.width, b.h * item.height
+                x1 = max((b.cx * item.width) - bw / 2 - bw * 0.08, 0)
+                y1 = max((b.cy * item.height) - bh / 2 - bh * 0.08, 0)
+                x2 = min((b.cx * item.width) + bw / 2 + bw * 0.08, item.width)
+                y2 = min((b.cy * item.height) + bh / 2 + bh * 0.08, item.height)
+                if x2 - x1 < MIN_CROP_PX or y2 - y1 < MIN_CROP_PX:
+                    continue
+                name = class_names[b.class_id]
+                out_dir = root / split / name
+                out_dir.mkdir(parents=True, exist_ok=True)
+                crop = im.crop((int(x1), int(y1), int(x2), int(y2)))
+                crop.save(out_dir / f"{item.path.stem}_{i}.jpg", quality=90)
+                counts[name] = counts.get(name, 0) + 1
+
+    if not counts:
+        raise RuntimeError(
+            "Classify task: no verified box was large enough to crop "
+            f"(≥{MIN_CROP_PX}px). Use detect for this scene, or generate "
+            "closer-up imagery."
+        )
+    # Degenerate case: every usable crop came from val images.
+    if not (root / "train").exists():
+        shutil.copytree(root / "val", root / "train")
+    # Val must exist and mirror train's class folders, or the classifier
+    # can't validate — reuse train crops for any class with no val crop.
+    for train_cls in (root / "train").iterdir():
+        val_cls = root / "val" / train_cls.name
+        if not val_cls.exists() or not any(val_cls.iterdir()):
+            val_cls.mkdir(parents=True, exist_ok=True)
+            for f in list(train_cls.iterdir())[:4]:
+                shutil.copy2(f, val_cls / f.name)
+    ctx.log("info",
+            "Classification crops cut from verified boxes — "
+            + ", ".join(f"{n}: {c}" for n, c in sorted(counts.items())),
+            agent="mlops")
+
+
 def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
                     workdir: Path) -> Dataset:
     run = ctx.run
@@ -252,6 +308,9 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
     if run.training.architecture.startswith("rf-detr"):
         _write_rfdetr_coco(split_pairs, workdir,
                            [c.replace("_", " ") for c in run.target_classes])
+
+    if task == "classify":
+        _write_cls_crops(ctx, split_pairs, workdir, run.target_classes)
 
     if task == "pose" and pose_matched == 0:
         raise RuntimeError(

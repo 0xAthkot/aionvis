@@ -27,7 +27,8 @@ from .gpu import device_str, flush_vram
 MODELS_DIR = DATA_DIR / "files" / "models"
 
 # Base-weight suffix per training task (yolo26n + segment → yolo26n-seg.pt).
-TASK_SUFFIX = {"detect": "", "segment": "-seg", "obb": "-obb", "pose": "-pose"}
+TASK_SUFFIX = {"detect": "", "segment": "-seg", "obb": "-obb", "pose": "-pose",
+               "classify": "-cls"}
 
 
 def _model_class(arch: str):
@@ -84,7 +85,10 @@ class MLOpsAgent:
             losses = (loss_items(trainer.tloss, prefix="") if callable(loss_items)
                       else {})
             box_loss = float(losses.get("box_loss", metrics.get("box_loss", 0)))
-            cls_loss = float(losses.get("cls_loss", metrics.get("cls_loss", 0)))
+            cls_loss = float(losses.get("cls_loss",
+                                        metrics.get("cls_loss",
+                                                    losses.get("loss", 0))))
+            top1 = metrics.get("accuracy_top1")
             point = TrainingCurvePoint(
                 epoch=trainer.epoch + 1,
                 box_loss=round(box_loss, 4), cls_loss=round(cls_loss, 4),
@@ -92,19 +96,22 @@ class MLOpsAgent:
                 map5095=round(metrics.get("mAP50-95", 0), 4),
                 precision=round(metrics.get("precision", 0), 4),
                 recall=round(metrics.get("recall", 0), 4),
+                top1=round(top1, 4) if top1 is not None else None,
             )
             curves.append(point)
             progress.current_epoch = point.epoch
-            progress.latest_loss = point.box_loss
+            progress.latest_loss = point.box_loss if task != "classify" else point.cls_loss
             dt = max(time.monotonic() - epoch_started["t"], 1e-6)
             its = getattr(trainer, "epoch_iterations", None) or batch
             telemetry.throughput = Throughput(
                 kind="it_per_s",
                 value=round((len(trainer.train_loader) if hasattr(trainer, "train_loader") else its) / dt, 2),
             )
+            headline = (f"top1 {point.top1:.3f}" if point.top1 is not None
+                        else f"mAP50 {point.map50:.3f}")
             ctx.log("info",
                     f"epoch {point.epoch}/{epochs} — box_loss {point.box_loss:.3f} "
-                    f"cls_loss {point.cls_loss:.3f} mAP50 {point.map50:.3f} "
+                    f"cls_loss {point.cls_loss:.3f} {headline} "
                     f"({dt:.1f}s)", agent="mlops")
             ctx.publish_progress()
             on_epoch(point.epoch)
@@ -112,9 +119,14 @@ class MLOpsAgent:
         model.add_callback("on_train_epoch_start", on_train_epoch_start)
         model.add_callback("on_fit_epoch_end", on_fit_epoch_end)
 
+        # Classify trains on the imagefolder crops; every other task on the
+        # YOLO-format dataset. Classify crops are small — cap imgsz at 224.
+        data_arg = (str(workdir / "cls") if task == "classify"
+                    else str(workdir / "yolo" / "data.yaml"))
         results = model.train(
-            data=str(workdir / "yolo" / "data.yaml"),
-            epochs=epochs, imgsz=imgsz, batch=batch,
+            data=data_arg,
+            epochs=epochs, imgsz=min(imgsz, 224) if task == "classify" else imgsz,
+            batch=batch,
             device=0 if device != "cpu" else "cpu",
             workers=0,  # required on Windows inside a non-main thread
             project=str(workdir / "train"), name="yolo", exist_ok=True,
@@ -143,6 +155,18 @@ class MLOpsAgent:
             return fallback
 
         last = curves[-1] if curves else None
+        # A classifier's class indices follow the SORTED crop folder names,
+        # which may be a subset of target_classes (classes with no usable
+        # crop don't exist to the model).
+        if task == "classify":
+            classes = sorted(
+                d.name for d in (workdir / "cls" / "train").iterdir() if d.is_dir()
+            )
+            top1 = metric("accuracy_top1", last.top1 if last and last.top1 else 0)
+            top5 = metric("accuracy_top5", 0.0)
+        else:
+            classes = run.target_classes
+            top1 = top5 = None
         version = 1 + sum(
             m.run_id in store.runs
             and store.runs[m.run_id].project_id == run.project_id
@@ -155,7 +179,7 @@ class MLOpsAgent:
             architecture=arch, task=task,
             file_name=weights.name,
             file_size_mb=round(weights.stat().st_size / 1024**2, 1),
-            classes=run.target_classes,
+            classes=classes,
             metrics=ModelMetrics(
                 map50=round(metric("mAP50(B)", last.map50 if last else 0), 4),
                 map5095=round(metric("mAP50-95(B)", last.map5095 if last else 0), 4),
@@ -163,6 +187,8 @@ class MLOpsAgent:
                 recall=round(metric("recall(B)", last.recall if last else 0), 4),
                 epochs_run=len(curves),
                 training_time_min=round((time.monotonic() - train_started) / 60, 1),
+                top1=round(top1, 4) if top1 is not None else None,
+                top5=round(top5, 4) if top5 is not None else None,
             ),
             curves=curves,
             trained_on=HardwareSummary(
@@ -212,6 +238,15 @@ def run_inference(artifact: ModelArtifact, image_path: Path) -> dict:
     h, w = res.orig_shape
 
     boxes = []
+    if getattr(res, "probs", None) is not None:
+        # Classifier: no boxes — report the top-1 class as a full-frame
+        # "detection" so the playground can render the label + confidence.
+        probs = res.probs
+        boxes.append(BoundingBox(
+            class_id=int(probs.top1),
+            cx=0.5, cy=0.5, w=1.0, h=1.0,
+            confidence=round(float(probs.top1conf.item()), 3),
+        ))
     for b in res.boxes or []:
         x1, y1, x2, y2 = b.xyxyn[0].tolist()
         boxes.append(BoundingBox(

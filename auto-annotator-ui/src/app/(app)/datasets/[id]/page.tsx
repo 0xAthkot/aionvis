@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Check, Download, X } from "lucide-react";
 import { toast } from "sonner";
 import { BBoxImage } from "@/components/datasets/bbox-image";
-import { ClassDistribution } from "@/components/datasets/class-distribution";
+import { DatasetAnalyticsPanel } from "@/components/datasets/dataset-analytics";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -277,39 +277,7 @@ export default function DatasetDetailPage({
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Class distribution</CardTitle>
-              <CardDescription>Labeled instances per class</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ClassDistribution classes={dataset.classes} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Splits</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <dl className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Train</dt>
-                  <dd>{images.filter((i) => i.split === "train").length} of sample</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Validation</dt>
-                  <dd>{images.filter((i) => i.split === "val").length} of sample</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Format</dt>
-                  <dd className="font-mono text-xs">YOLO · normalized xywh</dd>
-                </div>
-              </dl>
-            </CardContent>
-          </Card>
-        </div>
+        <DatasetAnalyticsPanel datasetId={id} />
       </div>
 
       <Dialog

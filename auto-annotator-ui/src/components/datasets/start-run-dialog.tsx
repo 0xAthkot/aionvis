@@ -33,11 +33,18 @@ import type {
 } from "@/lib/api/types";
 import { useLaunchRun } from "@/hooks/use-launch-run";
 
-/** Path B: configure the labeling+training run for an uploaded dataset. */
+/** Path B: configure the labeling+training run for an uploaded dataset.
+ * Datasets that shipped their own labels run in AUDIT mode: the class list
+ * comes from the labels and the Critic verifies them instead of relabeling. */
 export function StartRunDialog({ dataset }: { dataset: Dataset }) {
+  const audit = dataset.importedLabels;
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState(`${dataset.name} · byod labeling`);
-  const [targetClasses, setTargetClasses] = useState<string[]>([]);
+  const [name, setName] = useState(
+    `${dataset.name} · ${audit ? "label audit" : "byod labeling"}`,
+  );
+  const [targetClasses, setTargetClasses] = useState<string[]>(
+    audit?.classNames ?? [],
+  );
   const [architecture, setArchitecture] =
     useState<TrainingConfig["architecture"]>("yolov10m");
   const [epochs, setEpochs] = useState(50);
@@ -82,11 +89,13 @@ export function StartRunDialog({ dataset }: { dataset: Dataset }) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Label &amp; train on {dataset.name}</DialogTitle>
+          <DialogTitle>
+            {audit ? "Audit & train on" : "Label & train on"} {dataset.name}
+          </DialogTitle>
           <DialogDescription>
-            SAM 3 segments all {dataset.imageCount.toLocaleString()} images
-            zero-shot, the Critic verifies geometry, then YOLO trains — no
-            manual annotation.
+            {audit
+              ? `Your archive shipped ${audit.boxCount.toLocaleString()} ${audit.format.toUpperCase()} labels — the Critic audits them (geometry + VLM spot-check), then YOLO trains on the survivors.`
+              : `SAM 3 segments all ${dataset.imageCount.toLocaleString()} images zero-shot, the Critic verifies geometry, then YOLO trains — no manual annotation.`}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -115,12 +124,15 @@ export function StartRunDialog({ dataset }: { dataset: Dataset }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="byod-classes">
-              Target classes (SAM 3 zero-shot prompts)
+              {audit
+                ? "Classes (defined by the imported labels)"
+                : "Target classes (SAM 3 zero-shot prompts)"}
             </Label>
             <TagInput
               id="byod-classes"
               value={targetClasses}
-              onChange={setTargetClasses}
+              onChange={audit ? () => {} : setTargetClasses}
+              disabled={!!audit}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">

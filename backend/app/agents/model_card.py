@@ -41,8 +41,10 @@ def _facts(ctx: RunContext, artifact: ModelArtifact, dataset: Dataset) -> str:
         f"and rejected {run.progress.masks_rejected} candidate boxes (OpenCV IoU check)\n"
         f"Training: {m.epochs_run} epochs in {m.training_time_min} min on "
         f"{artifact.trained_on.gpu}\n"
-        f"Metrics: mAP50 {m.map50}, mAP50-95 {m.map5095}, precision {m.precision}, "
-        f"recall {m.recall}"
+        + (f"Metrics: top-1 accuracy {m.top1}, top-5 accuracy {m.top5}"
+           if m.top1 is not None else
+           f"Metrics: mAP50 {m.map50}, mAP50-95 {m.map5095}, "
+           f"precision {m.precision}, recall {m.recall}")
     )
 
 
@@ -59,8 +61,11 @@ def _template_card(ctx: RunContext, artifact: ModelArtifact, dataset: Dataset) -
         f"accepted {run.progress.masks_accepted} and rejected "
         f"{run.progress.masks_rejected} candidate labels.\n\n"
         f"## Evaluation\n"
-        f"mAP50 {m.map50} · mAP50-95 {m.map5095} · precision {m.precision} · "
-        f"recall {m.recall} after {m.epochs_run} epochs "
+        + (f"top-1 accuracy {m.top1} · top-5 accuracy {m.top5}"
+           if m.top1 is not None else
+           f"mAP50 {m.map50} · mAP50-95 {m.map5095} · precision {m.precision} · "
+           f"recall {m.recall}")
+        + f" after {m.epochs_run} epochs "
         f"({m.training_time_min} min on {artifact.trained_on.gpu}).\n\n"
         f"## Limitations\n"
         f"Labels are machine-generated and the dataset is small; validate on "

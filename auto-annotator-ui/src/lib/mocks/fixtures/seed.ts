@@ -157,6 +157,30 @@ export const datasets: Dataset[] = [
     classes: [],
     sizeMb: 3480,
     createdAt: daysAgo(2),
+    // Frames extracted from uploaded CCTV footage (video ingestion).
+    videoFrameCount: 1240,
+  },
+  {
+    // A customer archive that shipped its own COCO annotations — runs on
+    // this dataset AUDIT the labels instead of relabeling (audit mode).
+    id: "ds_vendor_labeled",
+    orgId: "org_aegis",
+    name: "vendor-labeled-batch-07",
+    origin: "byod",
+    status: "curating",
+    imageCount: 480,
+    labeledCount: 462,
+    classes: [
+      { id: 0, name: "solder_bridge", color: "#d97706", instanceCount: 512 },
+      { id: 1, name: "missing_component", color: "#0284c7", instanceCount: 347 },
+    ],
+    sizeMb: 940,
+    createdAt: daysAgo(1),
+    importedLabels: {
+      format: "coco",
+      classNames: ["solder_bridge", "missing_component"],
+      boxCount: 859,
+    },
   },
 ];
 
