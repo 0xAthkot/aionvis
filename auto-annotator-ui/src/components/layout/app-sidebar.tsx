@@ -34,7 +34,11 @@ import {
 } from "@/components/ui/sidebar";
 import { api } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
-import type { Organization } from "@/lib/api/types";
+import type {
+  DashboardStats,
+  HardwareNode,
+  Organization,
+} from "@/lib/api/types";
 import { useAuthStore } from "@/lib/stores/auth";
 import { useUiModeStore } from "@/lib/stores/ui-mode";
 import { cn } from "@/lib/utils";
@@ -183,6 +187,94 @@ function NavButton({
   );
 }
 
+const STATUS_DOT: Record<HardwareNode["status"], string> = {
+  online: "bg-emerald-500",
+  busy: "bg-primary animate-pulse",
+  offline: "bg-muted-foreground",
+};
+
+/**
+ * Live system pulse pinned to the bottom of the nav — fills the dead space
+ * under the menu with the three numbers an operator glances at between
+ * pages. Reuses the dashboard/hardware query keys, so it costs nothing
+ * extra and stays in sync with the pages.
+ */
+function SidebarStatus({ simple }: { simple: boolean }) {
+  const { data: stats } = useQuery({
+    queryKey: ["dashboard-stats"],
+    queryFn: () => api<DashboardStats>(endpoints.dashboard.stats()),
+  });
+  const { data: nodes } = useQuery({
+    queryKey: ["hardware-nodes"],
+    queryFn: () => api<HardwareNode[]>(endpoints.hardware.nodes()),
+  });
+  const node = nodes?.[0];
+  if (!node && !stats) return null;
+
+  return (
+    <div className="mx-1 space-y-2.5 rounded-xl border border-sidebar-border bg-sidebar-accent/35 p-3 group-data-[collapsible=icon]:hidden">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-semibold tracking-[0.14em] uppercase text-sidebar-foreground/40">
+          System
+        </span>
+        {node && (
+          <span className="flex items-center gap-1.5 text-[11px] capitalize text-sidebar-foreground/70">
+            <span
+              className={cn("size-1.5 rounded-full", STATUS_DOT[node.status])}
+            />
+            {node.status}
+          </span>
+        )}
+      </div>
+      {node && (
+        <Link
+          href="/hardware"
+          className="block truncate text-xs font-medium hover:underline"
+        >
+          {node.name}
+          <span className="font-normal text-sidebar-foreground/55">
+            {" "}· {node.gpu.replace("AMD Instinct ", "")} · {node.vramGb} GB
+          </span>
+        </Link>
+      )}
+      {stats && (
+        <div className="space-y-1.5 border-t border-sidebar-border pt-2.5 text-xs">
+          <Link
+            href="/runs"
+            className="flex items-center justify-between hover:underline"
+          >
+            <span className="text-sidebar-foreground/55">
+              {simple ? "Builds in progress" : "Active runs"}
+            </span>
+            <span className="font-medium tabular-nums">
+              {stats.activeRuns}
+              {stats.queuedRuns > 0 && (
+                <span className="font-normal text-sidebar-foreground/55">
+                  {" "}+{stats.queuedRuns} queued
+                </span>
+              )}
+            </span>
+          </Link>
+          <div className="flex items-center justify-between">
+            <span className="text-sidebar-foreground/55">
+              {simple ? "Models built" : "Models trained"}
+            </span>
+            <span className="font-medium tabular-nums">
+              {stats.modelsTrained}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sidebar-foreground/55">Credits left</span>
+            <span className="font-medium tabular-nums">
+              ${stats.creditsRemainingUsd.toFixed(2)}
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AppSidebar() {
   const pathname = usePathname();
   const simple = useUiModeStore((s) => s.mode) === "simple";
@@ -237,6 +329,9 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
+        <div className="mt-auto px-1 pb-1">
+          <SidebarStatus simple={simple} />
+        </div>
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border px-3 py-2">
