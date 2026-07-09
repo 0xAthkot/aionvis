@@ -148,16 +148,18 @@ function NavButton({
       isActive={active}
       tooltip={item.title}
       className={cn(
-        "group/nav relative h-9 gap-2.5 rounded-lg px-2.5 font-normal text-sidebar-foreground/75 transition-colors duration-150",
+        "group/nav relative h-11 gap-2.5 rounded-lg px-2.5 font-normal text-sidebar-foreground/75 transition-colors duration-150",
         "hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
         "data-[active=true]:bg-primary/12 data-[active=true]:font-medium data-[active=true]:text-sidebar-foreground",
+        // Collapsed (icon-only) rail: a larger, centered square with a bigger icon.
+        "group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-10! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-xl group-data-[collapsible=icon]:[&_svg]:size-5",
       )}
     >
       <Link href={item.href}>
         <span
           aria-hidden
           className={cn(
-            "absolute inset-y-2 left-0 w-0.5 rounded-full bg-primary transition-opacity duration-200",
+            "absolute inset-y-2 left-0 w-0.5 rounded-full bg-primary transition-opacity duration-200 group-data-[collapsible=icon]:hidden",
             active ? "opacity-100" : "opacity-0",
           )}
         />
@@ -169,7 +171,7 @@ function NavButton({
               : "text-sidebar-foreground/55 group-hover/nav:text-sidebar-foreground/80",
           )}
         />
-        <span>{item.title}</span>
+        <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
       </Link>
     </SidebarMenuButton>
   );
@@ -306,14 +308,14 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 pt-2">
+      <SidebarContent className="px-2 pt-2 group-data-[collapsible=icon]:px-0">
         {navGroups.map((group) => (
-          <SidebarGroup key={group.label} className="py-1">
+          <SidebarGroup key={group.label} className="py-1 group-data-[collapsible=icon]:px-0">
             <SidebarGroupLabel className="px-2.5 text-[10px] font-semibold tracking-[0.14em] uppercase text-sidebar-foreground/40">
               {group.label}
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="gap-0.5">
+              <SidebarMenu className="gap-1 group-data-[collapsible=icon]:gap-1.5">
                 {group.items.map((item) => {
                   const active =
                     item.href === "/"
