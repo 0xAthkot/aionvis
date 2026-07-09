@@ -96,7 +96,7 @@ export default function RunDetailPage({
         <Button variant="ghost" size="sm" className="-ml-2 w-fit" asChild>
           <Link href="/runs">
             <ArrowLeft className="size-3.5" />
-            {pro ? "All runs" : "All activity"}
+            All runs
           </Link>
         </Button>
         <div className="flex flex-wrap items-center justify-between gap-3">

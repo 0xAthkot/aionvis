@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Boxes, GitCompareArrows, X } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { HelpTip } from "@/components/shared/help-tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -145,7 +146,16 @@ export default function ModelsPage() {
   return (
     <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title="Model Registry"
+        title={
+          <span className="flex items-center gap-2">
+            Model Registry
+            <HelpTip>
+              Every model the swarm has trained for you. Open one to test it
+              on real photos or download the weights; tick two or more to
+              compare them side by side.
+            </HelpTip>
+          </span>
+        }
         description="Deployable YOLO weights produced by the agent swarm — tick two or more to compare experiments."
         actions={
           selected.length > 0 ? (
@@ -178,6 +188,33 @@ export default function ModelsPage() {
           ) : undefined
         }
       />
+
+      {models && models.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {[
+            ["Models", String(models.length)],
+            ["Ready", String(models.filter((m) => m.status === "ready").length)],
+            [
+              "Best mAP@50",
+              Math.max(...models.map((m) => m.metrics.map50)).toFixed(3),
+            ],
+            [
+              "Architectures",
+              String(new Set(models.map((m) => m.architecture)).size),
+            ],
+          ].map(([label, value]) => (
+            <span
+              key={label}
+              className="flex items-center gap-1.5 rounded-full border bg-card px-2.5 py-1 text-muted-foreground"
+            >
+              {label}
+              <span className="font-medium text-foreground tabular-nums">
+                {value}
+              </span>
+            </span>
+          ))}
+        </div>
+      )}
 
       {!models ? (
         <div className="grid gap-4 lg:grid-cols-2">

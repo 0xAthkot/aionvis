@@ -125,13 +125,12 @@ function GpuStatusChip() {
 
 export function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const pathname = usePathname();
-  const mode = useUiModeStore((s) => s.mode);
 
   return (
     <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/85 px-4 backdrop-blur-md">
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mr-1 h-4!" />
-      <h1 className="text-sm font-medium">{titleForPath(pathname, mode)}</h1>
+      <h1 className="text-sm font-medium">{titleForPath(pathname)}</h1>
       <div className="ml-auto flex items-center gap-3">
         <ModeToggle />
         <GpuStatusChip />

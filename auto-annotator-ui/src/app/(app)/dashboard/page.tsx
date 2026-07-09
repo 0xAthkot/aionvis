@@ -73,10 +73,10 @@ export default function DashboardPage() {
   return (
     <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title={simple ? "Your models" : "Command Center"}
+        title="Dashboard"
         description={
           simple
-            ? "Say what your model is for — the agent swarm builds the data, labels it and trains the model."
+            ? "What the agent swarm is doing right now — and your shortcut to a new model."
             : "Fleet overview for Aegis Robotics"
         }
         actions={

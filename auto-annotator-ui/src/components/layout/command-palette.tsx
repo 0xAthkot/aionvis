@@ -12,8 +12,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { useUiModeStore } from "@/lib/stores/ui-mode";
-import { navGroupsFor } from "./nav-config";
+import { allNavItems } from "./nav-config";
 
 export function CommandPalette({
   open,
@@ -23,8 +22,7 @@ export function CommandPalette({
   onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
-  const mode = useUiModeStore((s) => s.mode);
-  const navItems = navGroupsFor(mode).flatMap((g) => g.items);
+  const navItems = allNavItems;
 
   function go(href: string) {
     onOpenChange(false);

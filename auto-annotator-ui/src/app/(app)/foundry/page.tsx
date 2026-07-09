@@ -6,6 +6,7 @@ import { useState } from "react";
 import { LaunchSummary } from "@/components/foundry/launch-summary";
 import { SimpleFoundry } from "@/components/foundry/simple-foundry";
 import { PageHeader } from "@/components/layout/page-header";
+import { HelpTip } from "@/components/shared/help-tip";
 import { NewProjectDialog } from "@/components/shared/new-project-dialog";
 import { TagInput } from "@/components/shared/tag-input";
 import { Badge } from "@/components/ui/badge";
@@ -193,8 +194,14 @@ export default function FoundryPage() {
     return (
       <main className="page-enter mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 p-6">
         <header className="space-y-1 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Build a detection model
+          <h1 className="flex items-center justify-center gap-2 text-2xl font-semibold tracking-tight">
+            Synthetic Foundry
+            <HelpTip>
+              The Foundry is where models are built: say what your model is
+              for, and the AI agents design the scenes, create the photos,
+              label them and train the model — no annotation, no prompt
+              engineering.
+            </HelpTip>
           </h1>
           <p className="text-sm text-muted-foreground">
             One sentence in, deployable model out.

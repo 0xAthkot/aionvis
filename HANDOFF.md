@@ -139,7 +139,11 @@ run it before any demo. `backend/reset_demo.py` resets demo state.
   mAP/loss/top-1 curves. Pure frontend over `GET /models`.
 - **Simple/Pro modes** (Coinbase pattern): capability parity, Simple only
   removes jargon and mandatory decisions. Doctrine: rename/explain/disclose,
-  NEVER hide features. Fresh browsers default to Simple; DEMO.md needs Pro.
+  NEVER hide features. The sidebar menu and page titles are IDENTICAL in
+  both modes (decided 2026-07-09 — a menu that reshuffles on toggle is
+  disorienting); Simple explains the technical names via hover help instead
+  (`HelpTip` component + per-item `help` text in `nav-config.ts`). Fresh
+  browsers default to Simple; DEMO.md needs Pro.
 - **Parallel swarm** (`PIPELINE_MODE=streaming`, the AMD-unique pitch):
   synthesis → vision → critic overlap as bounded producer/consumer streams
   on one card holding the whole swarm resident (requires

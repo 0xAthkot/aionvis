@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { FlaskConical } from "lucide-react";
 import { runStatusVariant } from "@/components/dashboard/recent-runs";
 import { PageHeader } from "@/components/layout/page-header";
+import { HelpTip } from "@/components/shared/help-tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -33,13 +34,46 @@ export default function RunsPage() {
   return (
     <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title={simple ? "Activity" : "Runs"}
+        title={
+          <span className="flex items-center gap-2">
+            Runs
+            <HelpTip>
+              A run is one complete model build — from designing scenes to
+              training — carried out by the agent swarm. Open one to watch it
+              work.
+            </HelpTip>
+          </span>
+        }
         description={
           simple
             ? "Every model build, in progress and finished."
             : "Every pipeline execution across the organization."
         }
       />
+
+      {data && data.items.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {(
+            [
+              ["running", "bg-primary"],
+              ["queued", "bg-muted-foreground"],
+              ["succeeded", "bg-emerald-500"],
+              ["failed", "bg-destructive"],
+            ] as const
+          ).map(([status, dot]) => {
+            const count = data.items.filter((r) => r.status === status).length;
+            return (
+              <span
+                key={status}
+                className="flex items-center gap-1.5 rounded-full border bg-card px-2.5 py-1 text-muted-foreground"
+              >
+                <span className={`size-1.5 rounded-full ${dot}`} />
+                {count} {simple ? SIMPLE_STATUS[status] : status}
+              </span>
+            );
+          })}
+        </div>
+      )}
 
       {!data ? (
         <Skeleton className="h-64 w-full" />

@@ -3,6 +3,7 @@
 import { Cpu } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { PageHeader } from "@/components/layout/page-header";
+import { HelpTip } from "@/components/shared/help-tip";
 import { ConnectNodeCard } from "@/components/shared/connect-node-card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -101,7 +102,16 @@ export default function HardwarePage() {
   return (
     <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title="Hardware"
+        title={
+          <span className="flex items-center gap-2">
+            Hardware
+            <HelpTip>
+              The graphics card (GPU) doing all the work. VRAM is its working
+              memory; utilization is how hard it&apos;s working. You can also
+              connect a rented cloud GPU here.
+            </HelpTip>
+          </span>
+        }
         description="Live telemetry for the GPU fleet running the agent swarm."
       />
 

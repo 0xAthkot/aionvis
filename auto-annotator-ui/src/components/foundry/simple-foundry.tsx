@@ -3,6 +3,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronDown, Flag, Rocket, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { HelpTip } from "@/components/shared/help-tip";
 import { NewProjectDialog } from "@/components/shared/new-project-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -204,7 +205,14 @@ export function SimpleFoundry() {
           </div>
 
           <div className="space-y-2">
-            <Label>Dataset size</Label>
+            <Label className="gap-1.5">
+              Dataset size
+              <HelpTip>
+                How many training photos the swarm creates, and how long the
+                model studies them (epochs). Bigger = more accurate, slower to
+                build.
+              </HelpTip>
+            </Label>
             <div className="grid grid-cols-3 gap-2">
               {SIZES.map((s) => (
                 <button
@@ -228,7 +236,14 @@ export function SimpleFoundry() {
           </div>
 
           <div className="space-y-2">
-            <Label>Image engine</Label>
+            <Label className="gap-1.5">
+              Image engine
+              <HelpTip>
+                The AI that paints your training photos. FLUX produces the
+                sharpest scenes but needs a datacenter GPU; SDXL runs on any
+                GPU.
+              </HelpTip>
+            </Label>
             <div className="grid grid-cols-2 gap-2">
               {GENERATORS.map((g) => (
                 <button
@@ -254,7 +269,14 @@ export function SimpleFoundry() {
           </div>
 
           <div className="space-y-2">
-            <Label>Model output</Label>
+            <Label className="gap-1.5">
+              Model output
+              <HelpTip>
+                What the finished model draws on a photo: plain boxes, exact
+                outlines, rotated boxes, body keypoints — or just a label for
+                the whole image.
+              </HelpTip>
+            </Label>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {TASKS.map((t) => (
                 <button

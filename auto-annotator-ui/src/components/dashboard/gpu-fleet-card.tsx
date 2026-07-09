@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/chart";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HelpTip } from "@/components/shared/help-tip";
 import type { HardwareNode, TelemetrySample } from "@/lib/api/types";
 import { useTelemetry } from "@/hooks/use-telemetry";
 import { useUiModeStore } from "@/lib/stores/ui-mode";
@@ -168,7 +169,14 @@ export function GpuFleetCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{simple ? "Your GPU" : "GPU fleet"}</CardTitle>
+        <CardTitle className="flex items-center gap-1.5">
+          {simple ? "Your GPU" : "GPU fleet"}
+          <HelpTip>
+            The graphics card that runs the agents. The bar shows how much of
+            its working memory (VRAM) is in use — details reveals the live
+            charts engineers see.
+          </HelpTip>
+        </CardTitle>
         <CardDescription>
           {node
             ? `${node.gpu} · ${node.vramGb} GB · ${node.region}`

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Database } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { HelpTip } from "@/components/shared/help-tip";
 import { StartRunDialog } from "@/components/datasets/start-run-dialog";
 import { UploadDropzone } from "@/components/datasets/upload-dropzone";
 import { Badge } from "@/components/ui/badge";
@@ -125,17 +126,39 @@ export default function DatasetsPage() {
   return (
     <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
       <PageHeader
-        title="Datasets"
+        title={
+          <span className="flex items-center gap-2">
+            Datasets
+            <HelpTip>
+              A dataset is a collection of labeled photos your model learns
+              from. The Foundry creates them for you, or upload your own and
+              the agents label them.
+            </HelpTip>
+          </span>
+        }
         description="Path B — bring your own data. Upload proprietary images and the agents label them in place."
       />
 
       <UploadDropzone />
 
       <section className="space-y-3">
-        <h2 className="section-label flex items-center gap-2">
-          <Database className="size-4" />
-          Library
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="section-label flex items-center gap-2">
+            <Database className="size-4" />
+            Library
+          </h2>
+          {datasets && datasets.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {datasets.length} datasets ·{" "}
+              {datasets
+                .reduce((n, d) => n + d.imageCount, 0)
+                .toLocaleString()}{" "}
+              images ·{" "}
+              {datasets.filter((d) => d.status === "ready").length} ready to
+              train on
+            </p>
+          )}
+        </div>
         {datasets?.length === 0 ? (
           <div className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-xl border border-dashed">
             <p className="text-sm text-muted-foreground">

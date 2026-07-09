@@ -14,6 +14,8 @@ export interface NavItem {
   href: string;
   icon: LucideIcon;
   description: string;
+  /** Plain-language explanation surfaced in Simple mode (hover help). */
+  help: string;
 }
 
 export interface NavGroup {
@@ -21,7 +23,12 @@ export interface NavGroup {
   items: NavItem[];
 }
 
-/** Single source of truth for the sidebar and the ⌘K command palette. */
+/**
+ * Single source of truth for the sidebar and the ⌘K command palette.
+ * The menu is IDENTICAL in Simple and Pro mode — same names, same layout
+ * (a menu that reshuffles when you flip a toggle is disorienting). Simple
+ * mode explains the technical names instead, via each item's `help` text.
+ */
 export const navGroups: NavGroup[] = [
   {
     label: "Operate",
@@ -31,24 +38,28 @@ export const navGroups: NavGroup[] = [
         href: "/dashboard",
         icon: LayoutDashboard,
         description: "Fleet overview and recent activity",
+        help: "Your home screen — what the swarm is doing right now.",
       },
       {
         title: "Synthetic Foundry",
         href: "/foundry",
         icon: FlaskConical,
-        description: "Generate training data from a prompt",
+        description: "Generate training data from a use case",
+        help: "Where models are born: say what your model is for and the AI agents create the training photos, label them and train it.",
       },
       {
         title: "Datasets",
         href: "/datasets",
         icon: Database,
         description: "Uploads, curation and labeling state",
+        help: "The photo collections your models learn from — made by the swarm or uploaded by you.",
       },
       {
         title: "Runs",
         href: "/runs",
         icon: Play,
         description: "Pipeline runs and live agent observability",
+        help: "Every model build, live and finished — open one to watch the agents work.",
       },
     ],
   },
@@ -60,6 +71,7 @@ export const navGroups: NavGroup[] = [
         href: "/models",
         icon: Boxes,
         description: "Trained YOLO weights and metrics",
+        help: "Your finished models — test them on real photos and download them.",
       },
     ],
   },
@@ -71,12 +83,14 @@ export const navGroups: NavGroup[] = [
         href: "/hardware",
         icon: Cpu,
         description: "MI300X telemetry and node status",
+        help: "The graphics card doing the work — its health, memory and load.",
       },
       {
         title: "Settings",
         href: "/settings",
         icon: Settings,
         description: "Organization, members and API keys",
+        help: "Your team, access keys and connected services.",
       },
     ],
   },
@@ -84,88 +98,10 @@ export const navGroups: NavGroup[] = [
 
 export const allNavItems = navGroups.flatMap((g) => g.items);
 
-/**
- * Simple mode = the SAME destinations as Pro, in plain language (the
- * Coinbase Simple/Advanced pattern: identical capability, jargon-free
- * presentation). Never remove a tab here — rename and explain instead.
- */
-const simpleNavGroups: NavGroup[] = [
-  {
-    label: "Workspace",
-    items: [
-      {
-        title: "Dashboard",
-        href: "/dashboard",
-        icon: LayoutDashboard,
-        description: "Your models and recent activity",
-      },
-      {
-        title: "Build a model",
-        href: "/foundry",
-        icon: FlaskConical,
-        description: "Describe a scene, get a detection model",
-      },
-      {
-        title: "Activity",
-        href: "/runs",
-        icon: Play,
-        description: "Watch your models being built",
-      },
-    ],
-  },
-  {
-    label: "Library",
-    items: [
-      {
-        title: "Training data",
-        href: "/datasets",
-        icon: Database,
-        description: "The photos your models learn from",
-      },
-      {
-        title: "Your models",
-        href: "/models",
-        icon: Boxes,
-        description: "Test trained models on your own photos",
-      },
-    ],
-  },
-  {
-    label: "System",
-    items: [
-      {
-        title: "GPU monitor",
-        href: "/hardware",
-        icon: Cpu,
-        description: "The graphics card doing the work",
-      },
-      {
-        title: "Settings",
-        href: "/settings",
-        icon: Settings,
-        description: "Team and API keys",
-      },
-    ],
-  },
-];
-
-export function navGroupsFor(mode: "simple" | "pro"): NavGroup[] {
-  return mode === "pro" ? navGroups : simpleNavGroups;
-}
-
-export function titleForPath(
-  pathname: string,
-  mode: "simple" | "pro" = "pro",
-): string {
-  // Simple-mode names win where they exist; fall back to the full map so
-  // pages without a simple tab (run detail, datasets) still get a title.
-  const items = [
-    ...(mode === "simple" ? simpleNavGroups.flatMap((g) => g.items) : []),
-    ...allNavItems,
-  ];
-  const exact = items.find((i) => i.href === pathname);
+export function titleForPath(pathname: string): string {
+  const exact = allNavItems.find((i) => i.href === pathname);
   if (exact) return exact.title;
-  const prefix = items
+  const prefix = allNavItems
     .filter((i) => i.href !== "/" && pathname.startsWith(i.href))
     .sort((a, b) => b.href.length - a.href.length)[0];
   return prefix?.title ?? "Auto-Annotator";

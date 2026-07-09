@@ -51,8 +51,10 @@ export function RecentRuns() {
   return (
     <Card className="flex flex-col">
       <CardHeader>
-        <CardTitle>{simple ? "Recent activity" : "Recent runs"}</CardTitle>
-        <CardDescription>Latest pipeline activity</CardDescription>
+        <CardTitle>Recent runs</CardTitle>
+        <CardDescription>
+          {simple ? "Your latest model builds" : "Latest pipeline activity"}
+        </CardDescription>
         <CardAction>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/runs">
