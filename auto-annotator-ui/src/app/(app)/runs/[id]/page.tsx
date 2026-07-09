@@ -13,13 +13,6 @@ import { StageTracker } from "@/components/runs/stage-tracker";
 import { VramCard } from "@/components/runs/vram-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -181,39 +174,35 @@ export default function RunDetailPage({
         )}
       </header>
 
-      <div className="grid items-start gap-6 xl:grid-cols-3">
-        <div className="space-y-6 xl:col-span-2">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between gap-2">
-                <div className="space-y-1.5">
-                  <CardTitle>Agent activity</CardTitle>
-                  <CardDescription>
-                    Reasoning and verification log
-                  </CardDescription>
-                </div>
-                {streaming ? (
-                  <Badge variant="outline" className="gap-1.5">
-                    <span className="size-1.5 animate-pulse rounded-full bg-primary" />
-                    Live
-                  </Badge>
-                ) : (
-                  <Badge variant="outline">Log history</Badge>
-                )}
+      <div className="grid items-start gap-x-10 gap-y-8 xl:grid-cols-3">
+        <div className="space-y-8 xl:col-span-2">
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="space-y-1">
+                <h2 className="section-label">Agent activity</h2>
+                <p className="text-sm text-muted-foreground">
+                  Reasoning and verification log
+                </p>
               </div>
-            </CardHeader>
-            <CardContent>
-              <LogTerminal
-                logs={allLogs}
-                className="h-80"
-                emptyMessage={
-                  run.status === "queued"
-                    ? "Run is queued — agents haven't produced output yet."
-                    : "No log history for this run."
-                }
-              />
-            </CardContent>
-          </Card>
+              {streaming ? (
+                <Badge variant="outline" className="gap-1.5">
+                  <span className="size-1.5 animate-pulse rounded-full bg-primary" />
+                  Live
+                </Badge>
+              ) : (
+                <Badge variant="outline">Log history</Badge>
+              )}
+            </div>
+            <LogTerminal
+              logs={allLogs}
+              className="h-80"
+              emptyMessage={
+                run.status === "queued"
+                  ? "Run is queued — agents haven't produced output yet."
+                  : "No log history for this run."
+              }
+            />
+          </section>
 
           {run.path === "synthetic" && (
             <FoundryPreview
@@ -223,137 +212,127 @@ export default function RunDetailPage({
             />
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
-                <div>
-                  <dt className="text-muted-foreground">Images</dt>
-                  <dd className="text-lg font-semibold">
-                    {run.progress.imagesGenerated.toLocaleString()}
-                    <span className="text-sm font-normal text-muted-foreground">
-                      {" "}/ {run.progress.imagesTotal.toLocaleString()}
-                    </span>
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Masks accepted</dt>
-                  <dd className="text-lg font-semibold text-emerald-500">
-                    {run.progress.masksAccepted.toLocaleString()}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Masks rejected</dt>
-                  <dd className="text-lg font-semibold text-orange-400">
-                    {run.progress.masksRejected.toLocaleString()}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Epoch</dt>
-                  <dd className="text-lg font-semibold">
-                    {run.progress.currentEpoch}
-                    <span className="text-sm font-normal text-muted-foreground">
-                      {" "}/ {run.progress.totalEpochs}
-                    </span>
-                  </dd>
-                </div>
-              </dl>
-            </CardContent>
-          </Card>
+          <section className="space-y-3">
+            <h2 className="section-label">Progress</h2>
+            <dl className="grid grid-cols-2 gap-y-5 border-y border-border/70 text-sm sm:grid-cols-4 sm:divide-x sm:divide-border/70">
+              <div className="py-4 pr-4 sm:px-8 sm:first:pl-0">
+                <dt className="text-xs text-muted-foreground">Images</dt>
+                <dd className="text-2xl font-semibold tracking-tight tabular-nums">
+                  {run.progress.imagesGenerated.toLocaleString()}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {" "}/ {run.progress.imagesTotal.toLocaleString()}
+                  </span>
+                </dd>
+              </div>
+              <div className="py-4 pr-4 sm:px-8">
+                <dt className="text-xs text-muted-foreground">Masks accepted</dt>
+                <dd className="text-2xl font-semibold tracking-tight text-emerald-500 tabular-nums">
+                  {run.progress.masksAccepted.toLocaleString()}
+                </dd>
+              </div>
+              <div className="py-4 pr-4 sm:px-8">
+                <dt className="text-xs text-muted-foreground">Masks rejected</dt>
+                <dd className="text-2xl font-semibold tracking-tight text-orange-400 tabular-nums">
+                  {run.progress.masksRejected.toLocaleString()}
+                </dd>
+              </div>
+              <div className="py-4 pr-4 sm:px-8">
+                <dt className="text-xs text-muted-foreground">Epoch</dt>
+                <dd className="text-2xl font-semibold tracking-tight tabular-nums">
+                  {run.progress.currentEpoch}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {" "}/ {run.progress.totalEpochs}
+                  </span>
+                </dd>
+              </div>
+            </dl>
+          </section>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-8 xl:border-l xl:border-border/70 xl:pl-8">
           <VramCard />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Agent swarm</CardTitle>
-              <CardDescription>
+          <section className="space-y-3">
+            <div className="space-y-1">
+              <h2 className="section-label">Agent swarm</h2>
+              <p className="text-sm text-muted-foreground">
                 {run.path === "byod"
                   ? "BYOD runs skip prompt expansion and synthesis"
                   : "Five agents, zero human intervention"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {agents ? (
-                <AgentRoster agents={agents} />
-              ) : (
-                <Skeleton className="h-48 w-full" />
-              )}
-            </CardContent>
-          </Card>
+              </p>
+            </div>
+            {agents ? (
+              <AgentRoster agents={agents} />
+            ) : (
+              <Skeleton className="h-48 w-full" />
+            )}
+          </section>
 
           {pro && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Configuration</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <dl className="space-y-2 text-sm">
-                {run.source.path === "synthetic" ? (
-                  <>
-                    <div>
-                      <dt className="text-muted-foreground">Use case</dt>
-                      <dd className="mt-0.5 font-mono text-xs">
-                        {run.source.useCase}
-                      </dd>
-                    </div>
-                    <div className="flex justify-between">
-                      <dt className="text-muted-foreground">Generator</dt>
-                      <dd className="font-mono text-xs uppercase">
-                        {run.source.generator}
-                      </dd>
-                    </div>
-                    <div className="flex justify-between">
-                      <dt className="text-muted-foreground">Guidance scale</dt>
-                      <dd>{run.source.randomization.guidanceScale}</dd>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex justify-between">
-                      <dt className="text-muted-foreground">Archive</dt>
-                      <dd className="font-mono text-xs">
-                        {run.source.archiveName}
-                      </dd>
-                    </div>
-                    <div className="flex justify-between">
-                      <dt className="text-muted-foreground">Images</dt>
-                      <dd>{run.source.imageCount.toLocaleString()}</dd>
-                    </div>
-                  </>
-                )}
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Classes</dt>
-                  <dd className="font-mono text-xs">
-                    {run.targetClasses.join(", ")}
-                  </dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Architecture</dt>
-                  <dd className="font-mono text-xs uppercase">
-                    {run.training.architecture}
-                  </dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Epochs</dt>
-                  <dd>{run.training.epochs}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Device</dt>
-                  <dd className="font-mono text-xs">{run.training.device}</dd>
-                </div>
-                {run.costEstimateUsd !== undefined && (
-                  <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Est. cost</dt>
-                    <dd>${run.costEstimateUsd.toFixed(2)}</dd>
+          <section className="space-y-3">
+            <h2 className="section-label">Configuration</h2>
+            <dl className="divide-y divide-border/50 text-sm">
+              {run.source.path === "synthetic" ? (
+                <>
+                  <div className="py-2">
+                    <dt className="text-muted-foreground">Use case</dt>
+                    <dd className="mt-0.5 font-mono text-xs">
+                      {run.source.useCase}
+                    </dd>
                   </div>
-                )}
-              </dl>
-            </CardContent>
-          </Card>
+                  <div className="flex justify-between py-2">
+                    <dt className="text-muted-foreground">Generator</dt>
+                    <dd className="font-mono text-xs uppercase">
+                      {run.source.generator}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <dt className="text-muted-foreground">Guidance scale</dt>
+                    <dd>{run.source.randomization.guidanceScale}</dd>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-between py-2">
+                    <dt className="text-muted-foreground">Archive</dt>
+                    <dd className="font-mono text-xs">
+                      {run.source.archiveName}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <dt className="text-muted-foreground">Images</dt>
+                    <dd>{run.source.imageCount.toLocaleString()}</dd>
+                  </div>
+                </>
+              )}
+              <div className="flex justify-between py-2">
+                <dt className="text-muted-foreground">Classes</dt>
+                <dd className="font-mono text-xs">
+                  {run.targetClasses.join(", ")}
+                </dd>
+              </div>
+              <div className="flex justify-between py-2">
+                <dt className="text-muted-foreground">Architecture</dt>
+                <dd className="font-mono text-xs uppercase">
+                  {run.training.architecture}
+                </dd>
+              </div>
+              <div className="flex justify-between py-2">
+                <dt className="text-muted-foreground">Epochs</dt>
+                <dd>{run.training.epochs}</dd>
+              </div>
+              <div className="flex justify-between py-2">
+                <dt className="text-muted-foreground">Device</dt>
+                <dd className="font-mono text-xs">{run.training.device}</dd>
+              </div>
+              {run.costEstimateUsd !== undefined && (
+                <div className="flex justify-between py-2">
+                  <dt className="text-muted-foreground">Est. cost</dt>
+                  <dd>${run.costEstimateUsd.toFixed(2)}</dd>
+                </div>
+              )}
+            </dl>
+          </section>
           )}
         </div>
       </div>

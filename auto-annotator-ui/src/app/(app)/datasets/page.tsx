@@ -8,13 +8,6 @@ import { HelpTip } from "@/components/shared/help-tip";
 import { StartRunDialog } from "@/components/datasets/start-run-dialog";
 import { UploadDropzone } from "@/components/datasets/upload-dropzone";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api/client";
@@ -29,91 +22,82 @@ const statusLabel: Record<Dataset["status"], string> = {
   ready: "Ready",
 };
 
-function DatasetCard({ dataset }: { dataset: Dataset }) {
+/** Open row (no card): the library reads as one divided list. */
+function DatasetRow({ dataset }: { dataset: Dataset }) {
   const labeledPct =
     dataset.imageCount === 0
       ? 0
       : Math.round((dataset.labeledCount / dataset.imageCount) * 100);
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-start justify-between gap-2">
-          <div className="space-y-1.5">
-            <CardTitle className="font-mono text-sm">
-              <Link
-                href={`/datasets/${dataset.id}`}
-                className="hover:underline"
-              >
-                {dataset.name}
-              </Link>
-            </CardTitle>
-            <CardDescription>
-              {dataset.imageCount.toLocaleString()} images ·{" "}
-              {(dataset.sizeMb / 1024).toFixed(1)} GB ·{" "}
-              {new Date(dataset.createdAt).toLocaleDateString()}
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Badge variant="secondary">
-              {dataset.origin === "synthetic" ? "Synthetic" : "BYOD"}
-            </Badge>
-            {dataset.importedLabels && (
-              <Badge variant="outline" className="font-mono text-xs uppercase">
-                {dataset.importedLabels.format} labels
-              </Badge>
-            )}
-            {dataset.videoFrameCount ? (
-              <Badge variant="outline" className="text-xs">
-                video · {dataset.videoFrameCount} frames
-              </Badge>
-            ) : null}
-            <Badge variant={dataset.status === "ready" ? "default" : "outline"}>
-              {statusLabel[dataset.status]}
-            </Badge>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Progress value={labeledPct} className="h-1.5" />
-          <span className="w-24 text-right text-xs text-muted-foreground">
-            {labeledPct}% labeled
-          </span>
-        </div>
-        {dataset.classes.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5">
-            {dataset.classes.map((cls) => (
-              <Badge
-                key={cls.id}
-                variant="outline"
-                className="gap-1.5 font-mono text-xs font-normal"
-              >
-                <span
-                  className="size-2 rounded-full"
-                  style={{ backgroundColor: cls.color }}
-                />
-                {cls.name}
-                <span className="text-muted-foreground">
-                  {cls.instanceCount.toLocaleString()}
-                </span>
-              </Badge>
-            ))}
-          </div>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            No labels yet — launch a run to let the agents annotate it.
-          </p>
+    <div className="space-y-3 py-5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <Link
+          href={`/datasets/${dataset.id}`}
+          className="font-mono text-sm font-semibold hover:underline"
+        >
+          {dataset.name}
+        </Link>
+        <Badge variant="secondary">
+          {dataset.origin === "synthetic" ? "Synthetic" : "BYOD"}
+        </Badge>
+        {dataset.importedLabels && (
+          <Badge variant="outline" className="font-mono text-xs uppercase">
+            {dataset.importedLabels.format} labels
+          </Badge>
         )}
-        {/* Plain uploads launch a labeling run; archives that shipped their
-            own labels (status "curating") launch an AUDIT run — the dialog
-            handles both, so both must offer it. */}
-        {(dataset.status === "unlabeled" ||
-          (dataset.status === "curating" && !!dataset.importedLabels)) && (
-          <StartRunDialog dataset={dataset} />
-        )}
-      </CardContent>
-    </Card>
+        {dataset.videoFrameCount ? (
+          <Badge variant="outline" className="text-xs">
+            video · {dataset.videoFrameCount} frames
+          </Badge>
+        ) : null}
+        <Badge variant={dataset.status === "ready" ? "default" : "outline"}>
+          {statusLabel[dataset.status]}
+        </Badge>
+        <span className="ml-auto text-xs text-muted-foreground">
+          {dataset.imageCount.toLocaleString()} images ·{" "}
+          {(dataset.sizeMb / 1024).toFixed(1)} GB ·{" "}
+          {new Date(dataset.createdAt).toLocaleDateString()}
+        </span>
+      </div>
+      <div className="flex max-w-lg items-center gap-2">
+        <Progress value={labeledPct} className="h-1.5" />
+        <span className="w-24 shrink-0 text-right text-xs text-muted-foreground">
+          {labeledPct}% labeled
+        </span>
+      </div>
+      {dataset.classes.length > 0 ? (
+        <div className="flex flex-wrap gap-1.5">
+          {dataset.classes.map((cls) => (
+            <Badge
+              key={cls.id}
+              variant="outline"
+              className="gap-1.5 font-mono text-xs font-normal"
+            >
+              <span
+                className="size-2 rounded-full"
+                style={{ backgroundColor: cls.color }}
+              />
+              {cls.name}
+              <span className="text-muted-foreground">
+                {cls.instanceCount.toLocaleString()}
+              </span>
+            </Badge>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          No labels yet — launch a run to let the agents annotate it.
+        </p>
+      )}
+      {/* Plain uploads launch a labeling run; archives that shipped their
+          own labels (status "curating") launch an AUDIT run — the dialog
+          handles both, so both must offer it. */}
+      {(dataset.status === "unlabeled" ||
+        (dataset.status === "curating" && !!dataset.importedLabels)) && (
+        <StartRunDialog dataset={dataset} />
+      )}
+    </div>
   );
 }
 
@@ -167,13 +151,13 @@ export default function DatasetsPage() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="divide-y divide-border/60 border-t border-border/60">
             {!datasets
               ? Array.from({ length: 2 }, (_, i) => (
-                  <Skeleton key={i} className="h-44 w-full" />
+                  <Skeleton key={i} className="my-4 h-32 w-full" />
                 ))
               : datasets.map((dataset) => (
-                  <DatasetCard key={dataset.id} dataset={dataset} />
+                  <DatasetRow key={dataset.id} dataset={dataset} />
                 ))}
           </div>
         )}

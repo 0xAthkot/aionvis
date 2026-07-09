@@ -92,11 +92,11 @@ export default function RunsPage() {
           </Button>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border bg-card shadow-sm shadow-black/10">
+        <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead>Run</TableHead>
+              <TableRow className="border-border/70 hover:bg-transparent">
+                <TableHead className="pl-0">Run</TableHead>
                 <TableHead>{simple ? "Source" : "Path"}</TableHead>
                 <TableHead>{simple ? "Doing now" : "Stage"}</TableHead>
                 <TableHead className="w-44">Progress</TableHead>
@@ -106,8 +106,8 @@ export default function RunsPage() {
             </TableHeader>
             <TableBody>
               {data.items.map((run) => (
-                <TableRow key={run.id}>
-                  <TableCell>
+                <TableRow key={run.id} className="border-border/60">
+                  <TableCell className="py-3.5 pl-0">
                     <Link
                       href={`/runs/${run.id}`}
                       className="font-medium hover:underline"

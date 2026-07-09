@@ -11,13 +11,6 @@ import { NewProjectDialog } from "@/components/shared/new-project-dialog";
 import { TagInput } from "@/components/shared/tag-input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -219,16 +212,18 @@ export default function FoundryPage() {
         description="Path A — describe the objects once; the agent swarm generates, labels, verifies and trains without further input."
       />
 
-      <div className="grid items-start gap-6 lg:grid-cols-[1fr_320px]">
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>1 · Project &amp; objective</CardTitle>
-              <CardDescription>
+      <div className="grid items-start gap-8 lg:grid-cols-[1fr_320px]">
+        <div className="divide-y divide-border/70">
+          <section className="space-y-5 py-8 first:pt-0">
+            <div className="space-y-1">
+              <h2 className="text-base font-semibold tracking-tight">
+                1 · Project &amp; objective
+              </h2>
+              <p className="text-sm text-muted-foreground">
                 What should the final model detect?
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </p>
+            </div>
+            <div className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Project</Label>
@@ -266,19 +261,21 @@ export default function FoundryPage() {
                   onChange={setTargetClasses}
                 />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </section>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>2 · Use case</CardTitle>
-              <CardDescription>
+          <section className="space-y-5 py-8">
+            <div className="space-y-1">
+              <h2 className="text-base font-semibold tracking-tight">
+                2 · Use case
+              </h2>
+              <p className="text-sm text-muted-foreground">
                 Say what the model is for — the Prompt Agent infers the
                 deployment viewpoint and environment, then designs{" "}
                 {imageCount.toLocaleString()} domain-randomized scenes itself.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </p>
+            </div>
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="use-case">What is this model for?</Label>
                 <Textarea
@@ -406,17 +403,19 @@ export default function FoundryPage() {
                   </p>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </section>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>3 · Domain randomization</CardTitle>
-              <CardDescription>
+          <section className="space-y-5 py-8">
+            <div className="space-y-1">
+              <h2 className="text-base font-semibold tracking-tight">
+                3 · Domain randomization
+              </h2>
+              <p className="text-sm text-muted-foreground">
                 Higher variation → more robust models, harder synthesis.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
+              </p>
+            </div>
+            <div className="space-y-5">
               <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
                 <PercentSlider
                   id="lighting"
@@ -477,18 +476,20 @@ export default function FoundryPage() {
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </section>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>4 · Training</CardTitle>
-              <CardDescription>
+          <section className="space-y-5 py-8 last:pb-0">
+            <div className="space-y-1">
+              <h2 className="text-base font-semibold tracking-tight">
+                4 · Training
+              </h2>
+              <p className="text-sm text-muted-foreground">
                 The MLOps Agent triggers this after the Critic signs off the
                 dataset.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
+              </p>
+            </div>
+            <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Task</Label>
                 <Select
@@ -598,8 +599,8 @@ export default function FoundryPage() {
                   </SelectContent>
                 </Select>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </section>
         </div>
 
         <div className="lg:sticky lg:top-20">

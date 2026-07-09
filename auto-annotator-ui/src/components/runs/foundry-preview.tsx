@@ -2,13 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { api } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type { RunPreviewImage } from "@/lib/api/types";
@@ -36,25 +29,22 @@ export function FoundryPreview({
   if (!images?.length) return null;
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between gap-2">
-          <div className="space-y-1.5">
-            <CardTitle>Foundry output</CardTitle>
-            <CardDescription>
-              Synthetic images minted by the Synthesis Agent
-            </CardDescription>
-          </div>
-          <Badge variant="outline" className="gap-1.5 font-mono text-xs">
-            {active && images.length < imagesTotal && (
-              <span className="size-1.5 animate-pulse rounded-full bg-primary" />
-            )}
-            {images.length} / {imagesTotal}
-          </Badge>
+    <section className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="space-y-1">
+          <h2 className="section-label">Foundry output</h2>
+          <p className="text-sm text-muted-foreground">
+            Synthetic images minted by the Synthesis Agent
+          </p>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-8">
+        <Badge variant="outline" className="gap-1.5 font-mono text-xs">
+          {active && images.length < imagesTotal && (
+            <span className="size-1.5 animate-pulse rounded-full bg-primary" />
+          )}
+          {images.length} / {imagesTotal}
+        </Badge>
+      </div>
+      <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-8">
           {images.map((img, i) => (
             <div
               key={img.fileName}
@@ -74,8 +64,7 @@ export function FoundryPreview({
               )}
             </div>
           ))}
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

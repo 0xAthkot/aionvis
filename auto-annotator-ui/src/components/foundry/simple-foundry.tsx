@@ -7,13 +7,6 @@ import { HelpTip } from "@/components/shared/help-tip";
 import { NewProjectDialog } from "@/components/shared/new-project-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -156,17 +149,19 @@ export function SimpleFoundry() {
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>What is your model for?</CardTitle>
-          <CardDescription>
+      <div className="space-y-6">
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold tracking-tight">
+            What is your model for?
+          </h2>
+          <p className="text-sm leading-relaxed text-muted-foreground">
             Say the job in one sentence — &ldquo;my drone needs to detect
             rotten potatoes&rdquo;. The Prompt Agent works out the scenes,
             then the swarm generates the training data, labels it, checks
             its own work and trains the model. You do nothing else.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
+          </p>
+        </div>
+        <div className="space-y-5">
           <div className="space-y-2">
             <Label>Project</Label>
             <div className="flex gap-2">
@@ -447,8 +442,8 @@ export function SimpleFoundry() {
               {launch.isPending ? "Queueing…" : "Build my model"}
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <p className="text-center text-xs text-muted-foreground">
         Need the full control plane — architectures, randomization, epochs?{" "}

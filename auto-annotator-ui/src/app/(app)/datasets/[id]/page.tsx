@@ -10,13 +10,6 @@ import { DatasetAnalyticsPanel } from "@/components/datasets/dataset-analytics";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -189,27 +182,25 @@ export default function DatasetDetailPage({
         </p>
       </header>
 
-      <div className="grid items-start gap-6 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="space-y-1.5">
-                <CardTitle>Curation</CardTitle>
-                <CardDescription>
-                  Sample of {images.length} — accept or reject the Critic&apos;s
-                  work · {acceptRate}% accepted
-                </CardDescription>
-              </div>
-              <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
-                <TabsList>
-                  <TabsTrigger value="all">All</TabsTrigger>
-                  <TabsTrigger value="accepted">Accepted</TabsTrigger>
-                  <TabsTrigger value="rejected">Rejected</TabsTrigger>
-                </TabsList>
-              </Tabs>
+      <div className="grid items-start gap-x-10 gap-y-8 xl:grid-cols-3">
+        <section className="space-y-4 xl:col-span-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="space-y-1">
+              <h2 className="section-label">Curation</h2>
+              <p className="text-sm text-muted-foreground">
+                Sample of {images.length} — accept or reject the Critic&apos;s
+                work · {acceptRate}% accepted
+              </p>
             </div>
-          </CardHeader>
-          <CardContent>
+            <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
+              <TabsList>
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="accepted">Accepted</TabsTrigger>
+                <TabsTrigger value="rejected">Rejected</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+          <div>
             {!imagePage ? (
               <Skeleton className="h-72 w-full" />
             ) : filtered.length === 0 ? (
@@ -274,10 +265,12 @@ export default function DatasetDetailPage({
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </section>
 
-        <DatasetAnalyticsPanel datasetId={id} />
+        <div className="xl:border-l xl:border-border/70 xl:pl-8">
+          <DatasetAnalyticsPanel datasetId={id} />
+        </div>
       </div>
 
       <Dialog

@@ -6,14 +6,6 @@ import { Area, AreaChart, XAxis, YAxis } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
@@ -27,7 +19,7 @@ import { useTelemetry } from "@/hooks/use-telemetry";
 import { useUiModeStore } from "@/lib/stores/ui-mode";
 import { cn } from "@/lib/utils";
 
-/** Validated against the dark card surface (dataviz palette, dark steps). */
+/** Validated against the dark console surfaces (dataviz palette, dark steps). */
 const chartConfig = {
   vramUsedGb: { label: "VRAM used (GB)", color: "#3987e5" },
   gpuUtilPct: { label: "GPU utilization (%)", color: "#199e70" },
@@ -39,13 +31,15 @@ export function Sparkline({
   data,
   dataKey,
   domainMax,
+  className,
 }: {
   data: TelemetrySample[];
   dataKey: "vramUsedGb" | "gpuUtilPct";
   domainMax: number;
+  className?: string;
 }) {
   return (
-    <ChartContainer config={chartConfig} className="h-16 w-full">
+    <ChartContainer config={chartConfig} className={className ?? "h-16 w-full"}>
       <AreaChart data={data} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
         <defs>
           <linearGradient id={`fill-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
@@ -125,6 +119,7 @@ function TelemetryDetails({
           data={samples}
           dataKey="vramUsedGb"
           domainMax={latest.vramTotalGb}
+          className="h-20 w-full"
         />
       </div>
       <div className="space-y-1">
@@ -132,7 +127,12 @@ function TelemetryDetails({
           <p className="text-sm text-muted-foreground">GPU utilization</p>
           <p className="text-sm font-medium">{latest.gpuUtilPct}%</p>
         </div>
-        <Sparkline data={samples} dataKey="gpuUtilPct" domainMax={100} />
+        <Sparkline
+          data={samples}
+          dataKey="gpuUtilPct"
+          domainMax={100}
+          className="h-20 w-full"
+        />
       </div>
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>{latest.tempC}°C · {latest.powerW} W</span>
@@ -143,7 +143,7 @@ function TelemetryDetails({
         )}
       </div>
       {node?.residentModels && node.residentModels.length > 0 && (
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 border-t border-border/60 pt-4">
           <p className="text-xs text-muted-foreground">
             Resident swarm — models held in VRAM
           </p>
@@ -160,6 +160,7 @@ function TelemetryDetails({
   );
 }
 
+/** Open section (no card chrome) — the data sits directly on the page. */
 export function GpuFleetCard() {
   const simple = useUiModeStore((s) => s.mode) === "simple";
   const [expanded, setExpanded] = useState(false);
@@ -167,22 +168,24 @@ export function GpuFleetCard() {
   const showDetails = !simple || expanded;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-1.5">
-          {simple ? "Your GPU" : "GPU fleet"}
-          <HelpTip>
-            The graphics card that runs the agents. The bar shows how much of
-            its working memory (VRAM) is in use — details reveals the live
-            charts engineers see.
-          </HelpTip>
-        </CardTitle>
-        <CardDescription>
-          {node
-            ? `${node.gpu} · ${node.vramGb} GB · ${node.region}`
-            : "Loading node…"}
-        </CardDescription>
-        <CardAction className="flex items-center gap-2">
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="space-y-1">
+          <h2 className="section-label flex items-center gap-1.5">
+            {simple ? "Your GPU" : "GPU fleet"}
+            <HelpTip>
+              The graphics card that runs the agents. The bar shows how much
+              of its working memory (VRAM) is in use — details reveals the
+              live charts engineers see.
+            </HelpTip>
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {node
+              ? `${node.gpu} · ${node.vramGb} GB · ${node.region}`
+              : "Loading node…"}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
           {node && !simple && (
             <Badge variant="outline">ROCm {node.rocmVersion}</Badge>
           )}
@@ -210,9 +213,10 @@ export function GpuFleetCard() {
               />
             </Button>
           )}
-        </CardAction>
-      </CardHeader>
-      <CardContent className="space-y-5">
+        </div>
+      </div>
+
+      <div className="space-y-5">
         {!latest ? (
           <Skeleton className={showDetails ? "h-40 w-full" : "h-14 w-full"} />
         ) : !showDetails ? (
@@ -243,7 +247,7 @@ export function GpuFleetCard() {
         ) : (
           <TelemetryDetails node={node} samples={samples} latest={latest} />
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

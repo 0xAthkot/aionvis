@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Boxes, Images, Timer, type LucideIcon } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
@@ -16,6 +15,10 @@ interface Tile {
   hint: string;
 }
 
+/**
+ * Headline numbers as an open editorial strip — no boxes, just a hairline
+ * frame and typographic hierarchy.
+ */
 export function StatCards() {
   const simple = useUiModeStore((s) => s.mode) === "simple";
   const { data } = useQuery({
@@ -59,31 +62,32 @@ export function StatCards() {
     : null;
 
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-      {tiles
-        ? tiles.map((tile) => (
-            <Card key={tile.label}>
-              <CardContent className="space-y-1">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm text-muted-foreground">{tile.label}</p>
-                  <tile.icon className="size-4 text-muted-foreground/60" />
-                </div>
-                <p className="text-2xl font-semibold tracking-tight">
-                  {tile.value}
-                </p>
-                <p className="text-xs text-muted-foreground">{tile.hint}</p>
-              </CardContent>
-            </Card>
-          ))
-        : Array.from({ length: 4 }, (_, i) => (
-            <Card key={i}>
-              <CardContent className="space-y-2">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-7 w-14" />
-                <Skeleton className="h-3 w-24" />
-              </CardContent>
-            </Card>
-          ))}
+    <div className="grid grid-cols-2 gap-y-6 border-y border-border/70 lg:grid-cols-4 lg:divide-x lg:divide-border/70">
+      {(tiles ?? Array.from({ length: 4 }, () => null)).map((tile, i) => (
+        <div
+          key={tile?.label ?? i}
+          className="space-y-1.5 py-5 pr-4 lg:px-8 lg:first:pl-0"
+        >
+          {tile ? (
+            <>
+              <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                <tile.icon className="size-3.5 text-muted-foreground/70" />
+                {tile.label}
+              </p>
+              <p className="text-3xl font-semibold tracking-tight tabular-nums">
+                {tile.value}
+              </p>
+              <p className="text-xs text-muted-foreground">{tile.hint}</p>
+            </>
+          ) : (
+            <>
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-8 w-16" />
+              <Skeleton className="h-3 w-28" />
+            </>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

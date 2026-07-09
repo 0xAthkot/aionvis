@@ -7,13 +7,6 @@ import { HelpTip } from "@/components/shared/help-tip";
 import { ConnectNodeCard } from "@/components/shared/connect-node-card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
@@ -123,118 +116,112 @@ export default function HardwarePage() {
         <Skeleton className="h-96 w-full" />
       ) : (
         <>
-          <Card>
-            <CardHeader>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-lg bg-muted">
-                    <Cpu className="size-5 text-muted-foreground" />
-                  </div>
-                  <div className="space-y-0.5">
-                    <CardTitle>{node.name}</CardTitle>
-                    <CardDescription>
-                      {node.gpu} · {node.vramGb} GB HBM3 · {node.region} ·{" "}
-                      AMD Developer Cloud
-                    </CardDescription>
-                  </div>
+          <section className="space-y-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 items-center justify-center rounded-lg bg-muted">
+                  <Cpu className="size-5 text-muted-foreground" />
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Badge variant="outline">ROCm {node.rocmVersion}</Badge>
-                  <Badge variant="outline">PyTorch {node.pytorchVersion}</Badge>
-                  <Badge
-                    variant={node.status === "offline" ? "secondary" : "default"}
-                    className="capitalize"
-                  >
-                    {node.status}
-                  </Badge>
+                <div className="space-y-0.5">
+                  <h2 className="text-lg font-semibold tracking-tight">
+                    {node.name}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {node.gpu} · {node.vramGb} GB HBM3 · {node.region} ·{" "}
+                    AMD Developer Cloud
+                  </p>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
-                <div>
-                  <dt className="text-muted-foreground">VRAM</dt>
-                  <dd className="text-lg font-semibold tabular-nums">
-                    {latest.vramUsedGb.toFixed(1)}
+              <div className="flex items-center gap-1.5">
+                <Badge variant="outline">ROCm {node.rocmVersion}</Badge>
+                <Badge variant="outline">PyTorch {node.pytorchVersion}</Badge>
+                <Badge
+                  variant={node.status === "offline" ? "secondary" : "default"}
+                  className="capitalize"
+                >
+                  {node.status}
+                </Badge>
+              </div>
+            </div>
+            <dl className="grid grid-cols-2 gap-y-5 border-y border-border/70 sm:grid-cols-4 sm:divide-x sm:divide-border/70">
+              <div className="py-4 pr-4 sm:px-8 sm:first:pl-0">
+                <dt className="text-xs text-muted-foreground">VRAM</dt>
+                <dd className="text-2xl font-semibold tracking-tight tabular-nums">
+                  {latest.vramUsedGb.toFixed(1)}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {" "}/ {latest.vramTotalGb} GB
+                  </span>
+                </dd>
+              </div>
+              <div className="py-4 pr-4 sm:px-8">
+                <dt className="text-xs text-muted-foreground">Utilization</dt>
+                <dd className="text-2xl font-semibold tracking-tight tabular-nums">
+                  {latest.gpuUtilPct}%
+                </dd>
+              </div>
+              <div className="py-4 pr-4 sm:px-8">
+                <dt className="text-xs text-muted-foreground">Temperature</dt>
+                <dd className="text-2xl font-semibold tracking-tight tabular-nums">
+                  {latest.tempC}°C
+                </dd>
+              </div>
+              <div className="py-4 pr-4 sm:px-8">
+                <dt className="text-xs text-muted-foreground">Power</dt>
+                <dd className="text-2xl font-semibold tracking-tight tabular-nums">
+                  {latest.powerW} W
+                  {latest.throughput && (
                     <span className="text-sm font-normal text-muted-foreground">
-                      {" "}/ {latest.vramTotalGb} GB
+                      {" "}· {latest.throughput.value}{" "}
+                      {latest.throughput.kind === "it_per_s" ? "it/s" : "img/s"}
                     </span>
-                  </dd>
+                  )}
+                </dd>
+              </div>
+            </dl>
+            {node.residentModels && node.residentModels.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-sm text-muted-foreground">
+                  Resident swarm — every agent model held in VRAM at once,
+                  so the pipeline streams instead of taking turns
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {node.residentModels.map((m) => (
+                    <Badge key={m} variant="outline" className="font-normal">
+                      {m}
+                    </Badge>
+                  ))}
                 </div>
-                <div>
-                  <dt className="text-muted-foreground">Utilization</dt>
-                  <dd className="text-lg font-semibold tabular-nums">
-                    {latest.gpuUtilPct}%
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Temperature</dt>
-                  <dd className="text-lg font-semibold tabular-nums">
-                    {latest.tempC}°C
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Power</dt>
-                  <dd className="text-lg font-semibold tabular-nums">
-                    {latest.powerW} W
-                    {latest.throughput && (
-                      <span className="text-sm font-normal text-muted-foreground">
-                        {" "}· {latest.throughput.value}{" "}
-                        {latest.throughput.kind === "it_per_s" ? "it/s" : "img/s"}
-                      </span>
-                    )}
-                  </dd>
-                </div>
-              </dl>
-              {node.residentModels && node.residentModels.length > 0 && (
-                <div className="mt-4 space-y-1.5 border-t pt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Resident swarm — every agent model held in VRAM at once,
-                    so the pipeline streams instead of taking turns
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {node.residentModels.map((m) => (
-                      <Badge key={m} variant="outline" className="font-normal">
-                        {m}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            )}
+          </section>
 
-          <div className="grid items-start gap-6 xl:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>VRAM utilization</CardTitle>
-                <CardDescription>
+          <div className="grid items-start gap-x-10 gap-y-8 xl:grid-cols-2">
+            <section className="space-y-3">
+              <div className="space-y-1">
+                <h3 className="section-label">VRAM utilization</h3>
+                <p className="text-sm text-muted-foreground">
                   Watch it flush at hip.empty_cache() between pipeline stages
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <TelemetryChart
-                  data={samples}
-                  dataKey="vramUsedGb"
-                  domainMax={latest.vramTotalGb}
-                />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>GPU utilization</CardTitle>
-                <CardDescription>
+                </p>
+              </div>
+              <TelemetryChart
+                data={samples}
+                dataKey="vramUsedGb"
+                domainMax={latest.vramTotalGb}
+              />
+            </section>
+            <section className="space-y-3">
+              <div className="space-y-1">
+                <h3 className="section-label">GPU utilization</h3>
+                <p className="text-sm text-muted-foreground">
                   Compute load across synthesis, SAM 3 and training
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <TelemetryChart
-                  data={samples}
-                  dataKey="gpuUtilPct"
-                  domainMax={100}
-                />
-              </CardContent>
-            </Card>
+                </p>
+              </div>
+              <TelemetryChart
+                data={samples}
+                dataKey="gpuUtilPct"
+                domainMax={100}
+              />
+            </section>
           </div>
 
         </>

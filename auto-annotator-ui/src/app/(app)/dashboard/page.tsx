@@ -12,7 +12,6 @@ import { GpuFleetCard } from "@/components/dashboard/gpu-fleet-card";
 import { RecentRuns } from "@/components/dashboard/recent-runs";
 import { StatCards } from "@/components/dashboard/stat-cards";
 import { PageHeader } from "@/components/layout/page-header";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useUiModeStore } from "@/lib/stores/ui-mode";
 
@@ -39,30 +38,28 @@ const STEPS = [
 
 function GettingStarted() {
   return (
-    <Card>
-      <CardContent className="grid gap-2 sm:grid-cols-3">
-        {STEPS.map((s) => (
-          <Link
-            key={s.title}
-            href={s.href}
-            className="group/step -m-1 flex gap-3 rounded-lg p-3 transition-colors hover:bg-accent/60"
-          >
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover/step:bg-primary group-hover/step:text-primary-foreground">
-              <s.icon className="size-4.5" />
-            </div>
-            <div className="space-y-1">
-              <p className="flex items-center gap-1 text-sm font-medium">
-                {s.title}
-                <ArrowUpRight className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover/step:opacity-100" />
-              </p>
-              <p className="text-xs leading-relaxed text-muted-foreground">
-                {s.body}
-              </p>
-            </div>
-          </Link>
-        ))}
-      </CardContent>
-    </Card>
+    <div className="grid gap-6 sm:grid-cols-3 sm:gap-2">
+      {STEPS.map((s) => (
+        <Link
+          key={s.title}
+          href={s.href}
+          className="group/step -m-2 flex gap-3 rounded-xl p-3 transition-colors hover:bg-accent/50"
+        >
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover/step:bg-primary group-hover/step:text-primary-foreground">
+            <s.icon className="size-4.5" />
+          </div>
+          <div className="space-y-1">
+            <p className="flex items-center gap-1 text-sm font-medium">
+              {s.title}
+              <ArrowUpRight className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover/step:opacity-100" />
+            </p>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {s.body}
+            </p>
+          </div>
+        </Link>
+      ))}
+    </div>
   );
 }
 
@@ -92,11 +89,13 @@ export default function DashboardPage() {
       {/* Simple mode leads with "what do I do next"; Pro leads with the fleet. */}
       {simple && <GettingStarted />}
       <StatCards />
-      <div className="grid items-start gap-4 lg:grid-cols-3">
+      <div className="grid items-start gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <GpuFleetCard />
         </div>
-        <RecentRuns />
+        <div className="lg:border-l lg:border-border/70 lg:pl-8">
+          <RecentRuns />
+        </div>
       </div>
     </main>
   );
