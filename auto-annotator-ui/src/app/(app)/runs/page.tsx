@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { FlaskConical } from "lucide-react";
-import { runStatusVariant } from "@/components/dashboard/recent-runs";
 import { PageHeader } from "@/components/layout/page-header";
 import { HelpTip } from "@/components/shared/help-tip";
+import { RunStatusChip } from "@/components/shared/status-chip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -32,7 +32,7 @@ export default function RunsPage() {
   });
 
   return (
-    <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
+    <main className="stagger-children mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
       <PageHeader
         title={
           <span className="flex items-center gap-2">
@@ -137,16 +137,17 @@ export default function RunsPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Progress value={run.progress.pct} className="h-1.5" />
+                      <Progress
+                        value={run.progress.pct}
+                        className="progress-glow h-1.5"
+                      />
                       <span className="w-9 text-right text-xs text-muted-foreground">
                         {run.progress.pct}%
                       </span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={runStatusVariant[run.status]}>
-                      {simple ? SIMPLE_STATUS[run.status] : run.status}
-                    </Badge>
+                    <RunStatusChip status={run.status} simple={simple} />
                   </TableCell>
                   <TableCell className="text-right text-xs text-muted-foreground">
                     {new Date(run.createdAt).toLocaleString()}

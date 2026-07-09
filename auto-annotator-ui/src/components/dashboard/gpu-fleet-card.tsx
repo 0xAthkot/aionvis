@@ -46,7 +46,7 @@ export function Sparkline({
             <stop
               offset="0%"
               stopColor={`var(--color-${dataKey})`}
-              stopOpacity={0.25}
+              stopOpacity={0.38}
             />
             <stop
               offset="100%"
@@ -73,7 +73,7 @@ export function Sparkline({
           type="monotone"
           dataKey={dataKey}
           stroke={`var(--color-${dataKey})`}
-          strokeWidth={2}
+          strokeWidth={2.5}
           fill={`url(#fill-${dataKey})`}
           dot={false}
           isAnimationActive={false}

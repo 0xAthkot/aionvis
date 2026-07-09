@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Boxes, CheckCircle2, Database, OctagonX } from "lucide-react";
 import { toast } from "sonner";
-import { runStatusVariant } from "@/components/dashboard/recent-runs";
+import { RunStatusChip } from "@/components/shared/status-chip";
 import { AgentRoster } from "@/components/runs/agent-roster";
 import { FoundryPreview } from "@/components/runs/foundry-preview";
 import { LogTerminal } from "@/components/runs/log-terminal";
@@ -22,7 +22,6 @@ import {
 import { api, apiPost } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type { AgentInstance, LogEvent, PipelineRun } from "@/lib/api/types";
-import { SIMPLE_STATUS } from "@/lib/simple-language";
 import { useUiModeStore } from "@/lib/stores/ui-mode";
 import { useRunStream } from "@/hooks/use-run-stream";
 
@@ -97,9 +96,7 @@ export default function RunDetailPage({
             <h1 className="text-2xl font-semibold tracking-tight">
               {run.name}
             </h1>
-            <Badge variant={runStatusVariant[run.status]}>
-              {pro ? run.status : SIMPLE_STATUS[run.status]}
-            </Badge>
+            <RunStatusChip status={run.status} simple={!pro} />
             <Badge variant="secondary">
               {run.path === "synthetic"
                 ? pro

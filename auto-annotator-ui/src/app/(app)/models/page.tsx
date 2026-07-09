@@ -60,17 +60,17 @@ function ModelRow({
         <Badge variant="outline" className="font-mono uppercase">
           {model.architecture}
         </Badge>
-        <Badge
-          variant={
+        <span
+          className={`chip ${
             model.status === "ready"
-              ? "default"
-              : model.status === "archived"
-                ? "secondary"
-                : "outline"
-          }
+              ? "chip-success"
+              : model.status === "training"
+                ? "chip-accent"
+                : "chip-neutral"
+          }`}
         >
           {model.status}
-        </Badge>
+        </span>
         <Button variant="ghost" size="sm" className="ml-auto" asChild>
           <Link href={`/models/${model.id}`}>
             Metrics &amp; export <ArrowRight className="size-3.5" />
@@ -131,7 +131,7 @@ export default function ModelsPage() {
     );
 
   return (
-    <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
+    <main className="stagger-children mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
       <PageHeader
         title={
           <span className="flex items-center gap-2">

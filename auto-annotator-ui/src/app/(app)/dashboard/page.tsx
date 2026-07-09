@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowUpRight,
   FlaskConical,
@@ -13,6 +14,10 @@ import { RecentRuns } from "@/components/dashboard/recent-runs";
 import { StatCards } from "@/components/dashboard/stat-cards";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api/client";
+import { endpoints } from "@/lib/api/endpoints";
+import type { Paginated, PipelineRun } from "@/lib/api/types";
+import { SIMPLE_STAGE } from "@/lib/simple-language";
 import { useUiModeStore } from "@/lib/stores/ui-mode";
 
 const STEPS = [
@@ -67,14 +72,38 @@ export default function DashboardPage() {
   const mode = useUiModeStore((s) => s.mode);
   const simple = mode === "simple";
 
+  // Live one-line status: what the swarm is doing this second. Shares the
+  // "runs" query with RecentRuns, so it costs no extra request.
+  const { data: runs } = useQuery({
+    queryKey: ["runs"],
+    queryFn: () => api<Paginated<PipelineRun>>(endpoints.runs.list()),
+  });
+  const active = runs?.items.find((r) => r.status === "running");
+  const summary = !runs
+    ? simple
+      ? "Checking on the swarm…"
+      : "Loading fleet state…"
+    : active
+      ? `${active.name} — ${
+          simple
+            ? SIMPLE_STAGE[active.stage].toLowerCase()
+            : active.stage.replace(/_/g, " ")
+        } · ${active.progress.pct}%`
+      : simple
+        ? "The swarm is idle — say the job and it builds your next model."
+        : "Fleet idle — launch a run to put the swarm to work.";
+
   return (
-    <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
+    <main className="stagger-children mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
       <PageHeader
         title="Dashboard"
         description={
-          simple
-            ? "What the agent swarm is doing right now — and your shortcut to a new model."
-            : "Fleet overview for Aegis Robotics"
+          <span className="flex items-center gap-2">
+            {active && (
+              <span className="size-1.5 shrink-0 animate-pulse rounded-full bg-primary motion-reduce:animate-none" />
+            )}
+            {summary}
+          </span>
         }
         actions={
           <Button asChild size="lg" className="shadow-md shadow-primary/25">

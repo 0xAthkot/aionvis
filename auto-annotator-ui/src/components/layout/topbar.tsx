@@ -127,7 +127,7 @@ export function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/85 px-4 backdrop-blur-md">
+    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl">
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mr-1 h-4!" />
       <h1 className="text-sm font-medium">{titleForPath(pathname)}</h1>
@@ -137,7 +137,7 @@ export function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
         <Button
           variant="outline"
           size="sm"
-          className="gap-2 text-muted-foreground"
+          className="gap-2 rounded-full text-muted-foreground"
           onClick={onOpenPalette}
         >
           <Search className="size-3.5" />

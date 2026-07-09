@@ -22,6 +22,14 @@ const statusLabel: Record<Dataset["status"], string> = {
   ready: "Ready",
 };
 
+const statusChip: Record<Dataset["status"], string> = {
+  uploading: "chip-neutral",
+  unlabeled: "chip-warning",
+  labeling: "chip-accent",
+  curating: "chip-warning",
+  ready: "chip-success",
+};
+
 /** Open row (no card): the library reads as one divided list. */
 function DatasetRow({ dataset }: { dataset: Dataset }) {
   const labeledPct =
@@ -51,9 +59,9 @@ function DatasetRow({ dataset }: { dataset: Dataset }) {
             video · {dataset.videoFrameCount} frames
           </Badge>
         ) : null}
-        <Badge variant={dataset.status === "ready" ? "default" : "outline"}>
+        <span className={`chip ${statusChip[dataset.status]}`}>
           {statusLabel[dataset.status]}
-        </Badge>
+        </span>
         <span className="ml-auto text-xs text-muted-foreground">
           {dataset.imageCount.toLocaleString()} images ·{" "}
           {(dataset.sizeMb / 1024).toFixed(1)} GB ·{" "}
@@ -61,7 +69,7 @@ function DatasetRow({ dataset }: { dataset: Dataset }) {
         </span>
       </div>
       <div className="flex max-w-lg items-center gap-2">
-        <Progress value={labeledPct} className="h-1.5" />
+        <Progress value={labeledPct} className="progress-glow h-1.5" />
         <span className="w-24 shrink-0 text-right text-xs text-muted-foreground">
           {labeledPct}% labeled
         </span>
@@ -108,7 +116,7 @@ export default function DatasetsPage() {
   });
 
   return (
-    <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
+    <main className="stagger-children mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
       <PageHeader
         title={
           <span className="flex items-center gap-2">

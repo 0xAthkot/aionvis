@@ -97,9 +97,17 @@ export default function ModelDetailPage({
                 {model.task === "obb" ? "Rotated boxes" : model.task}
               </Badge>
             )}
-            <Badge variant={model.status === "ready" ? "default" : "secondary"}>
+            <span
+              className={`chip ${
+                model.status === "ready"
+                  ? "chip-success"
+                  : model.status === "training"
+                    ? "chip-accent"
+                    : "chip-neutral"
+              }`}
+            >
               {model.status}
-            </Badge>
+            </span>
           </div>
           <div className="flex gap-2">
             <DropdownMenu>

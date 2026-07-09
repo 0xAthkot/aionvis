@@ -36,7 +36,7 @@ function TelemetryChart({
       <AreaChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: -16 }}>
         <defs>
           <linearGradient id={`hw-fill-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={`var(--color-${dataKey})`} stopOpacity={0.25} />
+            <stop offset="0%" stopColor={`var(--color-${dataKey})`} stopOpacity={0.38} />
             <stop offset="100%" stopColor={`var(--color-${dataKey})`} stopOpacity={0} />
           </linearGradient>
         </defs>
@@ -79,7 +79,7 @@ function TelemetryChart({
           type="monotone"
           dataKey={dataKey}
           stroke={`var(--color-${dataKey})`}
-          strokeWidth={2}
+          strokeWidth={2.5}
           fill={`url(#hw-fill-${dataKey})`}
           dot={false}
           isAnimationActive={false}
@@ -93,7 +93,7 @@ export default function HardwarePage() {
   const { node, samples, latest } = useTelemetry(150);
 
   return (
-    <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
+    <main className="stagger-children mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
       <PageHeader
         title={
           <span className="flex items-center gap-2">

@@ -74,7 +74,7 @@ export function StatCards() {
                 <tile.icon className="size-3.5 text-muted-foreground/70" />
                 {tile.label}
               </p>
-              <p className="text-3xl font-semibold tracking-tight tabular-nums">
+              <p className="text-4xl font-semibold tracking-[-0.02em] tabular-nums">
                 {tile.value}
               </p>
               <p className="text-xs text-muted-foreground">{tile.hint}</p>

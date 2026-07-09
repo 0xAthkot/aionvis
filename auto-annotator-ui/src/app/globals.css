@@ -168,9 +168,17 @@
     @apply bg-background text-foreground;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Linear-style compression: slightly tight body tracking makes the
+       whole UI read machined instead of default. */
+    letter-spacing: -0.011em;
   }
   html {
     @apply font-sans;
+  }
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
   }
   /* Quiet, theme-matched scrollbars in the console's scroll regions. */
   ::-webkit-scrollbar {
@@ -208,4 +216,66 @@
 /* Card-shaped links/buttons that should read as clickable. */
 @utility interactive-card {
   @apply transition-all duration-200 hover:-translate-y-0.5 hover:ring-foreground/20 hover:shadow-lg hover:shadow-black/20 motion-reduce:transition-none motion-reduce:hover:translate-y-0;
+}
+
+/* Tinted status chips (Linear-style "-soft" tokens): translucent color-
+   matched fill + hairline ring, legible on the dark base. Compose as
+   `chip chip-success` etc. */
+@utility chip {
+  @apply inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-medium whitespace-nowrap ring-1 ring-inset;
+}
+@utility chip-success {
+  @apply bg-emerald-500/12 text-emerald-400 ring-emerald-500/25;
+}
+@utility chip-danger {
+  @apply bg-red-500/12 text-red-400 ring-red-500/30;
+}
+@utility chip-warning {
+  @apply bg-amber-500/12 text-amber-400 ring-amber-500/25;
+}
+@utility chip-neutral {
+  @apply bg-muted/70 text-muted-foreground ring-border;
+}
+@utility chip-accent {
+  @apply bg-primary/12 text-primary ring-primary/30;
+}
+
+/* Progress bars that glow: gradient fill + soft primary halo. */
+@utility progress-glow {
+  [data-slot="progress-indicator"] {
+    background-image: linear-gradient(
+      90deg,
+      color-mix(in oklch, var(--primary), white 18%),
+      var(--primary)
+    );
+    box-shadow: 0 0 10px color-mix(in oklch, var(--primary) 45%, transparent);
+  }
+}
+
+/* Sections cascade in one after another (60 ms steps). Apply to a page's
+   <main>; each direct child fades and rises independently. */
+@utility stagger-children {
+  > * {
+    animation: var(--animate-page-enter);
+  }
+  > *:nth-child(2) {
+    animation-delay: 60ms;
+  }
+  > *:nth-child(3) {
+    animation-delay: 120ms;
+  }
+  > *:nth-child(4) {
+    animation-delay: 180ms;
+  }
+  > *:nth-child(5) {
+    animation-delay: 240ms;
+  }
+  > *:nth-child(n + 6) {
+    animation-delay: 300ms;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    > * {
+      animation: none;
+    }
+  }
 }

@@ -148,9 +148,17 @@ export default function DatasetDetailPage({
             <Badge variant="secondary">
               {dataset.origin === "synthetic" ? "Synthetic" : "BYOD"}
             </Badge>
-            <Badge variant={dataset.status === "ready" ? "default" : "outline"}>
+            <span
+              className={`chip capitalize ${
+                dataset.status === "ready"
+                  ? "chip-success"
+                  : dataset.status === "labeling"
+                    ? "chip-accent"
+                    : "chip-warning"
+              }`}
+            >
               {dataset.status}
-            </Badge>
+            </span>
           </div>
           <div className="flex flex-wrap gap-2">
             {(["yolo", "coco", "voc", "csv"] as const).map((format) => (

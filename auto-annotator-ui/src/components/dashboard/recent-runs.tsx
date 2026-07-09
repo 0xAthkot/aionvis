@@ -3,27 +3,15 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RunStatusChip } from "@/components/shared/status-chip";
 import { api } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type { Paginated, PipelineRun } from "@/lib/api/types";
-import { SIMPLE_PATH, SIMPLE_STAGE, SIMPLE_STATUS } from "@/lib/simple-language";
+import { SIMPLE_PATH, SIMPLE_STAGE } from "@/lib/simple-language";
 import { useUiModeStore } from "@/lib/stores/ui-mode";
-
-export const runStatusVariant: Record<
-  PipelineRun["status"],
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  running: "default",
-  queued: "secondary",
-  paused: "secondary",
-  succeeded: "outline",
-  failed: "destructive",
-  cancelled: "secondary",
-};
 
 function caption(run: PipelineRun, simple: boolean): string {
   if (!simple) {
@@ -69,12 +57,13 @@ export function RecentRuns() {
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="truncate text-sm font-medium">{run.name}</p>
-                  <Badge variant={runStatusVariant[run.status]}>
-                    {simple ? SIMPLE_STATUS[run.status] : run.status}
-                  </Badge>
+                  <RunStatusChip status={run.status} simple={simple} />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Progress value={run.progress.pct} className="h-1.5" />
+                  <Progress
+                    value={run.progress.pct}
+                    className="progress-glow h-1.5"
+                  />
                   <span className="w-9 text-right text-xs text-muted-foreground">
                     {run.progress.pct}%
                   </span>
