@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Boxes, GitCompareArrows, X } from "lucide-react";
+import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -41,7 +42,9 @@ function ModelCard({
   onToggle: (id: string) => void;
 }) {
   return (
-    <Card className={`flex flex-col ${selected ? "border-primary/50" : ""}`}>
+    <Card
+      className={`flex flex-col transition-shadow duration-200 ${selected ? "ring-primary/50 shadow-md shadow-primary/10" : ""}`}
+    >
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1.5">
@@ -140,40 +143,41 @@ export default function ModelsPage() {
     );
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div className="space-y-1">
-          <h1 className="text-xl font-semibold tracking-tight">Model Registry</h1>
-          <p className="text-sm text-muted-foreground">
-            Deployable YOLO weights produced by the agent swarm — tick two or
-            more to compare experiments.
-          </p>
-        </div>
-        {selected.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">
-              {selected.length}/{MAX_COMPARE} selected
-            </span>
-            <Button variant="ghost" size="sm" onClick={() => setSelected([])}>
-              <X className="size-3.5" />
-              Clear
-            </Button>
-            <Button size="sm" disabled={selected.length < 2} asChild={selected.length >= 2}>
-              {selected.length >= 2 ? (
-                <Link href={`/models/compare?ids=${selected.join(",")}`}>
-                  <GitCompareArrows className="size-3.5" />
-                  Compare {selected.length}
-                </Link>
-              ) : (
-                <>
-                  <GitCompareArrows className="size-3.5" />
-                  Compare
-                </>
-              )}
-            </Button>
-          </div>
-        )}
-      </header>
+    <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
+      <PageHeader
+        title="Model Registry"
+        description="Deployable YOLO weights produced by the agent swarm — tick two or more to compare experiments."
+        actions={
+          selected.length > 0 ? (
+            <>
+              <span className="text-xs text-muted-foreground">
+                {selected.length}/{MAX_COMPARE} selected
+              </span>
+              <Button variant="ghost" size="sm" onClick={() => setSelected([])}>
+                <X className="size-3.5" />
+                Clear
+              </Button>
+              <Button
+                size="sm"
+                disabled={selected.length < 2}
+                asChild={selected.length >= 2}
+              >
+                {selected.length >= 2 ? (
+                  <Link href={`/models/compare?ids=${selected.join(",")}`}>
+                    <GitCompareArrows className="size-3.5" />
+                    Compare {selected.length}
+                  </Link>
+                ) : (
+                  <>
+                    <GitCompareArrows className="size-3.5" />
+                    Compare
+                  </>
+                )}
+              </Button>
+            </>
+          ) : undefined
+        }
+      />
 
       {!models ? (
         <div className="grid gap-4 lg:grid-cols-2">

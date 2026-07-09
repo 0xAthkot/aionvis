@@ -1,9 +1,13 @@
 "use client";
 
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { Area, AreaChart, XAxis, YAxis } from "recharts";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -15,9 +19,12 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { TelemetrySample } from "@/lib/api/types";
+import type { HardwareNode, TelemetrySample } from "@/lib/api/types";
 import { useTelemetry } from "@/hooks/use-telemetry";
+import { useUiModeStore } from "@/lib/stores/ui-mode";
+import { cn } from "@/lib/utils";
 
 /** Validated against the dark card surface (dataviz palette, dark steps). */
 const chartConfig = {
@@ -81,86 +88,152 @@ export function Sparkline({
   );
 }
 
+const NODE_STATUS: Record<
+  HardwareNode["status"],
+  { dot: string; simple: string }
+> = {
+  online: { dot: "bg-emerald-500", simple: "Healthy — ready for a run" },
+  busy: {
+    dot: "bg-primary animate-pulse",
+    simple: "Healthy — working on your run",
+  },
+  offline: { dot: "bg-muted-foreground", simple: "Offline" },
+};
+
+/** Full telemetry body — always what Pro sees; Simple gets it on expand. */
+function TelemetryDetails({
+  node,
+  samples,
+  latest,
+}: {
+  node: HardwareNode | undefined;
+  samples: TelemetrySample[];
+  latest: TelemetrySample;
+}) {
+  return (
+    <>
+      <div className="space-y-1">
+        <div className="flex items-baseline justify-between">
+          <p className="text-sm text-muted-foreground">VRAM used</p>
+          <p className="text-sm font-medium">
+            {latest.vramUsedGb.toFixed(1)}
+            <span className="text-muted-foreground"> / {latest.vramTotalGb} GB</span>
+          </p>
+        </div>
+        <Sparkline
+          data={samples}
+          dataKey="vramUsedGb"
+          domainMax={latest.vramTotalGb}
+        />
+      </div>
+      <div className="space-y-1">
+        <div className="flex items-baseline justify-between">
+          <p className="text-sm text-muted-foreground">GPU utilization</p>
+          <p className="text-sm font-medium">{latest.gpuUtilPct}%</p>
+        </div>
+        <Sparkline data={samples} dataKey="gpuUtilPct" domainMax={100} />
+      </div>
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>{latest.tempC}°C · {latest.powerW} W</span>
+        {latest.throughput && (
+          <span>
+            {latest.throughput.value} {latest.throughput.kind === "it_per_s" ? "it/s" : "img/s"}
+          </span>
+        )}
+      </div>
+      {node?.residentModels && node.residentModels.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs text-muted-foreground">
+            Resident swarm — models held in VRAM
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {node.residentModels.map((m) => (
+              <Badge key={m} variant="outline" className="font-normal">
+                {m}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function GpuFleetCard() {
+  const simple = useUiModeStore((s) => s.mode) === "simple";
+  const [expanded, setExpanded] = useState(false);
   const { node, samples, latest } = useTelemetry(WINDOW);
+  const showDetails = !simple || expanded;
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-start justify-between gap-2">
-          <div className="space-y-1.5">
-            <CardTitle>GPU fleet</CardTitle>
-            <CardDescription>
-              {node
-                ? `${node.gpu} · ${node.vramGb} GB · ${node.region}`
-                : "Loading node…"}
-            </CardDescription>
-          </div>
-          {node && (
-            <div className="flex items-center gap-2">
-              <Badge variant="outline">ROCm {node.rocmVersion}</Badge>
-              <Badge
-                variant={node.status === "offline" ? "secondary" : "default"}
-                className="capitalize"
-              >
-                {node.status}
-              </Badge>
-            </div>
+        <CardTitle>{simple ? "Your GPU" : "GPU fleet"}</CardTitle>
+        <CardDescription>
+          {node
+            ? `${node.gpu} · ${node.vramGb} GB · ${node.region}`
+            : "Loading node…"}
+        </CardDescription>
+        <CardAction className="flex items-center gap-2">
+          {node && !simple && (
+            <Badge variant="outline">ROCm {node.rocmVersion}</Badge>
           )}
-        </div>
+          {node && (
+            <Badge
+              variant={node.status === "offline" ? "secondary" : "default"}
+              className="capitalize"
+            >
+              {node.status}
+            </Badge>
+          )}
+          {simple && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              onClick={() => setExpanded((e) => !e)}
+            >
+              {expanded ? "Hide details" : "Show details"}
+              <ChevronDown
+                className={cn(
+                  "size-3.5 transition-transform duration-200",
+                  expanded && "rotate-180",
+                )}
+              />
+            </Button>
+          )}
+        </CardAction>
       </CardHeader>
       <CardContent className="space-y-5">
         {!latest ? (
-          <Skeleton className="h-40 w-full" />
-        ) : (
-          <>
-            <div className="space-y-1">
-              <div className="flex items-baseline justify-between">
-                <p className="text-sm text-muted-foreground">VRAM used</p>
-                <p className="text-sm font-medium">
-                  {latest.vramUsedGb.toFixed(1)}
-                  <span className="text-muted-foreground">
-                    {" "}
-                    / {latest.vramTotalGb} GB
-                  </span>
-                </p>
-              </div>
-              <Sparkline
-                data={samples}
-                dataKey="vramUsedGb"
-                domainMax={latest.vramTotalGb}
+          <Skeleton className={showDetails ? "h-40 w-full" : "h-14 w-full"} />
+        ) : !showDetails ? (
+          // Simple mode: one calm summary row — every number is one click away.
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "size-2 rounded-full",
+                  NODE_STATUS[node?.status ?? "online"].dot,
+                )}
               />
+              <p className="text-sm font-medium">
+                {NODE_STATUS[node?.status ?? "online"].simple}
+              </p>
             </div>
-            <div className="space-y-1">
-              <div className="flex items-baseline justify-between">
-                <p className="text-sm text-muted-foreground">GPU utilization</p>
-                <p className="text-sm font-medium">{latest.gpuUtilPct}%</p>
-              </div>
-              <Sparkline data={samples} dataKey="gpuUtilPct" domainMax={100} />
+            <div className="space-y-1.5">
+              <Progress
+                value={(latest.vramUsedGb / latest.vramTotalGb) * 100}
+                className="h-1.5"
+              />
+              <p className="text-xs text-muted-foreground">
+                {latest.vramUsedGb.toFixed(1)} of {latest.vramTotalGb} GB memory
+                in use
+              </p>
             </div>
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{latest.tempC}°C · {latest.powerW} W</span>
-              {latest.throughput && (
-                <span>
-                  {latest.throughput.value} {latest.throughput.kind === "it_per_s" ? "it/s" : "img/s"}
-                </span>
-              )}
-            </div>
-            {node?.residentModels && node.residentModels.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-xs text-muted-foreground">
-                  Resident swarm — models held in VRAM
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {node.residentModels.map((m) => (
-                    <Badge key={m} variant="outline" className="font-normal">
-                      {m}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
+          </div>
+        ) : (
+          <TelemetryDetails node={node} samples={samples} latest={latest} />
         )}
       </CardContent>
     </Card>

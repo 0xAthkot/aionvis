@@ -55,9 +55,9 @@ function ModeToggle() {
                 : "Full control plane — every option, terminal, telemetry"
             }
             className={cn(
-              "rounded-full px-2.5 py-0.5 text-xs font-medium capitalize transition-colors",
+              "rounded-full px-2.5 py-0.5 text-xs font-medium capitalize transition-all duration-200",
               mode === m
-                ? "bg-primary text-primary-foreground"
+                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/40"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -128,11 +128,11 @@ export function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const mode = useUiModeStore((s) => s.mode);
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/85 px-4 backdrop-blur-md">
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mr-1 h-4!" />
       <h1 className="text-sm font-medium">{titleForPath(pathname, mode)}</h1>
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-3">
         <ModeToggle />
         <GpuStatusChip />
         <Button

@@ -139,7 +139,7 @@ export default function DatasetDetailPage({
   }
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
+    <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
       <header className="space-y-3">
         <Button variant="ghost" size="sm" className="-ml-2 w-fit" asChild>
           <Link href="/datasets">
@@ -148,8 +148,8 @@ export default function DatasetDetailPage({
           </Link>
         </Button>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <h1 className="font-mono text-xl font-semibold tracking-tight">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-mono text-2xl font-semibold tracking-tight">
               {dataset.name}
             </h1>
             <Badge variant="secondary">

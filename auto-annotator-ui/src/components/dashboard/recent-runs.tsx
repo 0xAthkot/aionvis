@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -17,6 +18,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type { Paginated, PipelineRun } from "@/lib/api/types";
+import { SIMPLE_PATH, SIMPLE_STAGE, SIMPLE_STATUS } from "@/lib/simple-language";
+import { useUiModeStore } from "@/lib/stores/ui-mode";
 
 export const runStatusVariant: Record<
   PipelineRun["status"],
@@ -30,7 +33,16 @@ export const runStatusVariant: Record<
   cancelled: "secondary",
 };
 
+function caption(run: PipelineRun, simple: boolean): string {
+  if (!simple) {
+    return `${run.path === "synthetic" ? "Synthetic Foundry" : "BYOD"} · stage: ${run.stage.replace(/_/g, " ")}`;
+  }
+  if (run.status === "failed") return "Something went wrong — open to see why";
+  return `${SIMPLE_PATH[run.path]} · ${SIMPLE_STAGE[run.stage]}`;
+}
+
 export function RecentRuns() {
+  const simple = useUiModeStore((s) => s.mode) === "simple";
   const { data } = useQuery({
     queryKey: ["runs"],
     queryFn: () => api<Paginated<PipelineRun>>(endpoints.runs.list()),
@@ -39,17 +51,15 @@ export function RecentRuns() {
   return (
     <Card className="flex flex-col">
       <CardHeader>
-        <div className="flex items-start justify-between gap-2">
-          <div className="space-y-1.5">
-            <CardTitle>Recent runs</CardTitle>
-            <CardDescription>Latest pipeline activity</CardDescription>
-          </div>
+        <CardTitle>{simple ? "Recent activity" : "Recent runs"}</CardTitle>
+        <CardDescription>Latest pipeline activity</CardDescription>
+        <CardAction>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/runs">
               View all <ArrowRight className="size-3.5" />
             </Link>
           </Button>
-        </div>
+        </CardAction>
       </CardHeader>
       <CardContent className="flex-1 space-y-3">
         {!data
@@ -57,11 +67,15 @@ export function RecentRuns() {
               <Skeleton key={i} className="h-16 w-full" />
             ))
           : data.items.slice(0, 4).map((run) => (
-              <div key={run.id} className="space-y-2 rounded-lg border p-3">
+              <Link
+                key={run.id}
+                href={`/runs/${run.id}`}
+                className="block space-y-2 rounded-lg border p-3 transition-colors hover:border-foreground/20 hover:bg-accent/50"
+              >
                 <div className="flex items-center justify-between gap-2">
                   <p className="truncate text-sm font-medium">{run.name}</p>
                   <Badge variant={runStatusVariant[run.status]}>
-                    {run.status}
+                    {simple ? SIMPLE_STATUS[run.status] : run.status}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
@@ -71,10 +85,9 @@ export function RecentRuns() {
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {run.path === "synthetic" ? "Synthetic Foundry" : "BYOD"} ·
-                  stage: {run.stage.replace(/_/g, " ")}
+                  {caption(run, simple)}
                 </p>
-              </div>
+              </Link>
             ))}
       </CardContent>
     </Card>

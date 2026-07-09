@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { FlaskConical } from "lucide-react";
 import { runStatusVariant } from "@/components/dashboard/recent-runs";
+import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -17,38 +20,51 @@ import {
 import { api } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type { Paginated, PipelineRun } from "@/lib/api/types";
+import { SIMPLE_STAGE, SIMPLE_STATUS } from "@/lib/simple-language";
+import { useUiModeStore } from "@/lib/stores/ui-mode";
 
 export default function RunsPage() {
+  const simple = useUiModeStore((s) => s.mode) === "simple";
   const { data } = useQuery({
     queryKey: ["runs"],
     queryFn: () => api<Paginated<PipelineRun>>(endpoints.runs.list()),
   });
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
-      <header className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">Runs</h1>
-        <p className="text-sm text-muted-foreground">
-          Every pipeline execution across the organization.
-        </p>
-      </header>
+    <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
+      <PageHeader
+        title={simple ? "Activity" : "Runs"}
+        description={
+          simple
+            ? "Every model build, in progress and finished."
+            : "Every pipeline execution across the organization."
+        }
+      />
 
       {!data ? (
         <Skeleton className="h-64 w-full" />
       ) : data.items.length === 0 ? (
-        <div className="flex min-h-64 flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed">
+        <div className="flex min-h-64 flex-1 flex-col items-center justify-center gap-4 rounded-xl border border-dashed">
           <p className="text-sm text-muted-foreground">
-            No runs yet — launch one from the Synthetic Foundry or a dataset.
+            {simple
+              ? "Nothing yet — build your first model."
+              : "No runs yet — launch one from the Synthetic Foundry or a dataset."}
           </p>
+          <Button asChild>
+            <Link href="/foundry">
+              <FlaskConical className="size-4" />
+              {simple ? "Build a model" : "Launch run"}
+            </Link>
+          </Button>
         </div>
       ) : (
-        <div className="rounded-xl border">
+        <div className="overflow-hidden rounded-xl border bg-card shadow-sm shadow-black/10">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="hover:bg-transparent">
                 <TableHead>Run</TableHead>
-                <TableHead>Path</TableHead>
-                <TableHead>Stage</TableHead>
+                <TableHead>{simple ? "Source" : "Path"}</TableHead>
+                <TableHead>{simple ? "Doing now" : "Stage"}</TableHead>
                 <TableHead className="w-44">Progress</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Created</TableHead>
@@ -67,11 +83,23 @@ export default function RunsPage() {
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary">
-                      {run.path === "synthetic" ? "Synthetic" : "BYOD"}
+                      {run.path === "synthetic"
+                        ? simple
+                          ? "Described"
+                          : "Synthetic"
+                        : simple
+                          ? "Uploaded"
+                          : "BYOD"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground capitalize">
-                    {run.stage.replace(/_/g, " ")}
+                  <TableCell className="text-muted-foreground">
+                    {simple ? (
+                      SIMPLE_STAGE[run.stage]
+                    ) : (
+                      <span className="capitalize">
+                        {run.stage.replace(/_/g, " ")}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -83,7 +111,7 @@ export default function RunsPage() {
                   </TableCell>
                   <TableCell>
                     <Badge variant={runStatusVariant[run.status]}>
-                      {run.status}
+                      {simple ? SIMPLE_STATUS[run.status] : run.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right text-xs text-muted-foreground">

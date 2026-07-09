@@ -29,6 +29,7 @@ import {
 import { api, apiPost } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type { AgentInstance, LogEvent, PipelineRun } from "@/lib/api/types";
+import { SIMPLE_STATUS } from "@/lib/simple-language";
 import { useUiModeStore } from "@/lib/stores/ui-mode";
 import { useRunStream } from "@/hooks/use-run-stream";
 
@@ -90,20 +91,30 @@ export default function RunDetailPage({
   const cancellable = run.status === "running" || run.status === "queued";
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
+    <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
       <header className="space-y-3">
         <Button variant="ghost" size="sm" className="-ml-2 w-fit" asChild>
           <Link href="/runs">
             <ArrowLeft className="size-3.5" />
-            All runs
+            {pro ? "All runs" : "All activity"}
           </Link>
         </Button>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold tracking-tight">{run.name}</h1>
-            <Badge variant={runStatusVariant[run.status]}>{run.status}</Badge>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {run.name}
+            </h1>
+            <Badge variant={runStatusVariant[run.status]}>
+              {pro ? run.status : SIMPLE_STATUS[run.status]}
+            </Badge>
             <Badge variant="secondary">
-              {run.path === "synthetic" ? "Synthetic Foundry" : "BYOD"}
+              {run.path === "synthetic"
+                ? pro
+                  ? "Synthetic Foundry"
+                  : "Built from your description"
+                : pro
+                  ? "BYOD"
+                  : "From your uploaded photos"}
             </Badge>
             <Tooltip>
               <TooltipTrigger asChild>

@@ -212,10 +212,10 @@ export function SimpleFoundry() {
                   type="button"
                   onClick={() => setSize(s.id)}
                   className={cn(
-                    "rounded-lg border p-3 text-left transition-colors",
+                    "rounded-lg border p-3 text-left transition-all duration-200",
                     size === s.id
-                      ? "border-primary bg-primary/10"
-                      : "hover:border-muted-foreground/40",
+                      ? "border-primary bg-primary/10 shadow-sm shadow-primary/20"
+                      : "hover:border-muted-foreground/40 hover:bg-accent/40",
                   )}
                 >
                   <p className="text-sm font-medium">{s.label}</p>
@@ -236,10 +236,10 @@ export function SimpleFoundry() {
                   type="button"
                   onClick={() => setGenerator(g.id)}
                   className={cn(
-                    "rounded-lg border p-3 text-left transition-colors",
+                    "rounded-lg border p-3 text-left transition-all duration-200",
                     generator === g.id
-                      ? "border-primary bg-primary/10"
-                      : "hover:border-muted-foreground/40",
+                      ? "border-primary bg-primary/10 shadow-sm shadow-primary/20"
+                      : "hover:border-muted-foreground/40 hover:bg-accent/40",
                   )}
                 >
                   <p className="text-sm font-medium">{g.label}</p>
@@ -262,10 +262,10 @@ export function SimpleFoundry() {
                   type="button"
                   onClick={() => selectTask(t.id)}
                   className={cn(
-                    "rounded-lg border p-2.5 text-left transition-colors",
+                    "rounded-lg border p-2.5 text-left transition-all duration-200",
                     task === t.id
-                      ? "border-primary bg-primary/10"
-                      : "hover:border-muted-foreground/40",
+                      ? "border-primary bg-primary/10 shadow-sm shadow-primary/20"
+                      : "hover:border-muted-foreground/40 hover:bg-accent/40",
                   )}
                 >
                   <p className="text-sm font-medium">{t.label}</p>
@@ -398,7 +398,8 @@ export function SimpleFoundry() {
             <div className="text-sm">
               {!isValid ? (
                 <p className="text-xs text-muted-foreground">
-                  Pick a project and describe the scene (a full sentence).
+                  Pick a project and say what the model is for (a full
+                  sentence).
                 </p>
               ) : estimate.data ? (
                 <p>
@@ -416,6 +417,7 @@ export function SimpleFoundry() {
             </div>
             <Button
               size="lg"
+              className="shadow-md shadow-primary/25"
               disabled={!isValid || launch.isPending}
               onClick={() => launch.mutate(request)}
             >

@@ -2,6 +2,7 @@
 
 import { Cpu } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { PageHeader } from "@/components/layout/page-header";
 import { ConnectNodeCard } from "@/components/shared/connect-node-card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -98,13 +99,11 @@ export default function HardwarePage() {
   const { node, samples, latest } = useTelemetry(150);
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
-      <header className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">Hardware</h1>
-        <p className="text-sm text-muted-foreground">
-          Live telemetry for the GPU fleet running the agent swarm.
-        </p>
-      </header>
+    <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
+      <PageHeader
+        title="Hardware"
+        description="Live telemetry for the GPU fleet running the agent swarm."
+      />
 
       {/* Always reachable — attaching/detaching a node must work even when
           the current source is down and telemetry can't load. */}

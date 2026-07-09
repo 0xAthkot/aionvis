@@ -156,7 +156,7 @@ export default function CompareModelsPage({
   );
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
+    <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
       <header className="space-y-3">
         <Button variant="ghost" size="sm" className="-ml-2 w-fit" asChild>
           <Link href="/models">
@@ -165,7 +165,7 @@ export default function CompareModelsPage({
           </Link>
         </Button>
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight">
             Compare experiments
           </h1>
           <p className="text-sm text-muted-foreground">

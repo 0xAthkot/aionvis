@@ -5,6 +5,7 @@ import { Flag, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { LaunchSummary } from "@/components/foundry/launch-summary";
 import { SimpleFoundry } from "@/components/foundry/simple-foundry";
+import { PageHeader } from "@/components/layout/page-header";
 import { NewProjectDialog } from "@/components/shared/new-project-dialog";
 import { TagInput } from "@/components/shared/tag-input";
 import { Badge } from "@/components/ui/badge";
@@ -190,9 +191,9 @@ export default function FoundryPage() {
 
   if (mode === "simple") {
     return (
-      <main className="flex flex-1 flex-col gap-6 p-6">
+      <main className="page-enter mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 p-6">
         <header className="space-y-1 text-center">
-          <h1 className="text-xl font-semibold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight">
             Build a detection model
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -205,16 +206,11 @@ export default function FoundryPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
-      <header className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">
-          Synthetic Foundry
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Path A — describe the objects once; the agent swarm generates,
-          labels, verifies and trains without further input.
-        </p>
-      </header>
+    <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
+      <PageHeader
+        title="Synthetic Foundry"
+        description="Path A — describe the objects once; the agent swarm generates, labels, verifies and trains without further input."
+      />
 
       <div className="grid items-start gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-6">
@@ -398,8 +394,8 @@ export default function FoundryPage() {
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    Write a scene description, then preview how the Prompt
-                    Agent diversifies it.
+                    Say what the model is for above, then preview the scenes
+                    the Prompt Agent designs for that deployment.
                   </p>
                 )}
               </div>
@@ -599,11 +595,13 @@ export default function FoundryPage() {
           </Card>
         </div>
 
-        <LaunchSummary
-          request={request}
-          isValid={isValid}
-          validationHint="Pick a project, add target classes and write a scene description (≥ 16 chars)."
-        />
+        <div className="lg:sticky lg:top-20">
+          <LaunchSummary
+            request={request}
+            isValid={isValid}
+            validationHint="Pick a project, add target classes and say what the model is for (≥ 16 chars)."
+          />
+        </div>
       </div>
     </main>
   );

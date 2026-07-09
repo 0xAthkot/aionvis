@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Database } from "lucide-react";
+import { PageHeader } from "@/components/layout/page-header";
 import { StartRunDialog } from "@/components/datasets/start-run-dialog";
 import { UploadDropzone } from "@/components/datasets/upload-dropzone";
 import { Badge } from "@/components/ui/badge";
@@ -122,20 +123,17 @@ export default function DatasetsPage() {
   });
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
-      <header className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">Datasets</h1>
-        <p className="text-sm text-muted-foreground">
-          Path B — bring your own data. Upload proprietary images and the
-          agents label them in place.
-        </p>
-      </header>
+    <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
+      <PageHeader
+        title="Datasets"
+        description="Path B — bring your own data. Upload proprietary images and the agents label them in place."
+      />
 
       <UploadDropzone />
 
       <section className="space-y-3">
-        <h2 className="flex items-center gap-2 text-sm font-medium">
-          <Database className="size-4 text-muted-foreground" />
+        <h2 className="section-label flex items-center gap-2">
+          <Database className="size-4" />
           Library
         </h2>
         {datasets?.length === 0 ? (

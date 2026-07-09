@@ -334,9 +334,9 @@ function IntegrationsTab() {
 
 export default function SettingsPage() {
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
+    <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
       <header className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
         <p className="text-sm text-muted-foreground">
           Organization, access and external services.
         </p>
