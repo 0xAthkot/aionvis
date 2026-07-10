@@ -19,6 +19,11 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { api, apiPost } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type {
@@ -100,6 +105,17 @@ export function SimpleFoundry() {
   const project = projects?.find((p) => p.id === projectId);
   const sizeCfg = SIZES.find((s) => s.id === size) ?? SIZES[1];
   const isValid = !!project && useCase.trim().length > 15;
+  // Why the launch button is disabled — surfaced as its hover tooltip.
+  const blockers = [
+    !project && "pick a project",
+    useCase.trim().length <= 15 &&
+      (useCase.trim().length === 0
+        ? "describe what the model is for"
+        : `say a bit more about the use case (${useCase.trim().length}/16 characters)`),
+  ].filter(Boolean);
+  const disabledReason = blockers.length
+    ? `To build: ${blockers.join(" and ")}.`
+    : null;
   useReportUnsaved("simple-foundry", useCase.trim().length > 0);
 
   const request: CreateSyntheticRunRequest = {
@@ -481,15 +497,25 @@ export function SimpleFoundry() {
                 <Skeleton className="h-4 w-40" />
               )}
             </div>
-            <Button
-              size="lg"
-              className="shadow-md shadow-primary/25"
-              disabled={!isValid || launch.isPending}
-              onClick={() => launch.mutate(request)}
-            >
-              <Rocket className="size-4" />
-              {launch.isPending ? "Queueing…" : "Build my model"}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {/* Disabled buttons swallow hover — the span catches it. */}
+                <span className="inline-flex">
+                  <Button
+                    size="lg"
+                    className="shadow-md shadow-primary/25"
+                    disabled={!isValid || launch.isPending}
+                    onClick={() => launch.mutate(request)}
+                  >
+                    <Rocket className="size-4" />
+                    {launch.isPending ? "Queueing…" : "Build my model"}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {disabledReason && !launch.isPending && (
+                <TooltipContent>{disabledReason}</TooltipContent>
+              )}
+            </Tooltip>
           </div>
         </div>
       </div>
