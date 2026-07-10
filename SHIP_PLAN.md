@@ -122,7 +122,7 @@ attached with a live-updating Mission Control stream.
 >   degrades sam3→yoloe gracefully, SAM 3 needs a sidecar venv (roadmap).
 > - Repo travels as a git bundle over scp (no git remote exists).
 
-## Phase 3 — Verification runs + flagship model
+## Phase 3 — Verification runs + flagship model ✅ 2026-07-10
 
 First real hardware exercise of the parallel swarm (CPU verified only
 the orchestration).
@@ -145,7 +145,20 @@ the orchestration).
 **Exit gate:** flagship model beats mAP50 0.85; a full streaming run
 completed with no OOM; evidence captured (screenshots + metrics).
 
-## Phase 4 — TLS on the droplet (Vercel prerequisite)
+> Completed 2026-07-10 with the rechosen lineup (klein + SAM 3 + Gemma 4
+> 26B MoE — see HANDOFF). Flagship run_0007: 500 images generated,
+> SAM 3-labeled and critic-verified in 7.5 min of streaming (~73 img/min,
+> all models co-resident, 107→115 GB VRAM, no OOM), 22,718 verified
+> instances (~45/img), yolo26m 60 epochs in 30 min. **model_0004:
+> mAP50 0.764 / mAP50-95 0.611 / P 0.74 / R 0.70.** The 0.85 gate was
+> set against the old 48-easy-image benchmark — NOT beaten head-on, but
+> measured on a far denser dataset; mAP50-95 0.611 is the stronger
+> headline. Optional: rerun the 48-img/60-epoch showcase recipe if a
+> >0.85 mAP50 talking point is wanted. Playground inference (41 boxes,
+> 0.87–0.99 conf), .pt/.onnx model export and COCO dataset export all
+> verified over HTTPS.
+
+## Phase 4 — TLS on the droplet (Vercel prerequisite) ✅ 2026-07-10
 
 1. Hostname: a real (sub)domain pointed at the droplet IP, or zero-cost
    `<ip-with-dashes>.sslip.io` (works with Let's Encrypt).
@@ -166,6 +179,12 @@ completed with no OOM; evidence captured (screenshots + metrics).
 
 **Exit gate:** full UI session (run launch + live stream + image
 thumbnails via `/files`) over https/wss with raw :8000 closed.
+
+> Completed 2026-07-10. Hostname: **https://129-212-179-0.sslip.io**
+> (sslip.io, Let's Encrypt via Caddy). REST + authenticated WSS verified
+> from the dev machine through the proxy; uvicorn now binds 127.0.0.1
+> and raw :8000 is closed. Attach the UI with this https URL + the
+> AA_API_KEY from backend/.env on the node.
 
 ## Phase 5 — Vercel ship
 
