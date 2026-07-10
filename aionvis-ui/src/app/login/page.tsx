@@ -91,13 +91,15 @@ export default function LoginPage() {
           </p>
         </Link>
 
-        {user && (
+        {/* Only a NODE session gets a continue shortcut — for a demo
+            session it would duplicate the demo button right below it. */}
+        {user && user.email !== "demo@aionvis.dev" && (
           <Button
             variant="secondary"
             className="w-full"
             onClick={() => router.replace("/dashboard")}
           >
-            Continue as {user.name}
+            Continue on your node ({user.email.split("@")[1]})
             <ArrowRight className="size-4" />
           </Button>
         )}
