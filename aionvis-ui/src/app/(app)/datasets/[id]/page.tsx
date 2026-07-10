@@ -48,16 +48,27 @@ export default function DatasetDetailPage({
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<Filter>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Curation pages through the whole dataset, 50 images at a time — big
+  // datasets (the flagship holds 500) never hit the browser in one shot.
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 50;
 
   const { data: dataset } = useQuery({
     queryKey: ["dataset", id],
     queryFn: () => api<Dataset>(endpoints.datasets.get(id)),
   });
-  const { data: imagePage } = useQuery({
-    queryKey: ["dataset-images", id],
+  const { data: imagePage, isPlaceholderData } = useQuery({
+    queryKey: ["dataset-images", id, page],
     queryFn: () =>
-      api<Paginated<AnnotatedImage>>(endpoints.datasets.images(id)),
+      api<Paginated<AnnotatedImage>>(
+        `${endpoints.datasets.images(id)}?page=${page}&pageSize=${PAGE_SIZE}`,
+      ),
+    // Keep the previous page on screen while the next one loads.
+    placeholderData: (prev) => prev,
   });
+  const totalPages = imagePage
+    ? Math.max(1, Math.ceil(imagePage.total / PAGE_SIZE))
+    : 1;
 
   const curate = useMutation({
     mutationFn: ({
@@ -72,7 +83,7 @@ export default function DatasetDetailPage({
       }),
     onSuccess: (updated) => {
       queryClient.setQueryData<Paginated<AnnotatedImage>>(
-        ["dataset-images", id],
+        ["dataset-images", id, page],
         (old) =>
           old && {
             ...old,
@@ -196,8 +207,9 @@ export default function DatasetDetailPage({
             <div className="space-y-1">
               <h2 className="section-label">Curation</h2>
               <p className="text-sm text-muted-foreground">
-                Sample of {images.length} — accept or reject the Critic&apos;s
-                work · {acceptRate}% accepted
+                {imagePage?.total ?? images.length} images · page {page} of{" "}
+                {totalPages} — accept or reject the Critic&apos;s work ·{" "}
+                {acceptRate}% accepted on this page
               </p>
             </div>
             <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
@@ -274,6 +286,31 @@ export default function DatasetDetailPage({
               </div>
             )}
           </div>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 pt-1">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1 || isPlaceholderData}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                <ArrowLeft className="size-3.5" />
+                Previous
+              </Button>
+              <span className="text-xs text-muted-foreground tabular-nums">
+                page {page} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages || isPlaceholderData}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Next
+                <ArrowRight className="size-3.5" />
+              </Button>
+            </div>
+          )}
         </section>
 
         <div className="xl:border-l xl:border-border/70 xl:pl-8">
