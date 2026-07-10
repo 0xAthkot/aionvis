@@ -639,8 +639,9 @@ docker compose up --build
                 Bring your own GPU node
               </h2>
               <p className="mt-4 text-muted-foreground">
-                aionVIS runs on <em>your</em> compute. Your node&apos;s API key
-                is your login — nothing else to sign up for.
+                aionVIS runs on <em className="pr-0.5">your</em>{" "}
+                compute. Your node&apos;s API key is your login — nothing
+                else to sign up for.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
