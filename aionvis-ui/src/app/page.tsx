@@ -28,7 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "aionVIS — Training data that builds itself",
+  title: "aionVIS · Autonomous training data",
   description:
     "An autonomous agent swarm that turns one sentence into a trained, deployable detection model. Zero human annotation. Built entirely on AMD MI300X.",
 };
