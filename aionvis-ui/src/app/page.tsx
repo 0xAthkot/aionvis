@@ -534,9 +534,11 @@ docker compose up --build
                 <div
                   key={plan.name}
                   className={
+                    // flex-col so the CTA pins to the bottom edge on every
+                    // card, however tall its feature list runs.
                     plan.highlight
-                      ? "relative rounded-xl border border-primary/50 bg-card p-6 shadow-[0_0_40px_-12px] shadow-primary/30"
-                      : "rounded-xl border bg-card p-6"
+                      ? "relative flex flex-col rounded-xl border border-primary/50 bg-card p-6 shadow-[0_0_40px_-12px] shadow-primary/30"
+                      : "flex flex-col rounded-xl border bg-card p-6"
                   }
                 >
                   {plan.highlight && (
@@ -553,17 +555,19 @@ docker compose up --build
                       </li>
                     ))}
                   </ul>
-                  {plan.href === "contact" ? (
-                    <ContactDialog cta={plan.cta} />
-                  ) : (
-                    <Button
-                      asChild
-                      className="mt-6 w-full"
-                      variant={plan.highlight ? "default" : "outline"}
-                    >
-                      <Link href={plan.href}>{plan.cta}</Link>
-                    </Button>
-                  )}
+                  <div className="mt-auto">
+                    {plan.href === "contact" ? (
+                      <ContactDialog cta={plan.cta} />
+                    ) : (
+                      <Button
+                        asChild
+                        className="mt-6 w-full"
+                        variant={plan.highlight ? "default" : "outline"}
+                      >
+                        <Link href={plan.href}>{plan.cta}</Link>
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
