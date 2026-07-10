@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface AgentSpec {
@@ -212,6 +212,22 @@ const MODES = [
 
 export function AgentPipeline() {
   const [mode, setMode] = useState<"sequential" | "parallel">("parallel");
+  const seqRef = useRef<HTMLDivElement>(null);
+  const parRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | undefined>(undefined);
+
+  // The wrapper animates to the ACTIVE mode's height (the inactive mode is
+  // absolutely positioned, so it contributes none) — no dead space below
+  // the shorter mode, and the resize glides instead of snapping.
+  useEffect(() => {
+    const el = mode === "sequential" ? seqRef.current : parRef.current;
+    if (!el) return;
+    const update = () => setHeight(el.offsetHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [mode]);
 
   return (
     <div className="space-y-8">
@@ -237,23 +253,33 @@ export function AgentPipeline() {
           </button>
         ))}
       </div>
-      {/* Both modes stay mounted, stacked in one grid cell, and cross-fade —
-          the container keeps the taller mode's height, so no layout jump. */}
-      <div className="grid">
+      {/* Both modes stay mounted and cross-fade while the wrapper's height
+          glides to the active mode's — the inactive mode sits absolute, so
+          the shorter mode leaves no dead space below. */}
+      <div
+        className="relative overflow-hidden transition-[height] duration-300 motion-reduce:transition-none"
+        style={{ height }}
+      >
         <div
+          ref={seqRef}
           aria-hidden={mode !== "sequential"}
           className={cn(
-            "col-start-1 row-start-1 transition-opacity duration-300 motion-reduce:transition-none",
-            mode === "sequential" ? "opacity-100" : "pointer-events-none opacity-0",
+            "transition-opacity duration-300 motion-reduce:transition-none",
+            mode === "sequential"
+              ? "opacity-100"
+              : "pointer-events-none absolute inset-x-0 top-0 opacity-0",
           )}
         >
           <SequentialPipeline />
         </div>
         <div
+          ref={parRef}
           aria-hidden={mode !== "parallel"}
           className={cn(
-            "col-start-1 row-start-1 transition-opacity duration-300 motion-reduce:transition-none",
-            mode === "parallel" ? "opacity-100" : "pointer-events-none opacity-0",
+            "transition-opacity duration-300 motion-reduce:transition-none",
+            mode === "parallel"
+              ? "opacity-100"
+              : "pointer-events-none absolute inset-x-0 top-0 opacity-0",
           )}
         >
           <ParallelPipeline />
