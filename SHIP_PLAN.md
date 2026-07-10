@@ -39,7 +39,7 @@ everything through the local UI + runtime node attach.
 | 5 — Vercel ship verification | 1–2 h | ~$4 |
 | Rehearsal + failure buffer | remainder | ~$70 reserve |
 
-## Phase 0 — Local preflight (free, no droplet yet)
+## Phase 0 — Local preflight (free, no droplet yet) ✅ 2026-07-10
 
 All on the dev machine. Burn zero paid time on avoidable errors.
 
@@ -54,6 +54,14 @@ All on the dev machine. Burn zero paid time on avoidable errors.
    `rocm/vllm` container) is committed as `ced76a6`.
 
 **Exit gate:** lint, tsc, prod build, pytest all green.
+
+> Completed 2026-07-10: prod build clean (13 routes), 31/31 pytest.
+> Fixes landed: scipy declared first-party in requirements-ml.txt
+> (ultralytics 8.4 dropped it — would have broken the droplet install
+> too, commit 6df7d79). Machine note: this box's `backend\.venv` is a
+> junction to `C:\Users\Agent\venvs\aa-backend` — Windows MAX_PATH
+> workaround (no admin to enable long paths); all `.venv\Scripts\...`
+> commands work unchanged.
 
 ## Phase 1 — Create the droplet (user-only step)
 
