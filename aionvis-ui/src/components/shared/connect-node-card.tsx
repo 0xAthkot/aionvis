@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { HardwareNode } from "@/lib/api/types";
+import { attachNode, detachNode } from "@/lib/api/attach";
 import { useIntegrationsStore } from "@/lib/stores/integrations";
 
 /**
@@ -36,42 +36,18 @@ export function ConnectNodeCard() {
   const awaitingCredentials = !connected && !endpoint.trim() && !token.trim();
 
   async function connect() {
-    const base = endpoint.trim().replace(/\/+$/, "");
-    if (!base) {
-      toast.error("Enter the node's API endpoint first");
-      return;
-    }
     setBusy(true);
     try {
-      const res = await fetch(`${base}/api/v1/hardware/nodes`, {
-        headers: token.trim()
-          ? { Authorization: `Bearer ${token.trim()}` }
-          : {},
-        signal: AbortSignal.timeout(8000),
-      });
-      if (res.status === 401)
-        throw new Error(
-          "The node rejected this API key — check AA_API_KEY in its backend/.env.",
-        );
-      if (!res.ok) throw new Error(`The node answered HTTP ${res.status}.`);
-      const nodes = (await res.json()) as HardwareNode[];
-      store.save({
-        amdCloudEndpoint: base,
-        amdCloudToken: token.trim(),
-        amdCloudConnected: true,
-      });
+      const node = await attachNode(endpoint, token);
       // Every cached query was answered by the previous source — drop them
       // all so each screen refetches from the attached node.
       queryClient.clear();
-      toast.success(`Attached to ${nodes[0]?.gpu ?? "the node"}`, {
-        description: `${base} — every screen and live stream now reads this node.`,
+      toast.success(`Attached to ${node?.gpu ?? "the node"}`, {
+        description: `${endpoint.trim().replace(/\/+$/, "")} — every screen and live stream now reads this node.`,
       });
     } catch (err) {
       toast.error("Could not attach the node", {
-        description:
-          err instanceof Error && err.name !== "TimeoutError"
-            ? err.message
-            : "Unreachable — check the URL, that the backend is running, and that port 8000 is open.",
+        description: err instanceof Error ? err.message : String(err),
       });
     } finally {
       setBusy(false);
@@ -79,7 +55,7 @@ export function ConnectNodeCard() {
   }
 
   function disconnect() {
-    store.save({ amdCloudConnected: false });
+    detachNode();
     queryClient.clear();
     toast.success("Node detached", {
       description: "The console is back on its local data source.",
