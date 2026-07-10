@@ -26,3 +26,6 @@ Thumbs.db
 landing_page_console.png
 bornonamd.png
 footer.png
+
+.claude/settings.local.json
+*.pdf.bak
