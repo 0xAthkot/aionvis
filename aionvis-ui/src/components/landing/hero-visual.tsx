@@ -271,13 +271,19 @@ export function HeroVisual() {
                     shown ? "opacity-0" : "opacity-100",
                   )}
                 >
-                  {t < TILE_AT[0] ? (
+                  {!expanded ? (
+                    <Sparkles className="size-5 animate-pulse text-muted-foreground/60" />
+                  ) : t < TILE_AT[0] ? (
                     <MessageSquareText className="size-5 animate-pulse text-primary/70" />
                   ) : (
                     <ImageIcon className="size-5 animate-pulse text-primary/70" />
                   )}
                   <span className="font-mono text-[11px] text-muted-foreground">
-                    {t < TILE_AT[0] ? "Generating prompts…" : "Rendering image…"}
+                    {!expanded
+                      ? "Awaiting user prompt…"
+                      : t < TILE_AT[0]
+                        ? "Generating prompts…"
+                        : "Rendering image…"}
                   </span>
                 </div>
                 {tile.boxes.map((b) => (
