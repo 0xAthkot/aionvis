@@ -5,14 +5,18 @@ import {
   ArrowRight,
   Check,
   ChevronDown,
+  Cloud,
   Cpu,
   Crosshair,
   Download,
   FileText,
   Flag,
+  KeyRound,
   Minus,
   ShieldCheck,
+  Sparkles,
   Target,
+  TerminalSquare,
   Upload,
   X,
 } from "lucide-react";
@@ -36,6 +40,7 @@ const NAV_LINKS = [
   { href: "#pricing", label: "Pricing" },
   { href: "#industries", label: "Industries" },
   { href: "#faq", label: "FAQ" },
+  { href: "#get-started", label: "Get started" },
 ];
 
 const STATS = [
@@ -611,6 +616,65 @@ docker compose up --build
               }),
             }}
           />
+        </section>
+
+        {/* ---- Get started: bring your own node ---- */}
+        <section id="get-started" className="scroll-mt-20 border-t border-white/5 py-24">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="mx-auto mb-12 max-w-2xl text-center">
+              <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                Bring your own GPU node
+              </h2>
+              <p className="mt-4 text-muted-foreground">
+                aionVIS runs on <em>your</em> compute. Your node&apos;s API key
+                is your login — nothing else to sign up for.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="rounded-xl border border-white/10 bg-card/40 p-6">
+                <div className="flex items-center gap-2.5">
+                  <Cloud className="size-4 text-primary" />
+                  <p className="text-sm font-semibold">1 · Create a node</p>
+                </div>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  Spin up a GPU droplet — e.g. an MI300X on the AMD Developer
+                  Cloud. Any box that runs the open-source backend works.
+                </p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-card/40 p-6">
+                <div className="flex items-center gap-2.5">
+                  <TerminalSquare className="size-4 text-primary" />
+                  <p className="text-sm font-semibold">2 · Run one script</p>
+                </div>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  <code className="font-mono text-xs">backend/deploy_mi300x.sh</code>{" "}
+                  installs the swarm and prints your node&apos;s endpoint URL
+                  and API key.
+                </p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-card/40 p-6">
+                <div className="flex items-center gap-2.5">
+                  <KeyRound className="size-4 text-primary" />
+                  <p className="text-sm font-semibold">3 · Sign in with it</p>
+                </div>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  Paste the URL and key on the{" "}
+                  <Link href="/login" className="text-foreground underline underline-offset-4">
+                    login page
+                  </Link>
+                  . Every screen and live stream runs on your silicon.
+                </p>
+              </div>
+            </div>
+            <p className="mt-6 flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
+              <Sparkles className="size-3.5 text-primary" />
+              No node yet? The{" "}
+              <Link href="/login" className="text-foreground underline underline-offset-4">
+                demo
+              </Link>{" "}
+              runs the full console on an in-browser simulation — no account, no GPU.
+            </p>
+          </div>
         </section>
 
         {/* ---- Final CTA ---- */}
