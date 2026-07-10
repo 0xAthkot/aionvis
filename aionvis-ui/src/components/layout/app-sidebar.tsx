@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, ChevronsUpDown, Crosshair, Globe, LogOut } from "lucide-react";
+import { Building2, ChevronsUpDown, Globe, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -55,11 +55,14 @@ function OrgSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-accent">
+        <SidebarMenuButton
+          size="lg"
+          className="data-[state=open]:bg-sidebar-accent group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center"
+        >
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent">
             <Building2 className="size-4" />
           </div>
-          <div className="grid flex-1 text-left leading-tight">
+          <div className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
             <span className="truncate text-sm font-medium">
               {org?.name ?? "…"}
             </span>
@@ -67,7 +70,7 @@ function OrgSwitcher() {
               {org?.plan ?? ""} plan
             </span>
           </div>
-          <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
+          <ChevronsUpDown className="ml-auto size-4 text-muted-foreground group-data-[collapsible=icon]:hidden" />
         </SidebarMenuButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="start">
@@ -289,10 +292,15 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild className="rounded-lg">
               <Link href="/" title="aionVIS home">
-                {/* Collapsed rail can't fit the wordmark — keep the tile there. */}
-                <div className="hidden size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 shadow-sm shadow-primary/40 group-data-[collapsible=icon]:flex">
-                  <Crosshair className="size-4.5 text-primary-foreground" />
-                </div>
+                {/* Collapsed rail can't fit the wordmark — the favicon eye
+                    tile stands in (same asset as the browser tab). */}
+                <Image
+                  src="/icon.png"
+                  alt="aionVIS"
+                  width={512}
+                  height={512}
+                  className="hidden size-8 shrink-0 rounded-lg shadow-sm shadow-primary/40 group-data-[collapsible=icon]:block"
+                />
                 <div className="grid flex-1 gap-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
                   <Image
                     src="/aionvis-wordmark.png"

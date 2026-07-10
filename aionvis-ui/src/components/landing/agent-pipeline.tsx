@@ -109,10 +109,14 @@ function AgentCard({
               {agent.tech}
             </p>
           </TooltipTrigger>
+          {/* Base TooltipContent is inline-flex — one block child keeps
+              the lines stacked instead of flowing into columns. */}
           <TooltipContent className="max-w-72">
-            {agent.techTip.map((line) => (
-              <p key={line}>{line}</p>
-            ))}
+            <div className="space-y-1">
+              {agent.techTip.map((line) => (
+                <p key={line}>{line}</p>
+              ))}
+            </div>
           </TooltipContent>
         </Tooltip>
       ) : (

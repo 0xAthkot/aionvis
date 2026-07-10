@@ -13,11 +13,12 @@ import { Fragment, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Looping visual replay of a run for the landing hero: prompt typed →
+ * Looping visual replay of a run for the landing hero: use case typed →
  * synthetic images appear → verified boxes draw on → training → model ready.
- * Each loop plays the next scenario. Every tile is a REAL SDXL output from a
- * real pipeline run (public/landing/*.jpg) with its REAL Critic-verified
- * YOLO boxes — normalized cx/cy/w/h straight from the dataset records.
+ * Each loop plays the next scenario. Every tile is a REAL FLUX.2-klein
+ * output from a real MI300X pipeline run (public/landing/*.jpg) with its
+ * REAL SAM 3 + Critic-verified boxes — normalized cx/cy/w/h straight from
+ * the dataset records (ds_0004 / ds_0005 / ds_0006, 2026-07-10).
  */
 type Box = { label: string; color: string; cx: number; cy: number; w: number; h: number };
 type Scenario = {
@@ -28,82 +29,82 @@ type Scenario = {
 
 const SCENARIOS: Scenario[] = [
   {
-    // ds_0006 · warehouse safety showcase
-    prompt: "a yellow forklift moving pallets in a busy warehouse",
-    done: "model_0006 ready · mAP50 0.85 · exported .pt / ONNX",
+    // ds_0004 · run_0007 — the 500-image flagship (FLUX.2-klein + SAM 3)
+    prompt: "our warehouse safety cameras need to spot forklifts, pallets and workers",
+    done: "model_0004 ready · mAP50 0.76 · exported .pt / ONNX",
     tiles: [
-      {
-        src: "/landing/gen-3.jpg",
-        boxes: [
-          { label: "forklift", color: "#d97706", cx: 0.416, cy: 0.5438, w: 0.3675, h: 0.6799 },
-          { label: "worker", color: "#65a30d", cx: 0.3081, cy: 0.5382, w: 0.2239, h: 0.5901 },
-        ],
-      },
       {
         src: "/landing/gen-1.jpg",
         boxes: [
-          { label: "forklift", color: "#d97706", cx: 0.6633, cy: 0.5346, w: 0.165, h: 0.284 },
+          { label: "forklift", color: "#d97706", cx: 0.4839, cy: 0.3701, w: 0.5025, h: 0.6513 },
+          { label: "worker", color: "#65a30d", cx: 0.4945, cy: 0.4504, w: 0.168, h: 0.268 },
         ],
       },
       {
         src: "/landing/gen-2.jpg",
         boxes: [
-          { label: "pallet", color: "#0284c7", cx: 0.6112, cy: 0.8355, w: 0.4862, h: 0.1004 },
+          { label: "pallet", color: "#0284c7", cx: 0.3194, cy: 0.7146, w: 0.4659, h: 0.4426 },
+          { label: "forklift", color: "#d97706", cx: 0.6621, cy: 0.3462, w: 0.5227, h: 0.5646 },
+        ],
+      },
+      {
+        src: "/landing/gen-3.jpg",
+        boxes: [
+          { label: "forklift", color: "#d97706", cx: 0.7086, cy: 0.4259, w: 0.4203, h: 0.5217 },
+          { label: "worker", color: "#65a30d", cx: 0.174, cy: 0.4661, w: 0.1699, h: 0.2037 },
         ],
       },
     ],
   },
   {
-    // ds_0010 + ds_0012 · farm-aerial runs (run_0014 / run_0017)
-    prompt: "a tractor working crop rows, seen from a farm drone",
-    done: "model_0011 ready · exported .pt / ONNX",
+    // ds_0005 · run_0008 — farm-aerial landing refresh
+    prompt: "my farm drone needs to spot tractors and hay bales across the fields",
+    done: "model_0005 ready · FLUX.2 + SAM 3 · zero human labels",
     tiles: [
       {
         src: "/landing/agri-1.jpg",
         boxes: [
-          { label: "tractor", color: "#d97706", cx: 0.494, cy: 0.668, w: 0.104, h: 0.158 },
+          { label: "hay_bale", color: "#0284c7", cx: 0.2327, cy: 0.6119, w: 0.1768, h: 0.1785 },
+          { label: "tractor", color: "#d97706", cx: 0.4939, cy: 0.5566, w: 0.2855, h: 0.2773 },
         ],
       },
       {
         src: "/landing/agri-2.jpg",
         boxes: [
-          { label: "hay_bale", color: "#0284c7", cx: 0.413, cy: 0.616, w: 0.138, h: 0.143 },
+          { label: "tractor", color: "#d97706", cx: 0.5418, cy: 0.501, w: 0.332, h: 0.3332 },
         ],
       },
       {
         src: "/landing/agri-3.jpg",
         boxes: [
-          { label: "tractor", color: "#d97706", cx: 0.284, cy: 0.292, w: 0.099, h: 0.066 },
+          { label: "tractor", color: "#d97706", cx: 0.5195, cy: 0.5293, w: 0.3, h: 0.3352 },
         ],
       },
     ],
   },
   {
-    // ds_0011 · street-camera run (run_0015)
-    prompt: "delivery vans and cyclists from a street camera feed",
-    done: "model_0010 ready · trained on 100% synthetic data",
+    // ds_0006 · run_0010 — street-camera landing refresh
+    prompt: "our street cameras need to detect delivery vans and cyclists",
+    done: "model_0006 ready · trained on 100% synthetic data",
     tiles: [
       {
         src: "/landing/street-1.jpg",
         boxes: [
-          { label: "delivery_van", color: "#0284c7", cx: 0.615, cy: 0.787, w: 0.342, h: 0.192 },
-          { label: "delivery_van", color: "#0284c7", cx: 0.187, cy: 0.771, w: 0.228, h: 0.15 },
+          { label: "delivery_van", color: "#0284c7", cx: 0.5391, cy: 0.3186, w: 0.493, h: 0.4597 },
+          { label: "cyclist", color: "#65a30d", cx: 0.2767, cy: 0.7477, w: 0.1389, h: 0.2047 },
         ],
       },
       {
         src: "/landing/street-2.jpg",
         boxes: [
-          { label: "cyclist", color: "#65a30d", cx: 0.379, cy: 0.685, w: 0.083, h: 0.208 },
-          { label: "cyclist", color: "#65a30d", cx: 0.287, cy: 0.657, w: 0.08, h: 0.176 },
-          { label: "cyclist", color: "#65a30d", cx: 0.653, cy: 0.668, w: 0.11, h: 0.214 },
-          { label: "delivery_van", color: "#0284c7", cx: 0.86, cy: 0.479, w: 0.244, h: 0.309 },
+          { label: "delivery_van", color: "#0284c7", cx: 0.4971, cy: 0.3643, w: 0.4777, h: 0.4237 },
+          { label: "cyclist", color: "#65a30d", cx: 0.0725, cy: 0.7266, w: 0.1152, h: 0.2125 },
         ],
       },
       {
         src: "/landing/street-3.jpg",
         boxes: [
-          { label: "delivery_van", color: "#0284c7", cx: 0.544, cy: 0.445, w: 0.13, h: 0.164 },
-          { label: "cyclist", color: "#65a30d", cx: 0.963, cy: 0.644, w: 0.075, h: 0.137 },
+          { label: "delivery_van", color: "#0284c7", cx: 0.5641, cy: 0.2683, w: 0.457, h: 0.4141 },
         ],
       },
     ],
