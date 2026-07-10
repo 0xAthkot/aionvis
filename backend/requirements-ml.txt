@@ -9,7 +9,11 @@ torch>=2.5
 torchvision>=0.20
 diffusers>=0.31
 # transformers 5.x mis-sizes SDXL's OpenCLIP-bigG text encoder under
-# diffusers 0.39 (every weight "MISMATCH ... 1280 vs 512"); 4.57+ has SAM 3.
+# diffusers 0.39 (every weight "MISMATCH ... 1280 vs 512"). NOTE: SAM 3
+# exists ONLY in transformers 5.x (4.57.6, the last 4.x, tops out at SAM 2),
+# so VISION_BACKEND=sam3 cannot load in this venv — it degrades to YOLOE.
+# Running SAM 3 for real needs a transformers-5 sidecar venv (RF-DETR
+# pattern). Verified on the MI300X droplet 2026-07-10.
 transformers>=4.57,<5
 accelerate>=1.0
 safetensors>=0.4

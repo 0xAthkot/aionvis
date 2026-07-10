@@ -46,7 +46,9 @@ PUBLIC_BASE_URL=http://${node_ip}:8000
 AA_API_KEY=${aa_key}
 # Allow the console to attach from anywhere (it authenticates with the key).
 CORS_ORIGINS=*
-VISION_BACKEND=sam3
+# yoloe, not sam3: SAM 3 needs transformers>=5, which the pinned SDXL stack
+# forbids (see requirements-ml.txt) — sam3 would fall back to YOLOE anyway.
+VISION_BACKEND=yoloe
 SDXL_MODEL=stabilityai/stable-diffusion-xl-base-1.0
 MAX_IMAGES_PER_RUN=500
 MAX_EPOCHS=100

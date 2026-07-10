@@ -63,7 +63,7 @@ All on the dev machine. Burn zero paid time on avoidable errors.
 > workaround (no admin to enable long paths); all `.venv\Scripts\...`
 > commands work unchanged.
 
-## Phase 1 — Create the droplet (user-only step)
+## Phase 1 — Create the droplet (user-only step) ✅ 2026-07-10
 
 1. AMD Developer Cloud → new MI300X instance. **Prefer the
    vLLM-preloaded GPU image** if offered; otherwise plain ROCm/Ubuntu.
@@ -74,7 +74,7 @@ All on the dev machine. Burn zero paid time on avoidable errors.
 **Exit gate:** `ssh` onto the node works; `amd-smi static --asic` (or
 `rocm-smi`) shows the MI300X.
 
-## Phase 2 — Backend bring-up on the node (~2–3 h)
+## Phase 2 — Backend bring-up on the node (~2–3 h) ✅ 2026-07-10 (Gemma pending HF token)
 
 On the droplet:
 
@@ -103,6 +103,24 @@ reports which path is live.
 
 **Exit gate:** smoke_test all green on the node **and** the local UI is
 attached with a live-updating Mission Control stream.
+
+> Completed 2026-07-10 (session driven from the dev machine over SSH).
+> Node: 129.212.179.0 (MI300X VF, 191.7 GB VRAM, ROCm 7.2.4 host,
+> vLLM 0.23.0 image; key in /root/aionvis/backend/.env, systemd unit
+> `aionvis-backend`). All smoke checks green; REST auth (401/200) and
+> the authenticated telemetry WebSocket verified end-to-end from the
+> dev machine; warm-up run run_0002 (6 img SDXL → YOLOE → critic →
+> 10-epoch yolov10n train → playground inference on cuda:0) succeeded
+> in streaming mode. Deviations from the plan as written:
+> - vLLM on the image is a Docker image (vllm/vllm-openai-rocm:v0.23.0),
+>   not a CLI; the image's demo Jupyter container squatted port 8000 and
+>   was stopped/disabled (`docker update --restart=no rocm`).
+> - **Gemma is NOT up yet** — gated model, needs the user's HF token.
+>   Prompt Agent runs on the template fallback meanwhile.
+> - **SAM 3 discovery:** only transformers 5.x has Sam3Model; our SDXL
+>   pin forbids 5.x → node runs VISION_BACKEND=yoloe, vision agent now
+>   degrades sam3→yoloe gracefully, SAM 3 needs a sidecar venv (roadmap).
+> - Repo travels as a git bundle over scp (no git remote exists).
 
 ## Phase 3 — Verification runs + flagship model
 

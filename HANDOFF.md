@@ -97,9 +97,12 @@ run it before any demo. `backend/reset_demo.py` resets demo state.
    cards; counts for the "Best Use of Gemma" challenge), FLUX.1-schnell or
    SDXL synthesis (the user's explicit wizard choice, honored verbatim —
    nodes below `FLUX_MIN_VRAM_GB` reject flux runs at creation, before
-   downloading anything; no silent fallback), SAM 3
-   vision backend (`VISION_BACKEND=sam3`, gated checkpoint; YOLOE
-   fallback). Utilization knobs: `MAX_BATCH_SIZE`, `MAX_TRAIN_IMAGE_SIZE`,
+   downloading anything; no silent fallback), YOLOE
+   vision backend (`VISION_BACKEND=yoloe`; the planned SAM 3 backend turned
+   out to need transformers>=5, which the SDXL pin forbids — SAM 3 is only
+   possible via a future sidecar venv, and `sam3` config now degrades to
+   YOLOE with a warning instead of failing the run; found on the MI300X
+   2026-07-10). Utilization knobs: `MAX_BATCH_SIZE`, `MAX_TRAIN_IMAGE_SIZE`,
    `KEEP_MODELS_WARM` (deploy_mi300x.sh sets 96 / 1024 / true) plus the
    parallel-swarm profile: `PIPELINE_MODE=streaming`, `GPU_SLOTS=2`,
    `AUTO_BATCH=true`.

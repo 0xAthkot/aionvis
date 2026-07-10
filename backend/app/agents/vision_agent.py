@@ -74,7 +74,17 @@ class VisionAgent:
         """Load the configured backend, primed with this run's concepts."""
         prompts = [c.replace("_", " ") for c in target_classes]
         if settings.vision_backend == "sam3":
-            annotate_one, teardown = self._load_sam3(ctx, prompts)
+            try:
+                annotate_one, teardown = self._load_sam3(ctx, prompts)
+            except Exception as exc:
+                # Promised fallback: SAM 3 needs transformers 5 (which the
+                # pinned SDXL stack forbids) and a gated checkpoint — any
+                # load failure degrades to YOLOE instead of killing the run.
+                ctx.log("warn",
+                        f"SAM 3 unavailable — falling back to YOLOE "
+                        f"({settings.yoloe_model}). Reason: {exc}",
+                        agent="vision")
+                annotate_one, teardown = self._load_yoloe(ctx, prompts)
         else:
             annotate_one, teardown = self._load_yoloe(ctx, prompts)
         return VisionSession(annotate_one, teardown)
