@@ -13,10 +13,12 @@ diffusers>=0.31
 transformers>=4.57,<5
 accelerate>=1.0
 safetensors>=0.4
-# NOTE: ultralytics hard-depends on opencv-python and scipy; both arrive
+# NOTE: ultralytics hard-depends on opencv-python, which arrives
 # transitively. First-party code MUST NOT import cv2 — the swarm's own
 # geometry is pure numpy/scipy (app/agents/geometry.py) and video ingestion
-# uses imageio/ffmpeg.
+# uses imageio/ffmpeg. scipy is declared here because geometry.py imports
+# it directly (newer ultralytics releases stopped depending on it).
+scipy>=1.11
 ultralytics>=8.3
 imageio>=2.34
 imageio-ffmpeg>=0.5

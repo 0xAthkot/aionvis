@@ -144,7 +144,7 @@ def mask_to_polygon(mask, max_steps: int = 100_000) -> np.ndarray | None:
     """Outer boundary of the largest connected blob in a binary mask, as an
     ordered (N, 2) polygon in (x, y) pixel coords — Moore-neighbor tracing
     over scipy-labeled components. None for an empty mask."""
-    from scipy import ndimage  # ships with ultralytics' dependency set
+    from scipy import ndimage  # first-party dep (requirements-ml.txt)
 
     grid = np.asarray(mask).astype(bool)
     if not grid.any():
