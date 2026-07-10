@@ -161,8 +161,8 @@ class Store:
             Member(
                 id="member_1",
                 org_id=org.id,
-                name="Stelios Apostolakis",
-                email="steliosapostolak106@gmail.com",
+                name="Athanasios Kotidis",
+                email="athkot@proton.me",
                 role="owner",
             ),
             Member(
