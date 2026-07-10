@@ -187,6 +187,14 @@ export interface RunProgress {
   latestLoss?: number;
 }
 
+/**
+ * Which zero-shot labeler annotates the images. A per-run user choice —
+ * honored verbatim: a node that can't run the selection rejects the run at
+ * creation (no silent substitution). Omitted on create = the node's
+ * VISION_BACKEND default.
+ */
+export type VisionBackend = "sam3" | "yoloe";
+
 export interface PipelineRun {
   id: string;
   orgId: string;
@@ -197,6 +205,8 @@ export interface PipelineRun {
   stage: PipelineStage;
   /** Set by the backend at run creation from hardware config; absent on runs recorded before the field existed (= "sequential"). */
   pipelineMode?: PipelineMode;
+  /** Resolved at creation (request field or node default); absent on older runs. */
+  visionBackend?: VisionBackend;
   source: SourceConfig;
   training: TrainingConfig;
   targetClasses: string[];
@@ -594,6 +604,8 @@ export interface CreateSyntheticRunRequest {
   targetClasses: string[];
   source: SyntheticSourceConfig;
   training: TrainingConfig;
+  /** Omitted → the node's VISION_BACKEND default. */
+  visionBackend?: VisionBackend;
 }
 
 export interface CreateByodRunRequest {
@@ -602,6 +614,8 @@ export interface CreateByodRunRequest {
   targetClasses: string[];
   source: ByodSourceConfig;
   training: TrainingConfig;
+  /** Omitted → the node's VISION_BACKEND default. */
+  visionBackend?: VisionBackend;
 }
 
 export type CreateRunRequest = CreateSyntheticRunRequest | CreateByodRunRequest;

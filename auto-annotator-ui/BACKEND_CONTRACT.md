@@ -101,6 +101,15 @@ While the overlap is active, `RunProgress.imagesAnnotated` reports Vision
 Agent throughput separately from the critic's `masksAccepted`, and all
 three middle agents report `state: "working"` concurrently.
 
+**Vision backend.** `CreateRunRequest.visionBackend` (`"sam3" | "yoloe"`,
+optional) picks the zero-shot labeler for the run; omitted means the node's
+`VISION_BACKEND` default. Honored verbatim, like the generator: a node that
+can't run the selection (SAM 3 needs the `.venv-sam3` sidecar runtime and
+gated-checkpoint access) rejects the run at creation with a 400 whose
+message contains the setup steps — never a silent substitution. The backend
+echoes the resolved choice as `PipelineRun.visionBackend` (absent on runs
+recorded before the field existed).
+
 ### Foundry
 | Method | Path | Request → Response |
 |---|---|---|

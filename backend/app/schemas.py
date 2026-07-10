@@ -167,6 +167,12 @@ class RunProgress(ApiModel):
     latest_loss: Optional[float] = None
 
 
+# Which zero-shot labeler annotates the images. Per-run user choice; the
+# node's VISION_BACKEND setting is only the default. Honored verbatim —
+# a node that can't run the selection rejects the run (no fallback).
+VisionBackend = Literal["sam3", "yoloe"]
+
+
 class PipelineRun(ApiModel):
     id: str
     org_id: str
@@ -177,6 +183,8 @@ class PipelineRun(ApiModel):
     stage: PipelineStage
     # Optional so state.json written before the field existed still loads.
     pipeline_mode: Optional[PipelineMode] = None
+    # Resolved at creation (request field or node default); None on old runs.
+    vision_backend: Optional[VisionBackend] = None
     source: SourceConfig
     training: TrainingConfig
     target_classes: list[str]
@@ -498,6 +506,8 @@ class CreateRunRequest(ApiModel):
     target_classes: list[str]
     source: SourceConfig
     training: TrainingConfig
+    # Omitted -> the node's VISION_BACKEND default.
+    vision_backend: Optional[VisionBackend] = None
 
 
 class CurateImageRequest(ApiModel):

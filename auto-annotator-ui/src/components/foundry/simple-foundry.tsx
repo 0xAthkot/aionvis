@@ -36,7 +36,7 @@ import {
   supportsTask,
   TASKS,
 } from "@/lib/architectures";
-import type { Architecture, TrainingTask } from "@/lib/api/types";
+import type { Architecture, TrainingTask, VisionBackend } from "@/lib/api/types";
 import { useReportUnsaved } from "@/lib/stores/unsaved";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +61,20 @@ const GENERATORS = [
     label: "SDXL",
     hint: "Runs on any GPU",
   },
+] as const;
+
+/** Same doctrine for the labeler — used verbatim or the run is declined. */
+const LABELERS = [
+  {
+    id: "sam3" as const,
+    label: "SAM 3",
+    hint: "Meta's concept labeler — most accurate outlines",
+  },
+  {
+    id: "yoloe" as const,
+    label: "YOLOE",
+    hint: "Runs on any GPU",
+  },
 ];
 
 export function SimpleFoundry() {
@@ -73,6 +87,7 @@ export function SimpleFoundry() {
   const [useCase, setUseCase] = useState("");
   const [size, setSize] = useState<SizeId>("medium");
   const [generator, setGenerator] = useState<"sdxl" | "flux">("flux");
+  const [labeler, setLabeler] = useState<VisionBackend>("sam3");
   const [architecture, setArchitecture] = useState<Architecture>(RECOMMENDED_ARCH);
   const [task, setTask] = useState<TrainingTask>("detect");
   const [showMore, setShowMore] = useState(false);
@@ -116,6 +131,7 @@ export function SimpleFoundry() {
       batchSize: 32,
       device: "mi300x-0",
     },
+    visionBackend: labeler,
   };
 
   const { data: feedback } = useQuery({
@@ -260,6 +276,39 @@ export function SimpleFoundry() {
             <p className="text-xs text-muted-foreground">
               Your choice is final — a node that can&apos;t run FLUX declines
               the run instead of quietly switching engines.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="gap-1.5">
+              Labeler
+              <HelpTip>
+                The AI that draws the boxes and outlines on your training
+                photos before your model learns from them. SAM 3 (Meta) is
+                the most accurate; YOLOE runs on any GPU.
+              </HelpTip>
+            </Label>
+            <div className="grid grid-cols-2 gap-2">
+              {LABELERS.map((l) => (
+                <button
+                  key={l.id}
+                  type="button"
+                  onClick={() => setLabeler(l.id)}
+                  className={cn(
+                    "rounded-lg border p-3 text-left transition-all duration-200",
+                    labeler === l.id
+                      ? "border-primary bg-primary/10 shadow-sm shadow-primary/20"
+                      : "hover:border-muted-foreground/40 hover:bg-accent/40",
+                  )}
+                >
+                  <p className="text-sm font-medium">{l.label}</p>
+                  <p className="text-xs text-muted-foreground">{l.hint}</p>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Also final — a node without the chosen labeler declines the run
+              and explains how to install it.
             </p>
           </div>
 

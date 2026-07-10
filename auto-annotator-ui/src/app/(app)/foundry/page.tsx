@@ -43,6 +43,7 @@ import type {
   Project,
   TrainingConfig,
   TrainingTask,
+  VisionBackend,
 } from "@/lib/api/types";
 
 function PercentSlider({
@@ -92,6 +93,9 @@ export default function FoundryPage() {
   // The generator is the user's explicit choice, honored verbatim — a node
   // that can't run FLUX rejects the run at launch (400), no silent fallback.
   const [generator, setGenerator] = useState<"sdxl" | "flux">("flux");
+  // Same doctrine for the labeler: the selection is used or the run is
+  // rejected with the node's setup hint — never silently substituted.
+  const [visionBackend, setVisionBackend] = useState<VisionBackend>("sam3");
 
   const [lightingVariation, setLightingVariation] = useState(0.6);
   const [cameraAngleVariation, setCameraAngleVariation] = useState(0.4);
@@ -154,6 +158,7 @@ export default function FoundryPage() {
       randomization,
     },
     training,
+    visionBackend,
   };
 
   const isValid =
@@ -306,7 +311,7 @@ export default function FoundryPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="flux">
-                        FLUX.1-schnell — needs ≥24 GB VRAM
+                        FLUX.2 klein — big-VRAM nodes
                       </SelectItem>
                       <SelectItem value="sdxl">
                         SDXL — any GPU
@@ -316,6 +321,29 @@ export default function FoundryPage() {
                   <p className="text-xs text-muted-foreground">
                     Honored verbatim — nodes that can&apos;t run the chosen
                     engine reject the run instead of substituting.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Labeler (vision agent)</Label>
+                  <Select
+                    value={visionBackend}
+                    onValueChange={(v) => setVisionBackend(v as VisionBackend)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sam3">
+                        SAM 3 — Meta concept segmentation, highest quality
+                      </SelectItem>
+                      <SelectItem value="yoloe">
+                        YOLOE — open-vocab, runs anywhere
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Also honored verbatim — a node without the selected
+                    labeler&apos;s runtime rejects the run with setup steps.
                   </p>
                 </div>
               </div>

@@ -65,36 +65,39 @@ class VisionSession:
         self._teardown()
 
 
+def resolve_backend(requested: str | None) -> str:
+    """Per-run choice wins; the node's VISION_BACKEND is only the default."""
+    return requested or settings.vision_backend
+
+
 class VisionAgent:
-    def describe(self) -> str:
-        return ("SAM 3 concept segmentation" if settings.vision_backend == "sam3"
+    def describe(self, backend: str | None = None) -> str:
+        return ("SAM 3 concept segmentation" if resolve_backend(backend) == "sam3"
                 else f"YOLOE open-vocab segmentation ({settings.yoloe_model})")
 
-    def start(self, ctx: RunContext, target_classes: list[str]) -> VisionSession:
-        """Load the configured backend, primed with this run's concepts."""
+    def start(self, ctx: RunContext, target_classes: list[str],
+              backend: str | None = None) -> VisionSession:
+        """Load the requested backend, primed with this run's concepts.
+
+        NO fallback by doctrine: the backend the user selected is the one
+        that runs — if it can't load (missing sidecar, gated weights), the
+        run fails with the reason instead of silently substituting.
+        """
         prompts = [c.replace("_", " ") for c in target_classes]
-        if settings.vision_backend == "sam3":
-            try:
-                annotate_one, teardown = self._load_sam3(ctx, prompts)
-            except Exception as exc:
-                # Promised fallback: SAM 3 needs transformers 5 (which the
-                # pinned SDXL stack forbids) and a gated checkpoint — any
-                # load failure degrades to YOLOE instead of killing the run.
-                ctx.log("warn",
-                        f"SAM 3 unavailable — falling back to YOLOE "
-                        f"({settings.yoloe_model}). Reason: {exc}",
-                        agent="vision")
-                annotate_one, teardown = self._load_yoloe(ctx, prompts)
+        if resolve_backend(backend) == "sam3":
+            annotate_one, teardown = self._load_sam3(ctx, prompts)
         else:
             annotate_one, teardown = self._load_yoloe(ctx, prompts)
         return VisionSession(annotate_one, teardown)
 
     def annotate(self, ctx: RunContext, image_paths: list[Path],
                  target_classes: list[str],
-                 on_progress: Callable[[int], None]) -> list[ImageAnnotation]:
-        ctx.set_agent("vision", "waiting_gpu", f"Loading {self.describe()}")
+                 on_progress: Callable[[int], None],
+                 backend: str | None = None) -> list[ImageAnnotation]:
+        ctx.set_agent("vision", "waiting_gpu",
+                      f"Loading {self.describe(backend)}")
         flush_vram(ctx)
-        session = self.start(ctx, target_classes)
+        session = self.start(ctx, target_classes, backend=backend)
 
         ctx.set_agent("vision", "working",
                       f"Segmenting {len(image_paths)} images, "
@@ -172,72 +175,32 @@ class VisionAgent:
 
         return annotate_one, teardown
 
-    # --- SAM 3 backend --------------------------------------------------------------
+    # --- SAM 3 backend (isolated .venv-sam3 worker; see sam3_bridge) ----------------
 
     def _load_sam3(self, ctx: RunContext, prompts: list[str]):
-        import torch
-        from PIL import Image
+        from . import sam3_bridge
 
-        from .geometry import mask_to_polygon
-
-        try:
-            from transformers import Sam3Model, Sam3Processor
-        except ImportError as exc:
-            raise RuntimeError(
-                "transformers build lacks SAM 3 — set VISION_BACKEND=yoloe "
-                "or upgrade transformers"
-            ) from exc
-
-        device = device_str()
-        cache_key = f"sam3:{settings.sam3_model}"
-        if settings.keep_models_warm and cache_key in _warm_models:
-            processor, model = _warm_models[cache_key]
-            ctx.log("info", "Reusing warm SAM 3 model", agent="vision")
-        else:
-            processor = Sam3Processor.from_pretrained(settings.sam3_model)
-            model = Sam3Model.from_pretrained(
-                settings.sam3_model,
-                torch_dtype=torch.float16 if device != "cpu" else torch.float32,
-            ).to(device)
-            if settings.keep_models_warm:
-                _warm_models.clear()  # one warm vision backend at a time
-                _warm_models[cache_key] = (processor, model)
-        ctx.log("info", f"SAM 3 loaded on {device} ({settings.sam3_model})",
+        session = sam3_bridge.get_session(
+            on_log=lambda msg: ctx.log("info", msg, agent="vision"))
+        ctx.log("info", f"SAM 3 worker ready on {session.device} "
+                        f"({settings.sam3_model}, .venv-sam3 sidecar)",
                 agent="vision")
 
         def annotate_one(path: Path) -> ImageAnnotation:
-            image = Image.open(path).convert("RGB")
-            w, h = image.size
-            ann = ImageAnnotation(path=path, width=w, height=h)
-            for class_id, concept in enumerate(prompts):
-                inputs = processor(images=image, text=concept,
-                                   return_tensors="pt").to(device)
-                with torch.inference_mode():
-                    outputs = model(**inputs)
-                parsed = processor.post_process_instance_segmentation(
-                    outputs, threshold=0.4, mask_threshold=0.5,
-                    target_sizes=[(h, w)],
-                )[0]
-                for mask, score, box in zip(
-                    parsed["masks"], parsed["scores"], parsed["boxes"]
-                ):
-                    # Largest-blob outer boundary, traced in pure numpy.
-                    poly = mask_to_polygon(mask.cpu().numpy() > 0)
-                    if poly is None or len(poly) < 3:
-                        continue
-                    x1, y1, x2, y2 = box.tolist()
-                    ann.detections.append(Detection(
-                        class_id=class_id,
-                        confidence=float(score),
-                        box_xyxyn=(x1 / w, y1 / h, x2 / w, y2 / h),
-                        polygon_px=poly,
-                    ))
+            result = session.annotate(path, prompts)
+            ann = ImageAnnotation(path=path, width=result["width"],
+                                  height=result["height"])
+            for det in result["detections"]:
+                ann.detections.append(Detection(
+                    class_id=det["class_id"],
+                    confidence=det["confidence"],
+                    box_xyxyn=tuple(det["box_xyxyn"]),
+                    polygon_px=np.asarray(det["polygon"], dtype=np.float32),
+                ))
             return ann
 
         def teardown() -> None:
-            nonlocal model, processor
-            if not settings.keep_models_warm:
-                del model, processor
+            sam3_bridge.release_session(session)
 
         return annotate_one, teardown
 

@@ -292,10 +292,12 @@ class Pipeline:
     def _segmentation_stage(self, ctx: RunContext, image_paths: list[Path]):
         from ..agents.vision_agent import vision_agent
 
-        ctx.set_stage("segmentation", vision_agent.describe())
+        ctx.set_stage("segmentation",
+                      vision_agent.describe(ctx.run.vision_backend))
         result = vision_agent.annotate(
             ctx, image_paths, ctx.run.target_classes,
             on_progress=lambda done: self._pct(ctx, done / max(len(image_paths), 1)),
+            backend=ctx.run.vision_backend,
         )
         ctx.set_agent("vision", "done")
         return result
@@ -409,7 +411,8 @@ class Pipeline:
                 )
                 ctx.set_agent("synthesis", "done")
                 # Synthesis drained — the bottleneck moves downstream.
-                ctx.set_stage("segmentation", vision_agent.describe())
+                ctx.set_stage("segmentation",
+                              vision_agent.describe(run.vision_backend))
             except BaseException as exc:  # noqa: BLE001 — poison the stream
                 fail(exc)
             finally:
@@ -419,8 +422,9 @@ class Pipeline:
             session = None
             try:
                 ctx.set_agent("vision", "waiting_gpu",
-                              f"Loading {vision_agent.describe()}")
-                session = vision_agent.start(ctx, run.target_classes)
+                              f"Loading {vision_agent.describe(run.vision_backend)}")
+                session = vision_agent.start(ctx, run.target_classes,
+                                             backend=run.vision_backend)
                 ctx.set_agent("vision", "working",
                               f"Segmenting the image stream, "
                               f"{len(run.target_classes)} target concepts")
@@ -480,10 +484,11 @@ class Pipeline:
                                else settings.sdxl_model)
             ctx.set_stage("synthesis",
                           f"{generator_model} → streaming into "
-                          f"{vision_agent.describe()}")
+                          f"{vision_agent.describe(run.vision_backend)}")
         else:
             ctx.set_stage("segmentation",
-                          f"{vision_agent.describe()} — streaming into the Critic")
+                          f"{vision_agent.describe(run.vision_backend)} "
+                          f"— streaming into the Critic")
 
         workers = [threading.Thread(target=vision_worker,
                                     name=f"vision-{run.id}", daemon=True),

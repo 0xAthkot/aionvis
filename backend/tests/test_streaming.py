@@ -106,7 +106,7 @@ def stub_synthesis(monkeypatch, counters, delay=0.0):
 
 
 def stub_vision(monkeypatch, counters, delay=0.0, fail_at=None):
-    def start(ctx, target_classes):
+    def start(ctx, target_classes, backend=None):
         def annotate_one(path):
             if fail_at is not None and counters["vision"] + 1 == fail_at:
                 raise RuntimeError("vision exploded")

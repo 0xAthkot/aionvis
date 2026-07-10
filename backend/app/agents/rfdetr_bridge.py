@@ -40,7 +40,9 @@ SETUP_HINT = (
 
 
 def worker_python() -> Path:
-    return BACKEND_DIR / ".venv-rfdetr" / "Scripts" / "python.exe"
+    posix = BACKEND_DIR / ".venv-rfdetr" / "bin" / "python"
+    win = BACKEND_DIR / ".venv-rfdetr" / "Scripts" / "python.exe"
+    return posix if posix.exists() else win
 
 
 def available() -> bool:

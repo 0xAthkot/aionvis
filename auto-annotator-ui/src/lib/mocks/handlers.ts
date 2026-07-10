@@ -181,6 +181,9 @@ export const handlers = [
       status: "queued",
       stage: "queued",
       pipelineMode: sourceDataset?.importedLabels ? "sequential" : "streaming",
+      // Mock node profile is the MI300X where SAM 3 is installed; the user's
+      // explicit choice wins — mirrors routers.create_run's resolution.
+      visionBackend: body.visionBackend ?? "sam3",
       source: body.source,
       training: body.training,
       targetClasses: body.targetClasses,

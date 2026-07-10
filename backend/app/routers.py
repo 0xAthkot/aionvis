@@ -190,8 +190,17 @@ def create_run(body: CreateRunRequest) -> PipelineRun:
         ok, why = flux_supported()
         if not ok:
             raise HTTPException(
-                400, f"FLUX.1-schnell can't run here: {why}. Pick SDXL for "
-                     "this node, or attach a GPU with more VRAM.")
+                400, f"{settings.flux_model} can't run here: {why}. Pick "
+                     "SDXL for this node, or attach a GPU with more VRAM.")
+    # The labeler is the user's explicit choice too — reject if this node
+    # can't honor it instead of silently substituting (audit runs have no
+    # vision stage, so BYOD label-audit datasets are exempt below).
+    vision_backend = body.vision_backend or settings.vision_backend
+    if vision_backend == "sam3":
+        from .agents.sam3_bridge import SETUP_HINT as SAM3_HINT, available as sam3_available
+
+        if not sam3_available():
+            raise HTTPException(400, SAM3_HINT)
     target_classes = body.target_classes
     audit_mode = False
     if body.source.path == "byod":
@@ -216,6 +225,7 @@ def create_run(body: CreateRunRequest) -> PipelineRun:
         status="queued",
         stage="queued",
         pipeline_mode=pipeline_mode,
+        vision_backend=vision_backend,
         source=body.source,
         training=body.training,
         target_classes=target_classes,
