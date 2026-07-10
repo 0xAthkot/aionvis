@@ -100,6 +100,12 @@ model's mistakes. That's the flywheel."
 
 ## One-liners worth landing
 
+- **The riderless-bike story** (if asked about label quality): one street
+  render came out with a bicycle and no rider — a classic diffusion
+  artifact. Asked for "cyclist", SAM 3 scored that bike 0.15 and the run
+  stored no label. "The swarm refused to call a riderless bike a cyclist —
+  that's the two-stage QA, and no human checked it." (ds_0006/img_0004;
+  verified with a raw SAM 3 probe 2026-07-10.)
 - "Roboflow needs your data and your clicks. We need one sentence."
 - "On other GPUs our agents take turns. On one MI300X they work at the
   same time."

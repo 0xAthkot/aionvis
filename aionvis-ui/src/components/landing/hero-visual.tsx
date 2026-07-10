@@ -44,6 +44,7 @@ const SCENARIOS: Scenario[] = [
         src: "/landing/warehouse-ds0004-2.jpg",
         boxes: [
           { label: "pallet", color: "#0284c7", cx: 0.3194, cy: 0.7146, w: 0.4659, h: 0.4426 },
+          { label: "worker", color: "#65a30d", cx: 0.465, cy: 0.5533, w: 0.1363, h: 0.2598 },
           { label: "forklift", color: "#d97706", cx: 0.6621, cy: 0.3462, w: 0.5227, h: 0.5646 },
         ],
       },
@@ -65,6 +66,9 @@ const SCENARIOS: Scenario[] = [
         src: "/landing/farm-ds0005-1.jpg",
         boxes: [
           { label: "hay_bale", color: "#0284c7", cx: 0.2327, cy: 0.6119, w: 0.1768, h: 0.1785 },
+          { label: "hay_bale", color: "#0284c7", cx: 0.3985, cy: 0.4035, w: 0.0826, h: 0.0844 },
+          { label: "hay_bale", color: "#0284c7", cx: 0.1341, cy: 0.4512, w: 0.1108, h: 0.1094 },
+          { label: "hay_bale", color: "#0284c7", cx: 0.3274, cy: 0.3951, w: 0.0865, h: 0.091 },
           { label: "tractor", color: "#d97706", cx: 0.4939, cy: 0.5566, w: 0.2855, h: 0.2773 },
         ],
       },
@@ -102,9 +106,10 @@ const SCENARIOS: Scenario[] = [
         ],
       },
       {
-        src: "/landing/street-ds0006-3.jpg",
+        src: "/landing/street-ds0006-4.jpg",
         boxes: [
-          { label: "delivery_van", color: "#0284c7", cx: 0.5641, cy: 0.2683, w: 0.457, h: 0.4141 },
+          { label: "delivery_van", color: "#0284c7", cx: 0.3146, cy: 0.5158, w: 0.2583, h: 0.2027 },
+          { label: "cyclist", color: "#65a30d", cx: 0.651, cy: 0.4912, w: 0.0457, h: 0.0832 },
         ],
       },
     ],
