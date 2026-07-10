@@ -29,3 +29,16 @@ footer.png
 
 .claude/settings.local.json
 *.pdf.bak
+
+# Local dev/working files - not part of the published project
+CLAUDE.md
+AGENTS.md
+HANDOFF.md
+SHIP_PLAN.md
+PARALLEL_SWARM_PLAN.md
+presentation/
+image*.png
+judging_criteria.png
+promt_to_give.txt
+usefull_links.txt
+Auto_Annotator_Pitch_Deck_v2.pdf
