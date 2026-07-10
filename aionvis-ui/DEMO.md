@@ -1,27 +1,30 @@
 # 90-Second Demo Script
 
-Golden path for judges. Two ways to run it:
+Golden path for judges. The login page is the fork in the road:
 
-- **Mock mode** (`NEXT_PUBLIC_USE_MOCKS=true`): no backend, ~90 s simulated
-  pipeline, reset anytime with a hard refresh (state is per-tab). Safest for
-  a stage with no GPU.
-- **Real mode** (`.env.local` pointing at the FastAPI backend in
-  [`../backend`](../backend/README.md)): the swarm actually generates
-  SDXL images, segments them, critiques the boxes and trains YOLOv10.
-  A 24-image / 12-epoch run takes ~4 min on an RTX 4060 (weights must be
-  pre-downloaded — do one warm-up run first); the MI300X eats far bigger
-  runs. The Warehouse Safety project demos best in real mode (zero-shot
+- **"Demo without AMD Developer Cloud"** (the big button): no backend,
+  ~90 s simulated pipeline in the browser, reset anytime with a hard
+  refresh (state is per-tab). Safest with no GPU — and it's what any
+  anonymous visitor gets.
+- **"Sign in with your GPU node"**: paste your droplet's endpoint URL +
+  `AA_API_KEY` (printed by `backend/deploy_mi300x.sh`) — the key is
+  verified against the node, then every screen and live stream runs on
+  the real MI300X: FLUX.2-klein synthesis, SAM 3 labeling, the Gemma 4
+  critic, real training. Judges can do the same with their own droplet.
+  The Warehouse Safety project demos best on the real node (zero-shot
   detection is strongest on forklifts/pallets/workers).
 
 ## Setup (before you present)
 
-1. `npm run dev`, open http://localhost:3000 — the landing page (worth 5
-   seconds on screen by itself) — then **Launch console** and sign in (any
-   credentials). Real mode: start the backend first
-   (`uvicorn app.main:app --port 8000`), then run the preflight:
-   `python backend/smoke_test.py` — every check must pass before you present.
-2. Keep the **Dashboard** open in one tab — its VRAM sparkline moves with the
-   pipeline, which makes the intro land.
+1. On the node: `python backend/smoke_test.py` — every check must pass
+   before you present. Confirm vLLM (Gemma 4) answers and the droplet has
+   been up long enough that all weights are warm (one warm-up run).
+2. Open the deployed site — the landing page is worth 5 seconds on screen
+   by itself — then **Launch console** → sign in with the node URL + key.
+3. Keep the **Dashboard** open in one tab — its VRAM sparkline moves with
+   the pipeline, which makes the intro land. The model registry already
+   holds the 500-image flagship (yolo26m, mAP50 0.764) — good to show if
+   a live run is too slow for the slot.
 
 > **Simple vs Pro:** a fresh browser starts in **Simple mode** — the same
 > console in plain language (Coinbase Simple/Advanced pattern): every tab,
