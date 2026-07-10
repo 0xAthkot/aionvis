@@ -57,7 +57,9 @@ function OrgSwitcher() {
       <DropdownMenuTrigger asChild>
         <SidebarMenuButton
           size="lg"
-          className="data-[state=open]:bg-sidebar-accent group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center"
+          // mt only in the icon rail: expanded keeps its normal rhythm, but
+          // collapsed the org tile sat almost flush under the logo tile.
+          className="data-[state=open]:bg-sidebar-accent group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:mt-3 group-data-[collapsible=icon]:justify-center"
         >
           <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent">
             <Building2 className="size-4" />
