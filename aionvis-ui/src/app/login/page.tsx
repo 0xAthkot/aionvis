@@ -4,8 +4,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Cloud, PlugZap, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, ArrowRight, Cloud, PlugZap, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,9 +36,9 @@ export default function LoginPage() {
   const [token, setToken] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    if (user) router.replace("/dashboard");
-  }, [user, router]);
+  // Deliberately NO auto-redirect for existing sessions: entering the demo
+  // once must never lock you out of signing in with a real node. A live
+  // session just gets a shortcut below.
 
   function enterDemo() {
     // A previously attached node would shadow the demo — detach first.
@@ -90,6 +90,17 @@ export default function LoginPage() {
             MLOps Command Center
           </p>
         </Link>
+
+        {user && (
+          <Button
+            variant="secondary"
+            className="w-full"
+            onClick={() => router.replace("/dashboard")}
+          >
+            Continue as {user.name}
+            <ArrowRight className="size-4" />
+          </Button>
+        )}
 
         <Button size="lg" className="w-full" onClick={enterDemo}>
           <Sparkles className="size-4" />

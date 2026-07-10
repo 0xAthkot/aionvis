@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { AgentPipeline } from "@/components/landing/agent-pipeline";
+import { ContactDialog } from "@/components/landing/contact-dialog";
 import { HeroVisual } from "@/components/landing/hero-visual";
 import { IndustryMarquee } from "@/components/landing/industry-marquee";
 import { Badge } from "@/components/ui/badge";
@@ -222,7 +223,7 @@ const PLANS = [
       "Support SLAs",
     ],
     cta: "Talk to us",
-    href: "/login",
+    href: "contact",
     highlight: false,
   },
 ];
@@ -552,13 +553,17 @@ docker compose up --build
                       </li>
                     ))}
                   </ul>
-                  <Button
-                    asChild
-                    className="mt-6 w-full"
-                    variant={plan.highlight ? "default" : "outline"}
-                  >
-                    <Link href={plan.href}>{plan.cta}</Link>
-                  </Button>
+                  {plan.href === "contact" ? (
+                    <ContactDialog cta={plan.cta} />
+                  ) : (
+                    <Button
+                      asChild
+                      className="mt-6 w-full"
+                      variant={plan.highlight ? "default" : "outline"}
+                    >
+                      <Link href={plan.href}>{plan.cta}</Link>
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
