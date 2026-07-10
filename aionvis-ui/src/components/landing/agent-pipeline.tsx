@@ -10,12 +10,19 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface AgentSpec {
   icon: LucideIcon;
   name: string;
   tech: string;
+  /** Hover tooltip on the tech line — e.g. the full architecture list. */
+  techTip?: string[];
   blurb: string;
   status: string;
 }
@@ -52,7 +59,13 @@ const AGENTS: AgentSpec[] = [
   {
     icon: Boxes,
     name: "MLOps Agent",
-    tech: "YOLOv10 · PyTorch on ROCm",
+    tech: "22 architectures · PyTorch on ROCm",
+    techTip: [
+      "YOLOv10 / YOLO11 / YOLO26 — n·s·m·l·x each",
+      "RT-DETR — L / X",
+      "RF-DETR — nano · small · medium · base · large",
+      "Exports: .pt · ONNX · TorchScript · OpenVINO",
+    ],
     blurb: "Trains, streams live metrics, writes its own model card, exports weights.",
     status: "Training epoch 42/60…",
   },
@@ -89,7 +102,22 @@ function AgentCard({
         <Icon className="size-4.5" />
       </div>
       <p className="text-sm font-semibold">{agent.name}</p>
-      <p className="mb-2 font-mono text-[11px] text-primary/90">{agent.tech}</p>
+      {agent.techTip ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <p className="mb-2 w-fit cursor-help font-mono text-[11px] text-primary/90 underline decoration-dotted underline-offset-2">
+              {agent.tech}
+            </p>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-72">
+            {agent.techTip.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <p className="mb-2 font-mono text-[11px] text-primary/90">{agent.tech}</p>
+      )}
       <p className="text-xs leading-relaxed text-muted-foreground">{agent.blurb}</p>
       <p
         className={cn(
