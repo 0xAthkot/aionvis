@@ -25,7 +25,7 @@ WORKER = BACKEND_DIR / "sam3_worker.py"
 SETUP_HINT = (
     "SAM 3 runtime not installed on this node. From backend/: "
     "python3 -m venv .venv-sam3 && .venv-sam3/bin/pip install torch "
-    "--index-url https://download.pytorch.org/whl/rocm6.4 && "
+    "torchvision --index-url https://download.pytorch.org/whl/rocm6.4 && "
     ".venv-sam3/bin/pip install 'transformers>=5.5' accelerate pillow "
     "numpy scipy  (Windows: .venv-sam3\\Scripts\\pip, cu126 index). "
     "facebook/sam3 is also MANUALLY GATED on Hugging Face — request access "

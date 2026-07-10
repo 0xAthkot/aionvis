@@ -27,8 +27,13 @@ BACKEND_DIR = Path(__file__).resolve().parent
 
 
 def emit(tag: str, payload) -> None:
-    line = f"{tag} {json.dumps(payload) if not isinstance(payload, str) else payload}"
-    print(line, flush=True)
+    if isinstance(payload, str):
+        # One line per message — the bridge parses line-by-line, and library
+        # exceptions (e.g. transformers' torchvision hint) span lines.
+        payload = " ".join(payload.split())
+    else:
+        payload = json.dumps(payload)
+    print(f"{tag} {payload}", flush=True)
 
 
 def _load_geometry():

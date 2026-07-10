@@ -36,7 +36,7 @@ echo "== SAM 3 sidecar (.venv-sam3: transformers 5, isolated from SDXL) =="
 if [ ! -f .venv-sam3/bin/python ]; then
     python3 -m venv .venv-sam3
     .venv-sam3/bin/pip install --upgrade pip
-    .venv-sam3/bin/pip install torch --index-url https://download.pytorch.org/whl/rocm6.4
+    .venv-sam3/bin/pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
     .venv-sam3/bin/pip install 'transformers>=5.5' accelerate pillow numpy scipy
 fi
 .venv-sam3/bin/python -c 'from transformers import Sam3Model; print("SAM 3 sidecar OK")'
