@@ -16,7 +16,11 @@ pip install --upgrade pip
 
 echo "== Dependencies (ROCm wheels) =="
 pip install -r requirements.txt
-pip install -r requirements-ml.txt --extra-index-url https://download.pytorch.org/whl/rocm6.2
+# torch MUST come from the ROCm index with --index-url: with --extra-index-url
+# pip prefers PyPI's newer version, which is a CUDA build on Linux.
+# Verified on the AMD Developer Cloud MI300X (ROCm 7.2.4 host) 2026-07-10.
+pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
+pip install -r requirements-ml.txt
 
 echo "== Torch sees the GPU? =="
 python - <<'PY'
@@ -28,6 +32,9 @@ PY
 echo "== .env =="
 if [ ! -f .env ]; then
     cp .env.example .env
+    # Drop the template's empty AA_API_KEY= so the appended real key is the
+    # only occurrence (first-match .env readers otherwise see an empty key).
+    sed -i '/^AA_API_KEY=$/d' .env
     node_ip=$(hostname -I | awk '{print $1}')
     # The key the Control Plane's "Connect AMD Developer Cloud" form takes.
     aa_key="aa_node_$(openssl rand -hex 24)"

@@ -55,6 +55,14 @@ def _try_nvidia() -> Optional[GpuInfo]:
         return None
 
 
+def _unwrap_smi(data):
+    """amd-smi ≥ 25.x (ROCm 7) wraps results in {"gpu_data": [...]}; older
+    builds emit a bare list or dict. Normalize to the first GPU's dict."""
+    if isinstance(data, dict) and "gpu_data" in data:
+        data = data["gpu_data"]
+    return data[0] if isinstance(data, list) else data
+
+
 def _try_amd() -> Optional[GpuInfo]:
     smi = shutil.which("amd-smi") or shutil.which("rocm-smi")
     if not smi:
@@ -65,8 +73,7 @@ def _try_amd() -> Optional[GpuInfo]:
                 [smi, "static", "--gpu", "0", "--asic", "--vram", "--json"],
                 capture_output=True, text=True, timeout=10, check=True,
             ).stdout
-            data = json.loads(out)
-            gpu = data[0] if isinstance(data, list) else data
+            gpu = _unwrap_smi(json.loads(out))
             name = gpu.get("asic", {}).get("market_name", "AMD GPU")
             vram_mb = float(gpu.get("vram", {}).get("size", {}).get("value", 0))
             version = "ROCm"
@@ -75,7 +82,10 @@ def _try_amd() -> Optional[GpuInfo]:
                     [smi, "version", "--json"],
                     capture_output=True, text=True, timeout=10, check=True,
                 ).stdout
-                version = f"ROCm {json.loads(ver).get('rocm_version', '')}".strip()
+                vdata = json.loads(ver)
+                if isinstance(vdata, list):
+                    vdata = vdata[0]
+                version = f"ROCm {vdata.get('rocm_version', '')}".strip()
             except Exception:
                 pass
             return GpuInfo("amd", name, vram_mb / 1024, version)
@@ -186,8 +196,7 @@ def _sample_amd() -> Optional[dict]:
              "--temperature", "--power", "--json"],
             capture_output=True, text=True, timeout=10, check=True,
         ).stdout
-        data = json.loads(out)
-        gpu = data[0] if isinstance(data, list) else data
+        gpu = _unwrap_smi(json.loads(out))
 
         def val(*path, default=0.0):
             node = gpu

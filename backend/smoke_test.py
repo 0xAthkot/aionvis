@@ -28,10 +28,13 @@ def _env_file_key() -> str:
     env_path = Path(__file__).resolve().parent / ".env"
     if not env_path.exists():
         return ""
+    key = ""
     for line in env_path.read_text(encoding="utf-8").splitlines():
         if line.strip().startswith("AA_API_KEY="):
-            return line.split("=", 1)[1].strip()
-    return ""
+            # Last value wins, like the backend's settings loader — deploy
+            # scripts append the real key below .env.example's empty one.
+            key = line.split("=", 1)[1].strip() or key
+    return key
 
 
 def main() -> int:
