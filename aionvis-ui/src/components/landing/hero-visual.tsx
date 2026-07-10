@@ -263,6 +263,23 @@ export function HeroVisual() {
                 {!shown && (
                   <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-white/5 to-transparent" />
                 )}
+                {/* Working state while the tile is empty: which agent is on
+                    it right now. Fades out as the render lands. */}
+                <div
+                  className={cn(
+                    "pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 transition-opacity duration-500",
+                    shown ? "opacity-0" : "opacity-100",
+                  )}
+                >
+                  {t < TILE_AT[0] ? (
+                    <MessageSquareText className="size-5 animate-pulse text-primary/70" />
+                  ) : (
+                    <ImageIcon className="size-5 animate-pulse text-primary/70" />
+                  )}
+                  <span className="font-mono text-[11px] text-muted-foreground">
+                    {t < TILE_AT[0] ? "Generating prompts…" : "Rendering image…"}
+                  </span>
+                </div>
                 {tile.boxes.map((b) => (
                   <div
                     key={b.label + b.cx}
