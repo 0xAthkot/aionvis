@@ -30,9 +30,9 @@ const daysAgo = (d: number) => minutesAgo(d * 24 * 60);
 
 export const organizations: Organization[] = [
   {
-    id: "org_aegis",
-    name: "Aegis Robotics",
-    slug: "aegis-robotics",
+    id: "org_aionvis",
+    name: "aionVIS Robotics",
+    slug: "aionvis-robotics",
     plan: "enterprise",
     createdAt: daysAgo(92),
   },
@@ -41,16 +41,16 @@ export const organizations: Organization[] = [
 export const members: Member[] = [
   {
     id: "usr_stella",
-    orgId: "org_aegis",
+    orgId: "org_aionvis",
     name: "Stella Papadopoulou",
-    email: "stella@aegisrobotics.io",
+    email: "stella@aionvis.dev",
     role: "owner",
   },
   {
     id: "usr_marco",
-    orgId: "org_aegis",
+    orgId: "org_aionvis",
     name: "Marco Deluca",
-    email: "marco@aegisrobotics.io",
+    email: "marco@aionvis.dev",
     role: "operator",
   },
 ];
@@ -58,7 +58,7 @@ export const members: Member[] = [
 export const projects: Project[] = [
   {
     id: "prj_pcb",
-    orgId: "org_aegis",
+    orgId: "org_aionvis",
     name: "PCB Defect Detection",
     description:
       "Detect solder bridges, missing components and scratches on assembly-line PCBs.",
@@ -67,7 +67,7 @@ export const projects: Project[] = [
   },
   {
     id: "prj_helmet",
-    orgId: "org_aegis",
+    orgId: "org_aionvis",
     name: "Warehouse Safety Compliance",
     description:
       "Detect hard hats and hi-vis vests on warehouse CCTV frames for safety audits.",
@@ -132,7 +132,7 @@ export function telemetryHistory(nodeId: string): TelemetrySample[] {
 export const datasets: Dataset[] = [
   {
     id: "ds_pcb_synth_v2",
-    orgId: "org_aegis",
+    orgId: "org_aionvis",
     projectId: "prj_pcb",
     name: "pcb-defects-synth-v2",
     origin: "synthetic",
@@ -150,7 +150,7 @@ export const datasets: Dataset[] = [
   },
   {
     id: "ds_helmet_cctv",
-    orgId: "org_aegis",
+    orgId: "org_aionvis",
     projectId: "prj_helmet",
     name: "helmet-cctv-frames",
     origin: "byod",
@@ -167,7 +167,7 @@ export const datasets: Dataset[] = [
     // A customer archive that shipped its own COCO annotations — runs on
     // this dataset AUDIT the labels instead of relabeling (audit mode).
     id: "ds_vendor_labeled",
-    orgId: "org_aegis",
+    orgId: "org_aionvis",
     name: "vendor-labeled-batch-07",
     origin: "byod",
     status: "curating",
@@ -237,7 +237,7 @@ export const annotatedImages: AnnotatedImage[] = pcbImages();
 export const runs: PipelineRun[] = [
   {
     id: "run_pcb_v2",
-    orgId: "org_aegis",
+    orgId: "org_aionvis",
     projectId: "prj_pcb",
     name: "pcb-defects · synthetic v2",
     path: "synthetic",
@@ -288,7 +288,7 @@ export const runs: PipelineRun[] = [
   },
   {
     id: "run_pcb_v1",
-    orgId: "org_aegis",
+    orgId: "org_aionvis",
     projectId: "prj_pcb",
     name: "pcb-defects · synthetic v1",
     path: "synthetic",
@@ -336,7 +336,7 @@ export const runs: PipelineRun[] = [
   },
   {
     id: "run_helmet_byod",
-    orgId: "org_aegis",
+    orgId: "org_aionvis",
     projectId: "prj_helmet",
     name: "helmet-cctv · byod labeling",
     path: "byod",
@@ -424,7 +424,7 @@ export function trainingCurves(
 export const models: ModelArtifact[] = [
   {
     id: "mdl_pcb_v2",
-    orgId: "org_aegis",
+    orgId: "org_aionvis",
     runId: "run_pcb_v2",
     datasetId: "ds_pcb_synth_v2",
     name: "pcb-defect-detector",
@@ -472,7 +472,7 @@ export const models: ModelArtifact[] = [
   },
   {
     id: "mdl_pcb_v1",
-    orgId: "org_aegis",
+    orgId: "org_aionvis",
     runId: "run_pcb_v1",
     datasetId: "ds_pcb_synth_v2",
     name: "pcb-defect-detector",

@@ -150,9 +150,9 @@ class Store:
 
     def seed(self) -> None:
         org = Organization(
-            id="org_aegis",
-            name="Aegis Robotics",
-            slug="aegis-robotics",
+            id="org_aionvis",
+            name="aionVIS Robotics",
+            slug="aionvis-robotics",
             plan="enterprise",
             created_at="2026-01-12T09:00:00.000Z",
         )
@@ -169,7 +169,7 @@ class Store:
                 id="member_2",
                 org_id=org.id,
                 name="Maria Kefalogianni",
-                email="maria@aegisrobotics.dev",
+                email="maria@aionvis.dev",
                 role="operator",
             ),
         ]
