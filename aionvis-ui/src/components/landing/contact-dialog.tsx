@@ -32,7 +32,7 @@ export function ContactDialog({ cta }: { cta: string }) {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const subject = encodeURIComponent(
-      `aionVIS enterprise inquiry${name.trim() ? ` — ${name.trim()}` : ""}`,
+      `aionVIS inquiry${name.trim() ? ` from ${name.trim()}` : ""}`,
     );
     const body = encodeURIComponent(
       `${message.trim()}\n\n— ${name.trim() || "Anonymous"}${
@@ -57,8 +57,10 @@ export function ContactDialog({ cta }: { cta: string }) {
         <DialogHeader>
           <DialogTitle>Talk to us</DialogTitle>
           <DialogDescription>
-            Dedicated MI300X nodes, on-prem deployments, SLAs — tell us what
-            you need and we&apos;ll get back to you.
+            aionVIS is a young startup — paid plans aren&apos;t available
+            yet. If you&apos;re interested in where this project is going —
+            as an early user, partner or contributor — we&apos;d genuinely
+            love to hear from you.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
@@ -85,11 +87,13 @@ export function ContactDialog({ cta }: { cta: string }) {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="contact-message">What are you building?</Label>
+            <Label htmlFor="contact-message">
+              What interests you about aionVIS?
+            </Label>
             <Textarea
               id="contact-message"
               rows={4}
-              placeholder="Detection targets, data constraints, deployment environment…"
+              placeholder="What you'd use it for, what you'd want from it, or how you'd like to be involved…"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />
