@@ -73,8 +73,8 @@ intervention." You land in Mission Control.
   first with a live queue position instead of fighting for VRAM.)
 
 *(While training runs, flip briefly to **Hardware** for the full-size VRAM
-cliff chart and the **Resident swarm** chip row — Gemma 3 27B, FLUX, SAM 3
-held in VRAM at once — or to the Dashboard tab showing the same load.)*
+cliff chart and the **Resident swarm** chip row — Gemma 4 26B MoE, FLUX.2,
+SAM 3 held in VRAM at once — or to the Dashboard tab showing the same load.)*
 
 **2:15 — Completion.** Toast fires; the green banner appears. Click
 **View dataset**: bounding boxes drawn on every image, Critic verdicts on

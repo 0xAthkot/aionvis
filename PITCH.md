@@ -43,8 +43,9 @@ doesn't just label data; it learns from its models' mistakes.
 ## Why now, why AMD
 
 **On other GPUs our agents take turns. On one MI300X they work at the same
-time.** The swarm's working set is ~110–115 GB — Gemma 3 27B via vLLM,
-FLUX.1-schnell, SAM 3, plus training headroom. No NVIDIA card holds that;
+time.** The swarm's working set is ~110–115 GB (measured live) — Gemma 4
+26B MoE via vLLM, FLUX.2-klein, SAM 3, plus training headroom. No NVIDIA
+card holds that;
 even an H100's 80 GB forces the load→use→flush choreography we run in
 sequential mode. One MI300X's **192 GB of HBM3 holds the entire swarm
 resident**, so the pipeline switches to streaming mode

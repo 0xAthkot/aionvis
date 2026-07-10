@@ -6,10 +6,10 @@ the autonomous agent swarm that the Control Plane UI drives.
 | Agent | What actually runs |
 |---|---|
 | Prompt Agent | **Gemma via vLLM** (any OpenAI-compatible chat endpoint, `LLM_BASE_URL`); deterministic local fallback when the endpoint is offline |
-| Synthesis Agent | **SDXL-Turbo** via HuggingFace diffusers (FLUX.1-schnell on MI300X) |
-| Vision Agent | **YOLOE** open-vocabulary segmentation (default) or **SAM 3** (`VISION_BACKEND=sam3`) |
+| Synthesis Agent | **SDXL-Turbo** via HuggingFace diffusers (FLUX.2-klein on MI300X) — the wizard's generator choice is honored verbatim |
+| Vision Agent | **SAM 3** concept segmentation (`.venv-sam3` sidecar) or **YOLOE** open-vocab — a per-run user choice (`visionBackend`), rejected with setup steps if the node can't run it |
 | Critic Agent | **Gemma VLM semantic verification** (via the same vLLM endpoint) — confirms crops actually show the claimed class (cost-capped per run, `SEMANTIC_CRITIC=false` to disable) — on top of pure-numpy geometric checks that re-derive tight boxes from mask contours, compute IoU and reject/regenerate |
-| MLOps Agent | **Ultralytics YOLOv10** training with live epoch metrics, `.pt`/ONNX export |
+| MLOps Agent | **YOLOv10/11/26, RT-DETR, RF-DETR** training with live epoch metrics; `.pt`/ONNX/TorchScript/OpenVINO export |
 
 Between stages the orchestrator flushes VRAM (`torch.cuda.empty_cache()` —
 which *is* `hip.empty_cache()` on ROCm builds) and the telemetry sampler
@@ -46,12 +46,10 @@ YOLOv10n ~5 MB) into the HuggingFace/Ultralytics caches.
 
 ## Deploy on AMD MI300X (Developer Cloud)
 
-```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-pip install -r requirements-ml.txt --extra-index-url https://download.pytorch.org/whl/rocm6.2
-cp .env.example .env
-```
+One-shot, verified live on the Developer Cloud: `bash deploy_mi300x.sh`
+(ROCm torch via `--index-url` — an `--extra-index-url` would let PyPI's
+CUDA build win — plus the SAM 3 sidecar, the streaming `.env` profile
+below, and a minted `AA_API_KEY`).
 
 Recommended `.env` on the MI300X (192 GB VRAM — no offload, bigger models):
 
@@ -69,17 +67,18 @@ GPU_SLOTS=2                         # two runs share the card concurrently
 AUTO_BATCH=true                     # training sizes its batch to free VRAM
 ```
 
-Serve **Gemma on the MI300X itself** — zero API spend, every model on AMD
-silicon. This matches the `LLM_BASE_URL`/`LLM_MODEL` defaults, and Gemma 3
-is multimodal, so the same server powers the Prompt Agent, the semantic
-critic VLM, and model cards:
+Serve **Gemma 4 on the MI300X itself** — zero API spend, every model on AMD
+silicon. Gemma 4 is multimodal, so the same server powers the Prompt Agent,
+the semantic critic VLM, and model cards. Use the vLLM ROCm **container**
+(PyPI vllm wheels are CUDA-only); `deploy_mi300x.sh` prints the full
+`docker run` command:
 
 ```bash
-pip install vllm            # ROCm build
-vllm serve google/gemma-3-27b-it --port 8001 --gpu-memory-utilization 0.35
+# inside the vllm/vllm-openai-rocm container (see deploy_mi300x.sh)
+vllm serve google/gemma-4-26B-A4B-it --port 8001 --gpu-memory-utilization 0.40
 ```
 
-`--gpu-memory-utilization 0.35` is required when vLLM shares the card with
+`--gpu-memory-utilization 0.40` is required when vLLM shares the card with
 the swarm: its 0.9 default would grab ~170 GB of the 192 GB and starve
 FLUX, SAM 3 and training.
 
@@ -108,7 +107,7 @@ app/
 │   └── pipeline.py    # thread-per-run stage machine
 └── agents/
     ├── prompt_agent.py     # Gemma via vLLM (OpenAI-compatible)
-    ├── synthesis_agent.py  # diffusers SDXL-Turbo / FLUX
+    ├── synthesis_agent.py  # diffusers SDXL / FLUX.2-klein
     ├── vision_agent.py     # YOLOE / SAM 3 → mask contours
     ├── critic_agent.py     # geometric IoU verdicts + box regeneration
     ├── geometry.py         # pure-numpy geometry (no cv2 anywhere in app/)

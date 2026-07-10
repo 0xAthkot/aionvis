@@ -175,8 +175,8 @@ curve points carry per-epoch `top1` (mAP/precision/recall are 0), and
 | GET | `/hardware/nodes/{nodeId}/telemetry` | → `TelemetrySample[]` (recent history, ~30 min @ 15 s) |
 
 `HardwareNode.residentModels` lists the models currently held in VRAM when
-the node runs with `KEEP_MODELS_WARM` (e.g. `["Gemma 3 27B (vLLM)",
-"FLUX.1-schnell", "SAM 3"]`) — the "resident swarm" readout. Absent or
+the node runs with `KEEP_MODELS_WARM` (e.g. `["Gemma 4 26B MoE (vLLM)",
+"FLUX.2-klein", "SAM 3"]`) — the "resident swarm" readout. Absent or
 empty on sequential nodes that load-and-flush per stage.
 
 ### Settings
