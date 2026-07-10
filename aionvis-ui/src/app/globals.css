@@ -164,6 +164,12 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* Tailwind v4's preflight leaves buttons on the arrow cursor; restore the
+     hand for anything clickable (links already have it natively). */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
   body {
     @apply bg-background text-foreground;
     -webkit-font-smoothing: antialiased;

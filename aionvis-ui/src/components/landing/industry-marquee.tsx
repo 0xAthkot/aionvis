@@ -1,12 +1,17 @@
+"use client";
+
 import {
   Bot,
   Car,
   Factory,
+  Radar,
   ShoppingCart,
   Warehouse,
   Wheat,
   type LucideIcon,
 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 /* Placeholder tiles until the swarm renders each industry's hero image on
    the MI300X (SDXL, same Synthesis Agent as the pipeline) — swap `image`
@@ -59,6 +64,13 @@ const INDUSTRIES: {
       "Shelf gaps, planogram drift and queue counts — describe the shelf, get the detector.",
     image: null,
   },
+  {
+    icon: Radar,
+    name: "AI in Defense",
+    blurb:
+      "Aerial, maritime and perimeter detection where real imagery is scarce or classified — synthetic scenes fill the gap.",
+    image: null,
+  },
 ];
 
 function IndustryRow({ ariaHidden = false }: { ariaHidden?: boolean }) {
@@ -87,9 +99,93 @@ function IndustryRow({ ariaHidden = false }: { ariaHidden?: boolean }) {
   );
 }
 
+/** One marquee loop takes this long when idle — matches the old CSS pace. */
+const LOOP_SECONDS = 45;
+
+/**
+ * Infinite marquee, draggable. The track holds two identical rows, and a
+ * rAF loop advances a pixel offset wrapped modulo one row's width — the
+ * same seamless -50% trick as the old CSS animation, but interactive:
+ * hovering pauses, dragging scrubs (pointer events, so touch works too).
+ */
 export function IndustryMarquee() {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [dragging, setDragging] = useState(false);
+  const state = useRef({
+    offset: 0,
+    half: 0,
+    paused: false,
+    dragging: false,
+    dragStartX: 0,
+    dragStartOffset: 0,
+  });
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const s = state.current;
+
+    const measure = () => {
+      s.half = track.scrollWidth / 2;
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(track);
+
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    let raf = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = (now - last) / 1000;
+      last = now;
+      if (!reduceMotion && !s.paused && !s.dragging && s.half > 0) {
+        s.offset += (s.half / LOOP_SECONDS) * dt;
+      }
+      if (s.half > 0) {
+        s.offset = ((s.offset % s.half) + s.half) % s.half;
+        track.style.transform = `translate3d(${-s.offset}px, 0, 0)`;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, []);
+
+  const s = state.current;
   return (
-    <div className="group relative overflow-hidden">
+    <div
+      className={cn(
+        "group relative touch-pan-y overflow-hidden",
+        dragging ? "cursor-grabbing" : "cursor-grab",
+      )}
+      onMouseEnter={() => (s.paused = true)}
+      onMouseLeave={() => (s.paused = false)}
+      onPointerDown={(e) => {
+        s.dragging = true;
+        s.dragStartX = e.clientX;
+        s.dragStartOffset = s.offset;
+        setDragging(true);
+        e.currentTarget.setPointerCapture(e.pointerId);
+      }}
+      onPointerMove={(e) => {
+        if (!s.dragging) return;
+        s.offset = s.dragStartOffset - (e.clientX - s.dragStartX);
+      }}
+      onPointerUp={() => {
+        s.dragging = false;
+        setDragging(false);
+      }}
+      onPointerCancel={() => {
+        s.dragging = false;
+        setDragging(false);
+      }}
+    >
       <div
         aria-hidden
         className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-background to-transparent sm:w-28"
@@ -98,7 +194,7 @@ export function IndustryMarquee() {
         aria-hidden
         className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-background to-transparent sm:w-28"
       />
-      <div className="flex w-max animate-marquee group-hover:[animation-play-state:paused] motion-reduce:animate-none">
+      <div ref={trackRef} className="flex w-max select-none">
         <IndustryRow />
         <IndustryRow ariaHidden />
       </div>
