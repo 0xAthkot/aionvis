@@ -186,8 +186,7 @@ function ParallelPipeline() {
         </div>
 
         {/* Join: the three streams drain into one trainer. */}
-        <div className="hidden items-center gap-0 lg:flex">
-          <div className="h-32 w-px bg-primary/40" />
+        <div className="hidden items-center lg:flex">
           <FlowEdge />
         </div>
 
@@ -199,7 +198,7 @@ function ParallelPipeline() {
         </div>
       </div>
       <p className="text-center font-mono text-xs text-primary/90">
-        192 GB HBM3 holds the entire swarm resident — Gemma 3 27B, FLUX,
+        192 GB HBM3 holds the entire swarm resident — Gemma 4, FLUX.2,
         SAM 3 — at once.
       </p>
     </div>
@@ -238,7 +237,28 @@ export function AgentPipeline() {
           </button>
         ))}
       </div>
-      {mode === "sequential" ? <SequentialPipeline /> : <ParallelPipeline />}
+      {/* Both modes stay mounted, stacked in one grid cell, and cross-fade —
+          the container keeps the taller mode's height, so no layout jump. */}
+      <div className="grid">
+        <div
+          aria-hidden={mode !== "sequential"}
+          className={cn(
+            "col-start-1 row-start-1 transition-opacity duration-300 motion-reduce:transition-none",
+            mode === "sequential" ? "opacity-100" : "pointer-events-none opacity-0",
+          )}
+        >
+          <SequentialPipeline />
+        </div>
+        <div
+          aria-hidden={mode !== "parallel"}
+          className={cn(
+            "col-start-1 row-start-1 transition-opacity duration-300 motion-reduce:transition-none",
+            mode === "parallel" ? "opacity-100" : "pointer-events-none opacity-0",
+          )}
+        >
+          <ParallelPipeline />
+        </div>
+      </div>
     </div>
   );
 }
