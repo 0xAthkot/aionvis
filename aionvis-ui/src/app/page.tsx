@@ -37,7 +37,7 @@ const NAV_LINKS = [
   { href: "#pipeline", label: "Pipeline" },
   { href: "#features", label: "Features" },
   { href: "#compare", label: "Compare" },
-  { href: "#platform", label: "Platform" },
+  { href: "#platform", label: "Self-host" },
   { href: "#pricing", label: "Pricing" },
   { href: "#industries", label: "Industries" },
   { href: "#faq", label: "FAQ" },

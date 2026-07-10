@@ -128,8 +128,15 @@ export default function LoginPage() {
             <CardDescription>
               Run the real product on your own AMD Developer Cloud droplet.
               Deploy the backend with{" "}
-              <code className="font-mono text-xs">deploy_mi300x.sh</code> — it
-              prints the endpoint and API key to paste here.
+              <a
+                href="https://github.com/0xAthkot/aionvis/blob/main/backend/deploy_mi300x.sh"
+                target="_blank"
+                rel="noreferrer"
+                className="font-mono text-xs text-foreground underline underline-offset-4"
+              >
+                deploy_mi300x.sh
+              </a>{" "}
+              — it prints the endpoint and API key to paste here.
             </CardDescription>
           </CardHeader>
           <form onSubmit={connectAndEnter}>

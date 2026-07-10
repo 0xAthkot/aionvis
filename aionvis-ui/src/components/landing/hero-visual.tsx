@@ -20,9 +20,11 @@ import { cn } from "@/lib/utils";
  * REAL SAM 3 + Critic-verified boxes — normalized cx/cy/w/h straight from
  * the dataset records (ds_0004 / ds_0005 / ds_0006, 2026-07-10).
  */
-// chip: draw the label pill (highest-confidence box of each class per tile);
-// the rest render as bare outlines so EVERY stored box is visible without
-// the pills colliding.
+// Display rule: every stored box with confidence >= 0.50 is drawn (the
+// dataset records keep lower-confidence ones too, but they don't ship on
+// the marketing tiles). chip: draw the label pill (highest-confidence box
+// of each class per tile); the rest render as bare outlines so the pills
+// never collide.
 type Box = {
   label: string; color: string;
   cx: number; cy: number; w: number; h: number;
@@ -49,14 +51,13 @@ const SCENARIOS: Scenario[] = [
         ],
       },
       {
-        src: "/landing/warehouse-ds0004-2.jpg", // img_0119, all 6 verified boxes
+        src: "/landing/warehouse-ds0004-2.jpg", // img_0119, 5 of 6 stored boxes (one forklift at conf 0.39 < 0.50)
         boxes: [
           { label: "pallet", color: "#0284c7", cx: 0.3194, cy: 0.7146, w: 0.4659, h: 0.4426, chip: true },
           { label: "worker", color: "#65a30d", cx: 0.465, cy: 0.5533, w: 0.1363, h: 0.2598, chip: true },
           { label: "forklift", color: "#d97706", cx: 0.6621, cy: 0.3462, w: 0.5227, h: 0.5646, chip: true },
           { label: "pallet", color: "#0284c7", cx: 0.8752, cy: 0.0539, w: 0.2496, h: 0.1072 },
           { label: "pallet", color: "#0284c7", cx: 0.8654, cy: 0.0933, w: 0.2691, h: 0.1432 },
-          { label: "forklift", color: "#d97706", cx: 0.508, cy: 0.4983, w: 0.8496, h: 0.8643 },
         ],
       },
       {
@@ -324,6 +325,10 @@ export function HeroVisual() {
                     className={cn(
                       "absolute rounded-sm border-2 transition-all duration-500",
                       boxed ? "scale-100 opacity-100" : "scale-110 opacity-0",
+                      // Chipped boxes stack above bare outlines so their
+                      // label pills are never covered (each box is its own
+                      // stacking context via the scale transform).
+                      b.chip ? "z-20" : "z-0",
                     )}
                     style={{
                       borderColor: b.color,
