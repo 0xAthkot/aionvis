@@ -1,18 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Database } from "lucide-react";
+import { ArrowLeft, ArrowRight, Database } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { HelpTip } from "@/components/shared/help-tip";
 import { StartRunDialog } from "@/components/datasets/start-run-dialog";
 import { UploadDropzone } from "@/components/datasets/upload-dropzone";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
-import type { Dataset } from "@/lib/api/types";
+import type { AnnotatedImage, Dataset, Paginated } from "@/lib/api/types";
 
 const statusLabel: Record<Dataset["status"], string> = {
   uploading: "Uploading",
@@ -30,6 +32,48 @@ const statusChip: Record<Dataset["status"], string> = {
   ready: "chip-success",
 };
 
+/** Three thumbnails, randomly sampled (stable per dataset), so each row
+ * shows what it contains at a glance. One small request per row
+ * (pageSize=12), thumbnails only. */
+function DatasetPeek({ dataset }: { dataset: Dataset }) {
+  const { data } = useQuery({
+    queryKey: ["dataset-peek", dataset.id],
+    queryFn: () =>
+      api<Paginated<AnnotatedImage>>(
+        `${endpoints.datasets.images(dataset.id)}?page=1&pageSize=12`,
+      ),
+    enabled: dataset.imageCount > 0,
+    staleTime: 5 * 60_000,
+  });
+  const picks = useMemo(() => {
+    const items = data?.items ?? [];
+    if (items.length <= 3) return items;
+    // Seeded shuffle (dataset id) — random-looking but stable across renders.
+    let seed = [...dataset.id].reduce((a, c) => a + c.charCodeAt(0), 0);
+    const rand = () => {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    };
+    return [...items].sort(() => rand() - 0.5).slice(0, 3);
+  }, [data, dataset.id]);
+
+  if (picks.length === 0) return null;
+  return (
+    <div className="hidden shrink-0 gap-1.5 sm:flex">
+      {picks.map((img) => (
+        // eslint-disable-next-line @next/next/no-img-element -- runtime node/mock URLs, no optimizer
+        <img
+          key={img.id}
+          src={img.thumbnailUrl || img.url}
+          alt={img.fileName}
+          loading="lazy"
+          className="size-16 rounded-md border border-white/10 object-cover"
+        />
+      ))}
+    </div>
+  );
+}
+
 /** Open row (no card): the library reads as one divided list. */
 function DatasetRow({ dataset }: { dataset: Dataset }) {
   const labeledPct =
@@ -38,7 +82,8 @@ function DatasetRow({ dataset }: { dataset: Dataset }) {
       : Math.round((dataset.labeledCount / dataset.imageCount) * 100);
 
   return (
-    <div className="space-y-3 py-5">
+    <div className="flex items-start gap-5 py-5">
+      <div className="min-w-0 flex-1 space-y-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
         <Link
           href={`/datasets/${dataset.id}`}
@@ -105,15 +150,30 @@ function DatasetRow({ dataset }: { dataset: Dataset }) {
         (dataset.status === "curating" && !!dataset.importedLabels)) && (
         <StartRunDialog dataset={dataset} />
       )}
+      </div>
+      <DatasetPeek dataset={dataset} />
     </div>
   );
 }
 
+const LIBRARY_PAGE_SIZE = 12;
+
 export default function DatasetsPage() {
-  const { data: datasets } = useQuery({
-    queryKey: ["datasets"],
-    queryFn: () => api<Dataset[]>(endpoints.datasets.list()),
+  // Paginated so a library of hundreds never lands in one request — each
+  // row also fetches its 3-thumbnail peek, so the page size stays modest.
+  const [page, setPage] = useState(1);
+  const { data: datasetPage, isPlaceholderData } = useQuery({
+    queryKey: ["datasets", page],
+    queryFn: () =>
+      api<Paginated<Dataset>>(
+        `${endpoints.datasets.list()}?page=${page}&pageSize=${LIBRARY_PAGE_SIZE}`,
+      ),
+    placeholderData: (prev) => prev,
   });
+  const datasets = datasetPage?.items;
+  const totalPages = datasetPage
+    ? Math.max(1, Math.ceil(datasetPage.total / LIBRARY_PAGE_SIZE))
+    : 1;
 
   return (
     <main className="stagger-children mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
@@ -139,15 +199,16 @@ export default function DatasetsPage() {
             <Database className="size-4" />
             Library
           </h2>
-          {datasets && datasets.length > 0 && (
+          {datasetPage && datasetPage.total > 0 && (
             <p className="text-xs text-muted-foreground">
-              {datasets.length} datasets ·{" "}
+              {datasetPage.total} datasets
+              {totalPages > 1 && ` · page ${page} of ${totalPages}`} ·{" "}
               {datasets
-                .reduce((n, d) => n + d.imageCount, 0)
+                ?.reduce((n, d) => n + d.imageCount, 0)
                 .toLocaleString()}{" "}
-              images ·{" "}
-              {datasets.filter((d) => d.status === "ready").length} ready to
-              train on
+              images and{" "}
+              {datasets?.filter((d) => d.status === "ready").length} ready to
+              train on{totalPages > 1 && " on this page"}
             </p>
           )}
         </div>
@@ -167,6 +228,31 @@ export default function DatasetsPage() {
               : datasets.map((dataset) => (
                   <DatasetRow key={dataset.id} dataset={dataset} />
                 ))}
+          </div>
+        )}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1 || isPlaceholderData}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              <ArrowLeft className="size-3.5" />
+              Previous
+            </Button>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              page {page} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages || isPlaceholderData}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Next
+              <ArrowRight className="size-3.5" />
+            </Button>
           </div>
         )}
       </section>

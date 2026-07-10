@@ -395,9 +395,9 @@ export const handlers = [
   }),
 
   // -- Datasets ---------------------------------------------------------------
-  http.get(`${API_BASE}/datasets`, async () => {
+  http.get(`${API_BASE}/datasets`, async ({ request }) => {
     await lag();
-    return HttpResponse.json(db.datasets);
+    return HttpResponse.json(paginate(db.datasets, request.url));
   }),
 
   http.get(`${API_BASE}/datasets/:id`, async ({ params }) => {

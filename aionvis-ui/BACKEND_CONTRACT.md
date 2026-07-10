@@ -134,7 +134,7 @@ one.
 ### Datasets
 | Method | Path | Request → Response |
 |---|---|---|
-| GET | `/datasets` | → `Dataset[]` |
+| GET | `/datasets` | → `Paginated<Dataset>` (newest first, `?page=&pageSize=`) |
 | GET | `/datasets/{id}` | → `Dataset` |
 | GET | `/datasets/{id}/images` | → `Paginated<AnnotatedImage>` |
 | GET | `/datasets/{id}/analytics` | → `DatasetAnalytics` (class distribution, split balance, coverage-weighted label heatmap, image dimensions) |

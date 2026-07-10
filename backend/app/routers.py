@@ -384,8 +384,9 @@ async def expand_prompt(body: ExpandPromptRequest) -> ExpandPromptResponse:
 
 
 @router.get("/datasets")
-def datasets() -> list[Dataset]:
-    return sorted(store.datasets.values(), key=lambda d: d.created_at, reverse=True)
+def datasets(page: int = 1, pageSize: int = 50) -> Paginated[Dataset]:
+    items = sorted(store.datasets.values(), key=lambda d: d.created_at, reverse=True)
+    return Paginated[Dataset].model_validate(_paginate(items, page, pageSize))
 
 
 @router.get("/datasets/{dataset_id}")

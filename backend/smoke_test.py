@@ -86,7 +86,8 @@ def main() -> int:
     check("GET /models", _models)
     check("GET /dashboard/stats", lambda: f"{get('/dashboard/stats')['modelsTrained']} models trained")
     check("GET /runs", lambda: f"{get('/runs?pageSize=5')['total']} runs")
-    check("GET /datasets", lambda: f"{len(get('/datasets'))} datasets")
+    check("GET /datasets",
+          lambda: f"{get('/datasets')['total']} datasets (paginated)")
     check("GET /hardware/nodes", lambda: ", ".join(n["gpu"] for n in get("/hardware/nodes")))
 
     if projects:
@@ -95,7 +96,7 @@ def main() -> int:
               lambda: f"{sum(1 for f in get(f'/projects/{pid}/feedback') if not f.get('consumedByRunId'))} pending hard cases")
 
     def _analytics():
-        labeled = [d for d in get("/datasets") if d.get("labeledCount")]
+        labeled = [d for d in get("/datasets")["items"] if d.get("labeledCount")]
         if not labeled:
             return "skipped — no labeled dataset yet"
         a = get(f"/datasets/{labeled[0]['id']}/analytics")

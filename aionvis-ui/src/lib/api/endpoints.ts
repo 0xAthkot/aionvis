@@ -49,7 +49,7 @@ export const endpoints = {
   },
 
   datasets: {
-    /** GET → Dataset[] */
+    /** GET → Paginated<Dataset> (newest first, ?page=&pageSize=) */
     list: () => `${API_BASE}/datasets`,
     /** GET → Dataset */
     get: (id: string) => `${API_BASE}/datasets/${id}`,
