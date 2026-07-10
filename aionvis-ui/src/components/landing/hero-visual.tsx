@@ -34,21 +34,21 @@ const SCENARIOS: Scenario[] = [
     done: "model_0004 ready · mAP50 0.76 · exported .pt / ONNX",
     tiles: [
       {
-        src: "/landing/gen-1.jpg",
+        src: "/landing/warehouse-ds0004-1.jpg",
         boxes: [
           { label: "forklift", color: "#d97706", cx: 0.4839, cy: 0.3701, w: 0.5025, h: 0.6513 },
           { label: "worker", color: "#65a30d", cx: 0.4945, cy: 0.4504, w: 0.168, h: 0.268 },
         ],
       },
       {
-        src: "/landing/gen-2.jpg",
+        src: "/landing/warehouse-ds0004-2.jpg",
         boxes: [
           { label: "pallet", color: "#0284c7", cx: 0.3194, cy: 0.7146, w: 0.4659, h: 0.4426 },
           { label: "forklift", color: "#d97706", cx: 0.6621, cy: 0.3462, w: 0.5227, h: 0.5646 },
         ],
       },
       {
-        src: "/landing/gen-3.jpg",
+        src: "/landing/warehouse-ds0004-3.jpg",
         boxes: [
           { label: "forklift", color: "#d97706", cx: 0.7086, cy: 0.4259, w: 0.4203, h: 0.5217 },
           { label: "worker", color: "#65a30d", cx: 0.174, cy: 0.4661, w: 0.1699, h: 0.2037 },
@@ -62,20 +62,20 @@ const SCENARIOS: Scenario[] = [
     done: "model_0005 ready · FLUX.2 + SAM 3 · zero human labels",
     tiles: [
       {
-        src: "/landing/agri-1.jpg",
+        src: "/landing/farm-ds0005-1.jpg",
         boxes: [
           { label: "hay_bale", color: "#0284c7", cx: 0.2327, cy: 0.6119, w: 0.1768, h: 0.1785 },
           { label: "tractor", color: "#d97706", cx: 0.4939, cy: 0.5566, w: 0.2855, h: 0.2773 },
         ],
       },
       {
-        src: "/landing/agri-2.jpg",
+        src: "/landing/farm-ds0005-2.jpg",
         boxes: [
           { label: "tractor", color: "#d97706", cx: 0.5418, cy: 0.501, w: 0.332, h: 0.3332 },
         ],
       },
       {
-        src: "/landing/agri-3.jpg",
+        src: "/landing/farm-ds0005-3.jpg",
         boxes: [
           { label: "tractor", color: "#d97706", cx: 0.5195, cy: 0.5293, w: 0.3, h: 0.3352 },
         ],
@@ -88,21 +88,21 @@ const SCENARIOS: Scenario[] = [
     done: "model_0006 ready · trained on 100% synthetic data",
     tiles: [
       {
-        src: "/landing/street-1.jpg",
+        src: "/landing/street-ds0006-1.jpg",
         boxes: [
           { label: "delivery_van", color: "#0284c7", cx: 0.5391, cy: 0.3186, w: 0.493, h: 0.4597 },
           { label: "cyclist", color: "#65a30d", cx: 0.2767, cy: 0.7477, w: 0.1389, h: 0.2047 },
         ],
       },
       {
-        src: "/landing/street-2.jpg",
+        src: "/landing/street-ds0006-2.jpg",
         boxes: [
           { label: "delivery_van", color: "#0284c7", cx: 0.4971, cy: 0.3643, w: 0.4777, h: 0.4237 },
           { label: "cyclist", color: "#65a30d", cx: 0.0725, cy: 0.7266, w: 0.1152, h: 0.2125 },
         ],
       },
       {
-        src: "/landing/street-3.jpg",
+        src: "/landing/street-ds0006-3.jpg",
         boxes: [
           { label: "delivery_van", color: "#0284c7", cx: 0.5641, cy: 0.2683, w: 0.457, h: 0.4141 },
         ],
@@ -162,13 +162,13 @@ export function HeroVisual() {
   const status = done
     ? scenario.done
     : training
-      ? `Training YOLOv10 · epoch ${Math.max(1, Math.round(progress * 60))}/60`
+      ? `Training yolo26m · epoch ${Math.max(1, Math.round(progress * 60))}/60`
       : t >= VERIFY_AT
-        ? "Verifying every label — geometry + VLM"
+        ? "Verifying every label — geometry + Gemma 4 VLM"
         : t >= BOX_AT[0]
-          ? "Segmenting objects — open vocabulary (SAM)"
+          ? "Segmenting objects — open vocabulary (SAM 3)"
           : t >= TILE_AT[0]
-            ? "Rendering scenarios (SDXL)"
+            ? "Rendering scenarios (FLUX.2)"
             : expanded
               ? "48 domain-randomized scenarios queued"
               : "Describe what the model should detect";
