@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>aionVIS Pitch Deck</title>
+<style>
+  /* ============================ DESIGN SYSTEM ============================ */
+  :root{
+    --bg:#0A0A0B; --bg2:#0E0E10; --panel:#141417; --panel2:#1A1A1F;
+    --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
+    --ink:#F4F4F5; --ink2:#B6B6BD; --muted:#7C7C85;
+    --accent:#E60A17; --accent2:#FF5A48; --accentDeep:#A5060F;
+    --blue:#3987e5; --aqua:#199e70; --violet:#9085e9; --amber:#F5B23B;
+    --good:#26C281; --bad:#E0574F; --orange:#d95926;
+    --mono:"Cascadia Code","Cascadia Mono",Consolas,ui-monospace,monospace;
+    --sans:"Segoe UI Variable","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:#000;color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  .deck{display:flex;flex-direction:column;align-items:center;gap:22px;padding:22px}
+
+  .slide{
+    position:relative;width:1280px;height:720px;overflow:hidden;
+    background:
+      radial-gradient(120% 90% at 88% -10%, rgba(230,10,23,.10), transparent 60%),
+      radial-gradient(90% 70% at -10% 110%, rgba(230,10,23,.06), transparent 55%),
+      linear-gradient(180deg,#0C0C0E 0%, #08080A 100%);
+    color:var(--ink);
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+    display:flex;flex-direction:column;
+  }
+  .pad{padding:52px 64px 44px 64px;flex:1;display:flex;flex-direction:column;min-height:0}
+  .slide::before{
+    content:"";position:absolute;left:0;top:0;height:3px;width:100%;
+    background:linear-gradient(90deg,var(--accentDeep),var(--accent) 40%,var(--accent2) 75%, transparent);
+    opacity:.9;
+  }
+
+  /* ---- type ---- */
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.34em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .eyebrow .n{color:var(--muted);margin-right:10px}
+  h1.title{font-size:96px;line-height:.96;font-weight:800;letter-spacing:-.03em}
+  h1.h1{font-size:52px;line-height:1.02;font-weight:800;letter-spacing:-.025em;margin-top:10px}
+  h1.h1.sm{font-size:44px}
+  .lead{font-size:19px;line-height:1.5;color:var(--ink2);font-weight:400}
+  .lead.big{font-size:22px}
+  .ac{color:var(--accent)}
+  .grad{color:var(--accent)}
+  .kicker{font-size:15px;color:var(--muted);line-height:1.5}
+  strong{font-weight:700;color:#fff}
+  .mono{font-family:var(--mono)}
+
+  /* ---- footer ---- */
+  .foot{position:absolute;left:0;bottom:0;width:100%;height:34px;display:flex;align-items:center;
+    justify-content:space-between;padding:0 64px;font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--muted);border-top:1px solid var(--line)}
+  .foot .brand{color:var(--ink2);font-weight:600}
+  .foot .brand b{color:var(--accent)}
+  .pageno{color:var(--muted)}
+
+  /* ---- chips / tags ---- */
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font-size:12.5px;padding:5px 11px;border:1px solid var(--line2);border-radius:999px;color:var(--ink2);background:rgba(255,255,255,.02)}
+  .chip.ac{border-color:rgba(230,10,23,.45);color:var(--accent2);background:rgba(230,10,23,.08)}
+  .tag{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:2px 7px;border-radius:5px;font-weight:600;vertical-align:middle}
+  .tag.v{color:#7ff0bf;background:rgba(38,194,129,.14);border:1px solid rgba(38,194,129,.3)}
+  .tag.e{color:#ffd98a;background:rgba(245,178,59,.13);border:1px solid rgba(245,178,59,.3)}
+
+  /* ---- cards / grid ---- */
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 18px}
+  .card.hl{border-color:rgba(230,10,23,.4);background:linear-gradient(180deg,rgba(230,10,23,.07),var(--panel))}
+  .card .cn{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--accent);text-transform:uppercase}
+  .card h3{font-size:18px;font-weight:700;margin:8px 0 6px;letter-spacing:-.01em}
+  .card p{font-size:13.5px;line-height:1.5;color:var(--ink2)}
+  .card p .hlw{color:#fff;font-weight:600}
+
+  /* ---- stat tiles ---- */
+  .stats{display:grid;gap:14px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .stat>.v{font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1}
+  .stat>.v.ac{color:var(--accent)} .stat>.v.gd{color:var(--good)} .stat>.v.bl{color:var(--blue)}
+  .stat .l{font-size:12px;color:var(--ink2);margin-top:7px;line-height:1.35}
+
+  /* ---- pipeline ---- */
+  .pipe{display:flex;align-items:stretch;gap:0;margin:6px 0}
+  .pstage{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 12px;text-align:center;position:relative}
+  .pstage .ic{font-size:22px;margin-bottom:6px;display:block}
+  .pstage .nm{font-size:15px;font-weight:700}
+  .pstage .tool{font-family:var(--mono);font-size:10.5px;color:var(--accent2);margin-top:3px;letter-spacing:.02em}
+  .pstage .ds{font-size:12px;color:var(--ink2);margin-top:7px;line-height:1.4}
+  .parrow{display:flex;align-items:center;justify-content:center;width:26px;color:var(--accent);font-size:20px;font-weight:700;flex:0 0 26px}
+
+  /* ---- image + verified box overlay ---- */
+  .shot{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line2);background:#111}
+  .shot img{display:block;width:100%;height:100%;object-fit:cover}
+  .bbox{position:absolute;border:2px solid #fff;border-radius:3px;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+  .blab{position:absolute;top:-17px;left:-1px;font-size:10px;font-weight:700;color:#0b0b0b;padding:1px 5px;border-radius:3px;white-space:nowrap;font-family:var(--mono)}
+  .cap{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.4}
+
+  /* ---- funnel ---- */
+  .funnel{display:flex;flex-direction:column;align-items:center;gap:9px}
+  .frow{color:#fff;border-radius:10px;padding:12px 18px;text-align:center;position:relative}
+  .frow .ft{font-size:12px;font-family:var(--mono);letter-spacing:.12em;opacity:.85;text-transform:uppercase}
+  .frow .fv{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
+  .frow .fd{font-size:11.5px;opacity:.9;margin-top:3px}
+
+  /* ---- table ---- */
+  table.tb{width:100%;border-collapse:collapse;font-size:16px}
+  table.tb th,table.tb td{text-align:left;padding:17px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.45}
+  table.tb th{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  table.tb td{color:var(--ink2)} table.tb td b{color:#fff;font-size:17px}
+  table.tb tr.usrow td{background:rgba(230,10,23,.07);color:#fff}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* ---- misc layout ---- */
+  .row{display:flex;gap:22px} .col{display:flex;flex-direction:column}
+  .between{justify-content:space-between} .center{align-items:center}
+  .fill1{flex:1;min-height:0}
+  .src{font-size:10.5px;color:var(--muted);line-height:1.45;margin-top:auto}
+  .src b{color:var(--ink2);font-weight:600}
+  .legend{display:flex;gap:16px;align-items:center;font-size:11px;color:var(--muted)}
+  ul.tick{list-style:none;display:flex;flex-direction:column;gap:9px}
+  ul.tick li{font-size:14px;line-height:1.45;color:var(--ink2);padding-left:22px;position:relative}
+  ul.tick li::before{content:"\25B8";position:absolute;left:0;color:var(--accent);font-size:13px}
+  ul.tick li b{color:#fff}
+  .divlabel{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+
+  /* ---- cover ---- */
+  .cover{background:
+    radial-gradient(80% 120% at 82% -20%, rgba(230,10,23,.24), transparent 55%),
+    radial-gradient(70% 90% at -12% 118%, rgba(230,10,23,.12), transparent 55%),
+    linear-gradient(180deg,#0C0C0E 0%, #070708 100%)}
+  .hero-logo{width:540px;max-width:72%;height:auto;display:block;margin:2px 0 0 -4px;
+    filter:drop-shadow(0 10px 40px rgba(230,10,23,.45))}
+  .hero-kicker{font-family:var(--mono);font-size:13px;letter-spacing:.42em;text-transform:uppercase;
+    color:var(--accent2);margin:16px 0 0 2px;font-weight:600}
+  .proof{display:flex;margin-top:26px;border:1px solid var(--line2);border-radius:14px;overflow:hidden;
+    background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01))}
+  .proof>div{flex:1;padding:15px 18px;border-left:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+  .proof>div:first-child{border-left:none}
+  .proof b{font-size:28px;font-weight:800;letter-spacing:-.03em;color:#fff;line-height:1;font-variant-numeric:tabular-nums}
+  .proof b.ac{color:var(--accent2)} .proof b.gd{color:var(--good)}
+  .proof span{font-size:11px;color:var(--muted);letter-spacing:.03em;line-height:1.3}
+
+  /* ---- editorial numbered list ---- */
+  .enum{margin-top:16px}
+  .erow{display:flex;gap:26px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+  .erow:first-child{border-top:none}
+  .erow .eno{font-family:var(--mono);font-size:40px;font-weight:800;line-height:.9;color:var(--accent);letter-spacing:-.03em;min-width:66px;opacity:.92}
+  .erow .ec{flex:1}
+  .erow .tagn{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .erow h3{font-size:19px;font-weight:700;letter-spacing:-.01em;margin-bottom:5px}
+  .erow p{font-size:14px;line-height:1.5;color:var(--ink2);max-width:92ch}
+
+  /* ---- statement (left rule, no box) ---- */
+  .statement{border-left:3px solid var(--accent);padding:4px 0 4px 22px;margin-top:20px}
+  .statement p{font-size:19px;line-height:1.4;color:var(--ink)}
+
+  /* ---- inline metric band (hairlines, no boxes) ---- */
+  .band{display:flex;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+  .band>div{flex:1;padding:15px 22px;border-left:1px solid var(--line)}
+  .band>div:first-child{border-left:none;padding-left:0}
+  .band .bn{font-size:29px;font-weight:800;letter-spacing:-.03em;line-height:1;color:var(--accent2)}
+  .band .bn.gd{color:var(--good)} .band .bn.bl{color:var(--blue)} .band .bn.wt{color:#fff}
+  .band .bl{font-size:12.5px;color:var(--ink2);margin-top:7px;line-height:1.4}
+
+  /* ---- split + hairline list ---- */
+  .split{display:flex;gap:44px}
+  .hlist>div{padding:14px 0;border-top:1px solid var(--line)}
+  .hlist>div:first-child{border-top:none;padding-top:2px}
+  .hlist .hk{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+  .hlist h4{font-size:16px;font-weight:700;margin-bottom:3px;letter-spacing:-.01em}
+  .hlist p{font-size:13.5px;line-height:1.5;color:var(--ink2)}
+
+  /* ---- memory bar (why AMD) ---- */
+  .memhd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .memhd .lbl{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2)}
+  .memhd .lbl.mut{color:var(--muted)}
+  .memhd .big{font-size:30px;font-weight:800;letter-spacing:-.02em}
+  .memhd .big small{font-size:13px;color:var(--muted);font-weight:600;margin-left:5px}
+  .membar{display:flex;height:44px;border-radius:9px;overflow:hidden;border:1px solid var(--line2)}
+  .membar .seg{display:flex;align-items:center;justify-content:center;padding:0 8px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden}
+  .membar .free{color:var(--ink2);background:rgba(255,255,255,.03);font-weight:500}
+  .memkey{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:8px;letter-spacing:.02em}
+
+  /* ---- comparison matrix ---- */
+  table.mx{width:100%;border-collapse:collapse;font-size:15px}
+  table.mx th,table.mx td{padding:15px 16px;text-align:left;border-bottom:1px solid var(--line)}
+  table.mx thead th{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  table.mx thead th.us{color:var(--accent2)}
+  table.mx td{color:var(--ink2)} table.mx td:first-child{color:#fff;font-weight:600}
+  table.mx td.usc{background:rgba(230,10,23,.09);color:#fff}
+  table.mx .yes{color:var(--good);font-weight:700}
+  table.mx tbody tr:last-child td{border-bottom:none}
+
+  /* ---- capability ribbon ---- */
+  .ribbon{display:flex;align-items:center;gap:18px;padding:13px 18px;border:1px solid var(--line2);border-radius:11px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01))}
+  .ribbon .rk{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent2);font-weight:700;white-space:nowrap}
+  .ribbon .rc{font-size:13.5px;color:var(--ink2);line-height:1.5}
+  .ribbon .rc b{color:#fff;font-weight:600}
+
+  /* ---- inline triad (close) ---- */
+  .triad{display:flex}
+  .triad>div{flex:1;padding:0 26px;border-left:1px solid var(--line)}
+  .triad>div:first-child{border-left:none;padding-left:0}
+  .triad .hk{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+  .triad p{font-size:14px;line-height:1.5;color:var(--ink2)}
+
+  @media print{ .deck{gap:0;padding:0} .slide{page-break-after:always;break-after:page;box-shadow:none} .slide:last-child{page-break-after:auto} }
+  @page{ size:1280px 720px; margin:0 }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- ============================== 1 · COVER ============================== -->
+<section class="slide cover">
+  <div class="pad" style="justify-content:center">
+    <div class="eyebrow" style="margin-bottom:30px">AMD Developer Hackathon · ACT II · Unicorn Track · July 2026</div>
+    <img class="hero-logo" src="assets/aionvis_wordmark.png" alt="aionVIS">
+    <div class="hero-kicker">Vision models, on demand</div>
+    <h1 class="h1" style="max-width:20ch;margin-top:22px">Stop labeling data. <span class="grad">Start describing it.</span></h1>
+    <p class="lead big" style="max-width:62ch;margin-top:18px">
+      One plain English sentence becomes a trained, deployable detection model.
+      It generates, labels and verifies its own data. <strong>Zero human annotation.</strong>
+    </p>
+    <div class="chips" style="margin-top:34px">
+      <span class="chip ac">Built on a single AMD MI300X</span>
+      <span class="chip">SDXL / FLUX</span>
+      <span class="chip">SAM 3 / YOLOE</span>
+      <span class="chip">YOLO · RT-DETR · RF-DETR</span>
+      <span class="chip">Gemma via vLLM</span>
+      <span class="chip">PyTorch on ROCm</span>
+    </div>
+  </div>
+  <div class="foot"><span class="brand"><b>◉</b> aionVIS</span><span>We give machines their eyes</span><span class="pageno">01</span></div>
+</section>
+
+<!-- ============================= 2 · PROBLEM ============================= -->
+<section class="slide">
+  <div class="pad">
+    <div class="eyebrow"><span class="n">01</span>The problem</div>
+    <h1 class="h1">Every vision model is built on a tax<br><span class="grad">nobody can avoid.</span></h1>
+    <div class="enum">
+      <div class="erow"><div class="eno">01</div><div class="ec"><div class="tagn">Collect</div><h3>Months before a model even exists</h3>
+        <p>Thousands of on-site images, gathered before a single model can train.</p></div></div>
+      <div class="erow"><div class="eno">02</div><div class="ec"><div class="tagn">Label</div><h3>$0.02 to $0.08 for every single box</h3>
+        <p>Drawn by hand at $4 to $12 an hour. A 100,000 image set runs $50,000 and up.</p></div></div>
+      <div class="erow"><div class="eno">03</div><div class="ec"><div class="tagn">Pay again</div><h3>Change anything, and do it all over</h3>
+        <p>New camera, new product, new site. Collect, label and pay again. Data you rent, never own.</p></div></div>
+    </div>
+    <div class="statement"><p>Data labeling is a <strong>market worth billions that exists only because models cannot feed themselves.</strong></p></div>
+    <div class="src"><b>Sources:</b> LabelYourData, BasicAI, GigaBPO data annotation pricing guides (2025); industry wage surveys.</div>
+  </div>
+  <div class="foot"><span class="brand"><b>◉</b> aionVIS</span><span>The labeling tax</span><span class="pageno">02</span></div>
+</section>
+
+<!-- ============================ 3 · SOLUTION ============================ -->
+<section class="slide">
+  <div class="pad">
+    <div class="eyebrow"><span class="n">02</span>The solution</div>
+    <h1 class="h1">One sentence in. A deployable model out.<br><span class="grad">Five agents. Zero humans.</span></h1>
+    <div class="pipe" style="margin-top:30px">
+      <div class="pstage"><span class="ic">✍️</span><div class="nm">Prompt</div><div class="tool">Gemma · vLLM</div><div class="ds">Turns your sentence into hundreds of varied scenes</div></div>
+      <div class="parrow">▸</div>
+      <div class="pstage"><span class="ic">🖼️</span><div class="nm">Synthesis</div><div class="tool">SDXL / FLUX</div><div class="ds">Renders each scene as a photorealistic image</div></div>
+      <div class="parrow">▸</div>
+      <div class="pstage"><span class="ic">👁️</span><div class="nm">Vision</div><div class="tool">SAM 3 / YOLOE</div><div class="ds">Labels every object, any noun works</div></div>
+      <div class="parrow">▸</div>
+      <div class="pstage hl" style="background:linear-gradient(180deg,rgba(230,10,23,.1),var(--panel));border-color:rgba(230,10,23,.4)"><span class="ic">🛡️</span><div class="nm">Critic</div><div class="tool">Vision Language Model</div><div class="ds">Checks and rejects bad labels. The trust layer</div></div>
+      <div class="parrow">▸</div>
+      <div class="pstage"><span class="ic">📦</span><div class="nm">MLOps</div><div class="tool">YOLO on ROCm</div><div class="ds">Trains and exports a .pt / ONNX model</div></div>
+    </div>
+    <div class="cap" style="text-align:center;margin-top:12px;color:var(--ink2)">On the MI300X the whole swarm stays resident, so synthesis, vision and critic run as <b style="color:#fff">one parallel swarm on a single card</b>.</div>
+    <div class="statement" style="margin-top:18px"><p style="font-size:16px">A vision-language Critic re-checks every crop against its label and rejects the ones that fail. <strong>Synthetic data is easy to make and hard to trust, so we ship the trust.</strong></p></div>
+    <div class="band" style="margin-top:20px">
+      <div><div class="bn wt">194 / 244</div><div class="bl">labels the Critic rejected before training</div></div>
+      <div><div class="bn gd">0.85</div><div class="bl">mAP50 from 48 synthetic images, zero human labels</div></div>
+      <div><div class="bn bl">&lt;$0.01</div><div class="bl">LLM cost per run, minutes of GPU time</div></div>
+    </div>
+    <div class="src"><b>Measured in the repo</b> (run_0010 → model_0006): YOLOv10n, mAP50 0.85, precision 1.0, 48 images, 60 epochs. The swarm also labels your own uploaded images (BYOD).</div>
+  </div>
+  <div class="foot"><span class="brand"><b>◉</b> aionVIS</span><span>The agent swarm</span><span class="pageno">03</span></div>
+</section>
+
+<!-- ==================== 4 · EYES FOR AGENTS ON DEMAND ==================== -->
+<section class="slide">
+  <div class="pad">
+    <div class="eyebrow"><span class="n">03</span>A new kind of platform</div>
+    <h1 class="h1">We give eyes to agents.<br><span class="grad">On demand.</span></h1>
+    <p class="lead" style="margin-top:12px;max-width:88ch">One headless API, two kinds of caller: a person in the console, or an autonomous agent (drone, robot, camera) asking for a model for its exact task. Both get trained, verified weights in minutes.</p>
+    <div class="split" style="margin-top:18px;gap:40px">
+      <div class="hlist" style="flex:1.1">
+        <div><div class="hk">A sentence in, a model out</div><h4>You describe it, or an agent asks</h4><p>Send a sentence and a class list, get trained weights ready to run. No annotation, no data collection.</p></div>
+        <div><div class="hk">The gap it closes</div><h4>General sight is too slow</h4><p>Open-vocab models (SAM, OWL-ViT) see anything but are too heavy for a drone. Fixed detectors are fast but blind to new tasks. We generate the fast specialist on demand.</p></div>
+      </div>
+      <div class="card hl" style="flex:.92;display:flex;flex-direction:column;justify-content:center">
+        <div class="cn">Example · farm drone</div>
+        <h3 style="font-size:23px;margin:9px 0 8px">"Show me rotten potatoes"</h3>
+        <p style="font-size:13px">A drone hits trouble in a field, asks the API for a blight detector, and runs it onboard minutes later. No connection home.</p>
+        <div class="band" style="margin-top:15px;border-top:none;border-bottom:none">
+          <div style="padding-top:0;padding-bottom:0"><div class="bn wt" style="font-size:24px">68 MB</div><div class="bl">model size</div></div>
+          <div style="padding-top:0;padding-bottom:0"><div class="bn wt" style="font-size:24px">47 FPS</div><div class="bl">onboard</div></div>
+          <div style="padding-top:0;padding-bottom:0"><div class="bn gd" style="font-size:24px">~97%</div><div class="bl">accuracy</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="band" style="margin-top:20px">
+      <div><div class="bn">$52B</div><div class="bl">AI agents market by 2030, up from $7.8B in 2025</div></div>
+      <div><div class="bn">$48.5B</div><div class="bl">AI powered drones market by 2030, driven by onboard perception</div></div>
+      <div><div class="bn">$2.9T</div><div class="bl">yearly US value from AI agents and robots by 2030 (McKinsey)</div></div>
+    </div>
+    <div class="src"><b>Sources:</b> MarketsandMarkets (AI agents, AI drones); McKinsey Global Institute; Nature / Scientific Reports (UAV potato blight detection ~97%, edge models 47 FPS at 68 MB); robot foundation model surveys (open vocabulary latency trade-off).</div>
+  </div>
+  <div class="foot"><span class="brand"><b>◉</b> aionVIS</span><span>Eyes for agents, on demand</span><span class="pageno">04</span></div>
+</section>
+
+<!-- ============================ 5 · WHY AMD ============================ -->
+<section class="slide">
+  <div class="pad">
+    <div class="eyebrow"><span class="n">04</span>Why AMD MI300X</div>
+    <h1 class="h1">The whole factory fits<br><span class="grad">in one GPU.</span></h1>
+    <div class="row fill1" style="margin-top:20px;gap:18px">
+      <div class="card hl" style="flex:1;display:flex;flex-direction:column">
+        <div class="cn" style="color:var(--accent2)">AMD Instinct MI300X</div>
+        <div style="font-size:58px;font-weight:800;letter-spacing:-.03em;margin:6px 0">192 GB<span style="font-size:20px;color:var(--muted)"> HBM3</span></div>
+        <p style="font-size:14px;color:var(--ink2);margin-bottom:12px">Diffusion, segmentation, training and the LLM all stay resident at once. No swapping, so the stages <b style="color:#fff">overlap as one parallel swarm</b>.</p>
+        <ul class="tick" style="gap:8px">
+          <li>SDXL and FLUX synthesis, about <b>15 GB</b></li>
+          <li>SAM 3 and YOLOE vision, about <b>6 GB</b></li>
+          <li>YOLO trainer plus Gemma on vLLM, <b>resident together</b></li>
+          <li>Synthesis, vision and critic <b>stream in parallel</b>, no reloads</li>
+        </ul>
+      </div>
+      <div class="card" style="flex:1;display:flex;flex-direction:column;opacity:.92">
+        <div class="cn" style="color:var(--muted)">Single NVIDIA H100</div>
+        <div style="font-size:58px;font-weight:800;letter-spacing:-.03em;margin:6px 0;color:var(--muted);text-decoration:line-through;text-decoration-color:var(--bad)">80 GB</div>
+        <p style="font-size:14px;color:var(--ink2);margin-bottom:12px">The stack will not co-reside. Swap models per stage (slow) or split across boxes (costly). No streaming, no single-box factory.</p>
+        <ul class="tick" style="gap:8px">
+          <li>MI300X packs <b>2.4 times</b> the memory of an H100</li>
+          <li>Next generation MI355X reaches <b>288 GB</b> HBM3E</li>
+          <li>Swapping models per stage means <b>no parallel swarm</b></li>
+        </ul>
+      </div>
+      <div class="col" style="flex:1;gap:14px">
+        <div class="card"><div class="cn">Deliberate orchestration</div><p style="font-size:13px;margin-top:6px">PyTorch on <span class="hlw">ROCm</span> end to end, live <span class="mono" style="color:var(--accent2)">amd-smi</span> telemetry, and a run queue so <span class="hlw">one MI300X serves a whole team.</span></p></div>
+        <div class="stat"><div class="v bl" style="font-size:30px">$4.3B</div><div class="l">AMD data center GPU revenue in Q3 2025, up <b>22%</b> from a year earlier. Instinct is scaling.</div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;background:transparent;border-style:dashed"><p class="lead" style="font-size:17px">A whole data-to-model factory, resident and running <strong>in parallel</strong> on one card. This is the <strong>MI300X memory advantage</strong> put to work.</p></div>
+    <div class="src"><b>Sources:</b> AMD Q3 2025 results (data center GPU revenue); MI300X 192 GB HBM3 and MI355X 288 GB HBM3E specifications; memory footprints from this project's runs.</div>
+  </div>
+  <div class="foot"><span class="brand"><b>◉</b> aionVIS</span><span>One GPU, whole factory</span><span class="pageno">05</span></div>
+</section>
+
+<!-- ============================ 6 · WHY NOW ============================ -->
+<section class="slide">
+  <div class="pad">
+    <div class="eyebrow"><span class="n">05</span>Why now</div>
+    <h1 class="h1">The industry stopped collecting data.<br><span class="grad">It started generating it.</span></h1>
+    <div class="split" style="margin-top:20px;gap:48px">
+      <div style="flex:.82">
+        <p class="lead" style="font-size:19px">aionVIS is not early. It rides the biggest shift in how AI gets built: the move from gathering real data to generating it.</p>
+        <div class="statement" style="margin-top:22px"><p style="font-size:17px">The tailwind is already here. Not a forecast we are betting on, a shift already underway.</p></div>
+      </div>
+      <div class="hlist" style="flex:1.18">
+        <div><div class="hk">The crossover</div><h4>Synthetic passes real by 2030</h4><p>Gartner: synthetic overtakes real in AI training by 2030. Already 60% of dev data in 2024, heading to 75% by 2026.</p></div>
+        <div><div class="hk">The frontier already does it</div><h4>Proven at the top</h4><p>NVIDIA, Tesla, Waymo and others already train on generated data. The method is settled. The missing piece is trusting the labels, which is what we ship.</p></div>
+        <div><div class="hk">Real data runs out</div><h4>You cannot collect your way there</h4><p>Usable human data runs dry between 2026 and 2032. And the rarest cases (defects, edge scenes, objects in orbit) never had a dataset at all.</p></div>
+      </div>
+    </div>
+    <div class="band" style="margin-top:20px">
+      <div><div class="bn gd">2030</div><div class="bl">synthetic data overtakes real in AI training (Gartner)</div></div>
+      <div><div class="bn">~35% / yr</div><div class="bl">growth of the synthetic data market, the fastest growing slice of AI data</div></div>
+      <div><div class="bn wt">$17B</div><div class="bl">world spend on collecting and labeling data by 2030, the budget we replace</div></div>
+    </div>
+    <div class="src"><b>Sources:</b> Gartner (synthetic overtakes real by 2030; 60% of AI development data synthetic by 2024; 75% by 2026); Grand View Research (data collection and labeling market $17.1B by 2030 at ~28% CAGR; synthetic data generation ~35% CAGR, corroborated by MarketsandMarkets, IndustryARC and Next Move); Epoch AI and related studies (usable human data exhausted 2026 to 2032); public disclosures from NVIDIA, Tesla, Waymo, Meta and Google on synthetic and simulation training.</div>
+  </div>
+  <div class="foot"><span class="brand"><b>◉</b> aionVIS</span><span>Why now · the tailwind</span><span class="pageno">06</span></div>
+</section>
+
+<!-- ========================= 7 · INDUSTRIES ========================= -->
+<section class="slide">
+  <div class="pad">
+    <div class="eyebrow"><span class="n">06</span>Markets we serve</div>
+    <h1 class="h1 sm">One engine. Eight vision markets, each in the billions.</h1>
+    <div class="grid g4" style="margin-top:18px;gap:12px">
+      <div class="card" style="padding:12px 13px"><div class="cn">Retail</div>
+        <div style="font-size:23px;font-weight:800;letter-spacing:-.02em;color:var(--accent2);margin:3px 0 3px">$18B<span style="font-size:11px;color:var(--muted);font-weight:600"> 2025</span></div>
+        <p style="font-size:12px;line-height:1.45">Shelf analytics, planograms, loss prevention. Amazon Just Walk Out.</p></div>
+      <div class="card" style="padding:12px 13px"><div class="cn">Manufacturing</div>
+        <div style="font-size:23px;font-weight:800;letter-spacing:-.02em;color:var(--accent2);margin:3px 0 3px">$20B<span style="font-size:11px;color:var(--muted);font-weight:600"> 2025</span></div>
+        <p style="font-size:12px;line-height:1.45">Defect inspection at 95 to 99%. Generate rare defects you cannot collect. Foxconn, TSMC, Bosch.</p></div>
+      <div class="card" style="padding:12px 13px"><div class="cn">Automotive</div>
+        <div style="font-size:23px;font-weight:800;letter-spacing:-.02em;color:var(--accent2);margin:3px 0 3px">$19B<span style="font-size:11px;color:var(--muted);font-weight:600"> 2025</span></div>
+        <p style="font-size:12px;line-height:1.45">Edge-case perception. Rare road scenes teams wait years to see. Waymo, Mobileye.</p></div>
+      <div class="card" style="padding:12px 13px"><div class="cn">Agriculture</div>
+        <div style="font-size:23px;font-weight:800;letter-spacing:-.02em;color:var(--accent2);margin:3px 0 3px">$18B<span style="font-size:11px;color:var(--muted);font-weight:600"> 2025</span></div>
+        <p style="font-size:12px;line-height:1.45">Crop, weed and disease. John Deere See &amp; Spray cut herbicide ~50%. New classes in minutes.</p></div>
+      <div class="card" style="padding:12px 13px"><div class="cn">Robotics</div>
+        <div style="font-size:23px;font-weight:800;letter-spacing:-.02em;color:var(--accent2);margin:3px 0 3px">$4.4B<span style="font-size:11px;color:var(--muted);font-weight:600"> 2025</span></div>
+        <p style="font-size:12px;line-height:1.45">On-demand perception. A fast detector for each new object. Figure, Boston Dynamics.</p></div>
+      <div class="card" style="padding:12px 13px"><div class="cn">Logistics</div>
+        <div style="font-size:23px;font-weight:800;letter-spacing:-.02em;color:var(--accent2);margin:3px 0 3px">$22B<span style="font-size:11px;color:var(--muted);font-weight:600"> 2025</span></div>
+        <p style="font-size:12px;line-height:1.45">Warehouse safety. Forklift and worker detection. 25,110 US forklift injuries a year. Voxel AI ($64M).</p></div>
+      <div class="card" style="padding:12px 13px"><div class="cn">Aviation</div>
+        <div style="font-size:23px;font-weight:800;letter-spacing:-.02em;color:var(--accent2);margin:3px 0 3px">$12B<span style="font-size:11px;color:var(--muted);font-weight:600"> 2025</span></div>
+        <p style="font-size:12px;line-height:1.45">Runway debris, apron monitoring, aircraft inspection, bird and drone strikes.</p></div>
+      <div class="card hl" style="padding:12px 13px"><div class="cn">Military</div>
+        <div style="font-size:23px;font-weight:800;letter-spacing:-.02em;color:var(--accent2);margin:3px 0 3px">$9.3B<span style="font-size:11px;color:var(--muted);font-weight:600"> 2025</span></div>
+        <p style="font-size:12px;line-height:1.45">Air-gapped ISR. Detectors for imagery you cannot collect, fully on-prem. Anduril, Palantir Maven.</p></div>
+    </div>
+    <div class="card hl" style="margin-top:14px"><div class="cn">Beyond expensive to collect, into impossible</div>
+      <p class="lead" style="font-size:15px;margin-top:5px">Some things have <strong>no dataset at all</strong>: satellites and debris in orbit, rare defects, rare targets. You cannot photograph what you cannot reach, so we <strong>generate the images and the labels</strong>. Space domain awareness alone: <strong>$1.9B</strong> in 2025, almost entirely synthetic.</p></div>
+    <div class="src"><b>Sources (current market size, 2025 estimates):</b> Grand View Research (retail CV, machine vision, AI in military, space domain awareness); MarketsandMarkets (agricultural robots, embodied AI); LogisticsIQ (warehouse automation); Mordor (inspection drones); ResearchAndMarkets (automotive AI). Also NSC (forklift injuries), Voxel AI, John Deere, Anduril, Palantir. Named firms operate in these categories; adoption paths are illustrative.</div>
+  </div>
+  <div class="foot"><span class="brand"><b>◉</b> aionVIS</span><span>Eight markets, one engine</span><span class="pageno">07</span></div>
+</section>
+
+<!-- ====================== 8 · BUSINESS MODEL ====================== -->
+<section class="slide">
+  <div class="pad">
+    <div class="eyebrow"><span class="n">07</span>Business model</div>
+    <h1 class="h1 sm">Priced like infrastructure, not labor.</h1>
+    <div class="fill1" style="display:flex;flex-direction:column;justify-content:space-evenly;margin-top:8px">
+      <div class="split" style="gap:40px">
+        <table class="tb" style="flex:1.45">
+          <thead><tr><th>Plan</th><th>How it is priced</th><th>Who it lands</th></tr></thead>
+          <tbody>
+            <tr><td><b>Developer</b></td><td>Free and open. Self-host, your own GPU and LLM. Export YOLO, COCO, ONNX.</td><td>Developers, researchers</td></tr>
+            <tr class="usrow"><td><b>Team</b></td><td>Per GPU-minute on managed MI300X. Every run quoted first. Shared projects and registry.</td><td>Most popular. A 500 image run costs about a lunch.</td></tr>
+            <tr><td><b>Enterprise</b></td><td>Dedicated or on-prem MI300X. SSO, isolation, SLAs, zero external calls.</td><td>Regulated, IP sensitive, defense</td></tr>
+          </tbody>
+        </table>
+        <table class="tb" style="flex:.78">
+          <thead><tr><th>Buyer</th><th>Annual spend</th></tr></thead>
+          <tbody>
+            <tr><td><b>SMB or startup</b></td><td>$3k to $25k</td></tr>
+            <tr><td><b>Mid market</b></td><td>$50k to $250k</td></tr>
+            <tr><td><b>Enterprise</b></td><td>$300k to $1M plus</td></tr>
+            <tr><td><b>Gov or defense</b></td><td>$500k to $5M plus</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="statement" style="margin-top:0"><p style="font-size:21px">One GPU hour replaces about <strong>$1,000</strong> of human labeling. Margins track cloud GPU economics (70 to 85%), not human-in-the-loop services (30 to 40%).</p></div>
+    </div>
+    <div class="src"><b>The in-app pricing engine</b> meters per GPU minute and quotes every run. Annual spend figures are reasoned estimates for planning, not quotes.</div>
+  </div>
+  <div class="foot"><span class="brand"><b>◉</b> aionVIS</span><span>Usage based, high margin</span><span class="pageno">08</span></div>
+</section>
+
+<!-- ====================== 9 · WHY WE WIN ====================== -->
+<section class="slide">
+  <div class="pad">
+    <div class="eyebrow"><span class="n">08</span>Why we win</div>
+    <h1 class="h1 sm">Everyone else needs your data, or your clicks.</h1>
+    <div class="fill1" style="display:flex;flex-direction:column;justify-content:space-evenly;margin-top:4px">
+      <table class="mx">
+        <thead><tr><th style="width:24%"></th><th>Scale AI · Labelbox</th><th>Roboflow · Ultralytics</th><th class="us">aionVIS</th></tr></thead>
+        <tbody>
+          <tr><td>Who creates the data</td><td>You collect it</td><td>You collect it</td><td class="usc"><span class="yes">We generate it</span></td></tr>
+          <tr><td>Who draws the boxes</td><td>Humans, by hand</td><td>Humans, assisted</td><td class="usc"><span class="yes">The agent swarm</span></td></tr>
+          <tr><td>Humans in the loop</td><td>Many</td><td>Fewer, still required</td><td class="usc"><span class="yes">Zero</span></td></tr>
+          <tr><td>Label trust layer</td><td>Human QA</td><td>Human review</td><td class="usc"><span class="yes">Self-verifying Critic</span></td></tr>
+          <tr><td>Time to a new detector</td><td>Weeks</td><td>Days</td><td class="usc"><span class="yes">Minutes</span></td></tr>
+        </tbody>
+      </table>
+      <div class="ribbon"><span class="rk">Built today</span><span class="rc"><b>22 architectures</b> &nbsp;·&nbsp; <b>5 task types</b> detect / segment / OBB / pose / classify &nbsp;·&nbsp; export to <b>.pt, ONNX, TorchScript, OpenVINO</b> &nbsp;·&nbsp; <b>YOLO / COCO / VOC / CSV</b> datasets</span></div>
+      <div class="statement" style="margin-top:0"><p style="font-size:20px">Meta paid ~<strong>$29B</strong> for Scale AI, a business built on human labor in the loop. Our self-correcting <strong>Critic is the moat</strong>: everyone can generate, almost no one can trust it.</p></div>
+    </div>
+    <div class="src"><b>Sources:</b> TechCrunch, CNBC (Scale AI, Meta, June 2025); Ultralytics; project run history measured in the repo.</div>
+  </div>
+  <div class="foot"><span class="brand"><b>◉</b> aionVIS</span><span>Why we win</span><span class="pageno">09</span></div>
+</section>
+
+<!-- ====================== 10 · CLOSE ====================== -->
+<section class="slide">
+  <div class="pad" style="justify-content:center">
+    <div class="eyebrow" style="margin-bottom:20px">The close</div>
+    <h1 class="h1" style="font-size:58px;max-width:22ch">Not another annotation tool.<br><span class="grad">We give machines their eyes.</span></h1>
+    <p class="lead big" style="max-width:60ch;margin-top:22px">One sentence becomes a trained, verified detection model on a single AMD MI300X. Humans stop labeling. Agents start requesting their own vision.</p>
+    <div class="triad" style="margin-top:34px">
+      <div><div class="hk">Removes</div><p>The labeling tax. No data collection, no per box labor, no paying over and over.</p></div>
+      <div><div class="hk">Ships</div><p>The trust layer. A self-correcting Critic that makes synthetic data trainable.</p></div>
+      <div><div class="hk">Gives</div><p>Eyes to agents on demand, through a headless API, resident in one MI300X.</p></div>
+    </div>
+    <p class="lead" style="margin-top:34px;font-size:22px"><strong>Stop labeling. Start describing.</strong></p>
+  </div>
+  <div class="foot"><span class="brand"><b>◉</b> aionVIS</span><span>Stop labeling. Start describing.</span><span class="pageno">10</span></div>
+</section>
+
+</div>
+</body>
+</html>

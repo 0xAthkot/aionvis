@@ -1,4 +1,4 @@
-# Auto-Annotator backend — full agent swarm, CPU wheels by default.
+# aionVIS backend — full agent swarm, CPU wheels by default.
 #
 # CPU-only works out of the box (slow synthesis, fine for judging).
 # NVIDIA GPU: rebuild with --build-arg TORCH_INDEX=https://download.pytorch.org/whl/cu126

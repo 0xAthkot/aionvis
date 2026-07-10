@@ -1,4 +1,4 @@
-# HANDOFF — Auto-Annotator v0.4
+# HANDOFF — aionVIS v0.4
 
 Context document for anyone (human or Claude) continuing this project.
 Written 2026-07-08 after the v0.4 feature push. Read this top to bottom
@@ -6,7 +6,7 @@ before changing code.
 
 ## What this is
 
-**Auto-Annotator** — AMD Developer Hackathon ACT II, Unicorn Track. An
+**aionVIS** — AMD Developer Hackathon ACT II, Unicorn Track. An
 autonomous agent swarm (Prompt → Synthesis → Vision → Critic → MLOps) that
 turns one sentence into a trained, deployable detection model: it generates
 synthetic training images (SDXL), labels them (open-vocab segmentation),
@@ -16,20 +16,20 @@ Label Studio ("AI-assisted humans"); our story is "0× humans".
 
 Judging criteria: creativity/originality, completeness, product/market
 potential, meaningful AMD platform use. Pitch lives in `PITCH.md`, demo
-script in `auto-annotator-ui/DEMO.md`.
+script in `aionvis-ui/DEMO.md`.
 
 ## Repo layout
 
 | Path | What |
 |---|---|
-| `auto-annotator-ui/` | Next.js 16 app: marketing landing at `/`, console at `/dashboard`. Runs standalone on an in-browser mock (MSW) or against the real backend with one env flip. |
-| `backend/` | FastAPI + the real agent swarm. Implements `auto-annotator-ui/BACKEND_CONTRACT.md`. |
+| `aionvis-ui/` | Next.js 16 app: marketing landing at `/`, console at `/dashboard`. Runs standalone on an in-browser mock (MSW) or against the real backend with one env flip. |
+| `backend/` | FastAPI + the real agent swarm. Implements `aionvis-ui/BACKEND_CONTRACT.md`. |
 | `backend/rfdetr_worker.py` | RF-DETR sidecar — runs in its own venv (see below). |
 | `docker-compose.yml` | Full stack for judges. **Never tested on a machine with Docker — verify before the demo.** |
 
 ## The one rule: contract-first
 
-`auto-annotator-ui/src/lib/api/types.ts` is the single source of truth for
+`aionvis-ui/src/lib/api/types.ts` is the single source of truth for
 every payload. It is mirrored 1:1 in `backend/app/schemas.py` (Pydantic,
 snake_case + camelCase aliases). Every new endpoint/field touches, in order:
 **types.ts → endpoints.ts → MSW handlers (`src/lib/mocks/handlers.ts`) →
@@ -42,7 +42,7 @@ Install: **git**, **Node 22+**, **Python 3.12**.
 
 ```powershell
 # Frontend — works with ZERO backend (in-browser mock)
-cd auto-annotator-ui
+cd aionvis-ui
 npm install
 npm run dev          # http://localhost:3000 — landing at /, console at /dashboard
 ```
@@ -90,7 +90,7 @@ run it before any demo. `backend/reset_demo.py` resets demo state.
    still exists for permanent wiring:
    `NEXT_PUBLIC_API_BASE_URL=http://<remote>:8000`,
    `NEXT_PUBLIC_WS_BASE_URL=ws://<remote>:8000`,
-   `NEXT_PUBLIC_USE_MOCKS=false` in `auto-annotator-ui/.env.local` — note
+   `NEXT_PUBLIC_USE_MOCKS=false` in `aionvis-ui/.env.local` — note
    env mode sends no API key, so it's for open same-network nodes only.)
    The MI300X model lineup (rechosen 2026-07-10 after a live model/license
    research pass — all Apache-2.0): **Gemma 4 26B-A4B-IT** (MoE, 4B active)
@@ -211,7 +211,7 @@ to `rfdetr_worker.py` (tagged-line protocol INFO/EPOCH/RESULT). Missing venv
   em-dashes and lightning's rich tables). `workers=0` for ultralytics
   training in threads. PS 5.1: multi-line commits via `git commit -F file`.
 - Turbopack dev cache corrupts on unclean shutdown → delete
-  `auto-annotator-ui/.next` and restart.
+  `aionvis-ui/.next` and restart.
 - Next 16 strict lint: no synchronous setState in effects.
 - Chart colors must pass the dataviz validator against `#1c1c1c`;
   class palette in `src/lib/class-colors.ts`.
@@ -259,8 +259,8 @@ to `rfdetr_worker.py` (tagged-line protocol INFO/EPOCH/RESULT). Missing venv
 Open a Claude Code session at the repo root. The root `CLAUDE.md` imports
 this file automatically. A good first message:
 
-> Read HANDOFF.md, auto-annotator-ui/BACKEND_CONTRACT.md and
-> auto-annotator-ui/DEMO.md, then give me a status summary and the next
+> Read HANDOFF.md, aionvis-ui/BACKEND_CONTRACT.md and
+> aionvis-ui/DEMO.md, then give me a status summary and the next
 > steps on the roadmap. I have no local GPU — set me up in mock mode first.
 
 Mention "I can't run local inference" so Claude sets up mock mode / remote

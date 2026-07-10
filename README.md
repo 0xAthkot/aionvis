@@ -1,4 +1,4 @@
-# Auto-Annotator
+# aionVIS
 
 Autonomous agent swarm that generates, self-verifies and labels training
 data, then trains deployable YOLO object-detection models natively on AMD
@@ -24,8 +24,8 @@ click).
 
 | Part | What it is |
 |---|---|
-| [`auto-annotator-ui/`](auto-annotator-ui/README.md) | Next.js 16 MLOps Command Center — runs standalone on an in-browser mock, or against the real backend with one env flip |
-| [`backend/`](backend/README.md) | FastAPI + the real agent swarm; implements [`BACKEND_CONTRACT.md`](auto-annotator-ui/BACKEND_CONTRACT.md) |
+| [`aionvis-ui/`](aionvis-ui/README.md) | Next.js 16 MLOps Command Center — runs standalone on an in-browser mock, or against the real backend with one env flip |
+| [`backend/`](backend/README.md) | FastAPI + the real agent swarm; implements [`BACKEND_CONTRACT.md`](aionvis-ui/BACKEND_CONTRACT.md) |
 
 ## Quick start (Docker — recommended for judges)
 
@@ -55,7 +55,7 @@ with `TORCH_INDEX=https://download.pytorch.org/whl/cu126` and uncomment
 cd backend && .venv/Scripts/python -m uvicorn app.main:app --port 8000
 
 # 2. Frontend
-cd auto-annotator-ui && npm run dev     # http://localhost:3000
+cd aionvis-ui && npm run dev     # http://localhost:3000
 ```
 
 ### Optional: RF-DETR architectures
@@ -74,4 +74,4 @@ python -m venv .venv-rfdetr
 Without it, RF-DETR runs are rejected at launch with these instructions;
 every other architecture works as normal.
 
-Demo walkthrough: [`auto-annotator-ui/DEMO.md`](auto-annotator-ui/DEMO.md).
+Demo walkthrough: [`aionvis-ui/DEMO.md`](aionvis-ui/DEMO.md).

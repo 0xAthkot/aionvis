@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "Auto-Annotator — Training data that builds itself",
+  title: "aionVIS — Training data that builds itself",
   description:
     "An autonomous agent swarm that turns one sentence into a trained, deployable detection model. Zero human annotation. Built entirely on AMD MI300X.",
 };
@@ -169,7 +169,7 @@ const FAQS = [
   },
   {
     q: "What is image annotation?",
-    a: "Labeling images — boxes, masks, keypoints — so a model can learn what to look for. It's traditionally the slowest and most expensive step in computer vision, and it's the step Auto-Annotator removes entirely: the agents draw and verify every label themselves.",
+    a: "Labeling images — boxes, masks, keypoints — so a model can learn what to look for. It's traditionally the slowest and most expensive step in computer vision, and it's the step aionVIS removes entirely: the agents draw and verify every label themselves.",
   },
   {
     q: "What is model training?",
@@ -232,7 +232,7 @@ export default function LandingPage() {
             <div className="flex size-7 items-center justify-center rounded-md bg-primary">
               <Crosshair className="size-4 text-primary-foreground" />
             </div>
-            <span className="font-semibold tracking-tight">Auto-Annotator</span>
+            <span className="font-semibold tracking-tight">aionVIS</span>
           </Link>
           <div className="hidden items-center gap-5 text-sm text-muted-foreground md:flex">
             {NAV_LINKS.map((l) => (
@@ -275,7 +275,7 @@ export default function LandingPage() {
                 </span>
               </h1>
               <p className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg">
-                Auto-Annotator is an autonomous agent swarm that turns one plain-English
+                aionVIS is an autonomous agent swarm that turns one plain-English
                 sentence into a trained, deployable detection model — generating,
                 labeling and QA-ing its own training data. Zero human annotation.
               </p>
@@ -396,7 +396,7 @@ export default function LandingPage() {
                       <span className="block text-xs font-normal opacity-70">Ultralytics · Roboflow</span>
                     </th>
                     <th className="bg-primary/10 p-4 font-semibold text-foreground">
-                      Auto-Annotator
+                      aionVIS
                       <span className="block text-xs font-normal text-primary">autonomous swarm</span>
                     </th>
                   </tr>
@@ -490,7 +490,7 @@ export default function LandingPage() {
                   </div>
                   <pre className="overflow-x-auto p-4 font-mono text-xs leading-relaxed text-zinc-300">
                     <code>{`# Full stack, your machine, no accounts
-git clone <this-repo> && cd auto-annotator
+git clone <this-repo> && cd aionvis
 
 # Optional: point at your own LLM (falls back
 # to a deterministic template expander)
@@ -647,14 +647,14 @@ docker compose up --build
             <div className="flex size-6 items-center justify-center rounded-md bg-primary">
               <Crosshair className="size-3.5 text-primary-foreground" />
             </div>
-            <span className="text-sm font-semibold">Auto-Annotator</span>
+            <span className="text-sm font-semibold">aionVIS</span>
           </div>
           <p className="text-xs text-muted-foreground">
             SDXL · SAM · YOLO26 / YOLO11 / YOLOv10 / RT-DETR · Gemma via
             vLLM · PyTorch on ROCm · MI300X
           </p>
           <p className="text-xs text-muted-foreground/60">
-            © 2026 Auto-Annotator.
+            © 2026 aionVIS.
           </p>
         </div>
       </footer>

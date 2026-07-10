@@ -452,7 +452,7 @@ export const models: ModelArtifact[] = [
     createdAt: daysAgo(9),
     modelCard: [
       "## Summary",
-      "yolov10m detector for PCB defects (solder_bridge, missing_component, scratch), trained end-to-end by the Auto-Annotator swarm with zero human labels.",
+      "yolov10m detector for PCB defects (solder_bridge, missing_component, scratch), trained end-to-end by the aionVIS swarm with zero human labels.",
       "",
       "## Intended Use",
       "Automated optical inspection on assembly lines imaging bare or populated PCBs top-down. Not a substitute for electrical test.",

@@ -287,13 +287,13 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild className="rounded-lg">
-              <Link href="/" title="Auto-Annotator home">
+              <Link href="/" title="aionVIS home">
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 shadow-sm shadow-primary/40">
                   <Crosshair className="size-4.5 text-primary-foreground" />
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
                   <span className="truncate font-semibold tracking-tight">
-                    Auto-Annotator
+                    aionVIS
                   </span>
                   <span className="truncate text-[11px] text-muted-foreground">
                     Command Center

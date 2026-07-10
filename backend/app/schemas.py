@@ -1,6 +1,6 @@
 """Pydantic mirror of the frontend contract.
 
-Source of truth: auto-annotator-ui/src/lib/api/types.ts — every model here
+Source of truth: aionvis-ui/src/lib/api/types.ts — every model here
 maps 1:1 onto an interface there. Fields are snake_case in Python and
 camelCase on the wire via the alias generator (FastAPI serializes by alias
 by default; `populate_by_name` lets server code construct with snake_case).

@@ -1,4 +1,4 @@
-# Auto-Annotator Control Plane (Next.js) — multi-stage standalone build.
+# aionVIS Control Plane (Next.js) — multi-stage standalone build.
 #
 # NEXT_PUBLIC_* vars are inlined at build time; override via build args if
 # your backend is not on localhost:8000 (or set NEXT_PUBLIC_USE_MOCKS=true

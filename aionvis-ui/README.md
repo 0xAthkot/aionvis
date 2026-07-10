@@ -1,4 +1,4 @@
-# Auto-Annotator — MLOps Command Center
+# aionVIS — MLOps Command Center
 
 Frontend-first control plane for an autonomous agent swarm that generates,
 self-verifies and labels training data, then trains deployable YOLO models

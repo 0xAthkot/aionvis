@@ -1,4 +1,4 @@
-# Auto-Annotator — the pitch
+# aionVIS — the pitch
 
 **One sentence in → deployable detection model out. Zero human labeling.**
 
@@ -13,7 +13,7 @@ themselves.
 
 ## The product
 
-Auto-Annotator is an autonomous agent swarm that feeds them:
+aionVIS is an autonomous agent swarm that feeds them:
 
 1. **Prompt Agent** (LLM) takes the use case in the customer's words — "my
    drone needs to detect rotten potatoes" — infers the deployment viewpoint
@@ -70,7 +70,7 @@ at $5–15 with healthy margin against Developer Cloud pricing.
 | Scale AI / Labelbox | yours | humans | always |
 | Roboflow | yours | assisted | yes |
 | Synthetic-data studios (3D/CGI) | artists build scenes | rendered | artists |
-| **Auto-Annotator** | **generated from a sentence** | **self-verified by agents** | **no** |
+| **aionVIS** | **generated from a sentence** | **self-verified by agents** | **no** |
 
 The self-correcting Critic is the moat: synthetic data is easy to generate
 and hard to trust. We ship the trust layer.

@@ -56,7 +56,7 @@ def _template_card(ctx: RunContext, artifact: ModelArtifact, dataset: Dataset) -
     return (
         f"## Summary\n"
         f"{artifact.architecture} object detector for: {class_names}. Trained "
-        f"end-to-end by the Auto-Annotator swarm with zero human labels.\n\n"
+        f"end-to-end by the aionVIS swarm with zero human labels.\n\n"
         f"## Training Data\n"
         f"{dataset.image_count} images ({dataset.origin}); the Critic Agent "
         f"accepted {run.progress.masks_accepted} and rejected "

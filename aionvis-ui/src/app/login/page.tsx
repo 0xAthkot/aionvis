@@ -48,7 +48,7 @@ export default function LoginPage() {
             <Crosshair className="size-5 text-primary-foreground" />
           </div>
           <div className="leading-tight">
-            <p className="font-semibold tracking-tight">Auto-Annotator</p>
+            <p className="font-semibold tracking-tight">aionVIS</p>
             <p className="text-xs text-muted-foreground">
               MLOps Command Center
             </p>

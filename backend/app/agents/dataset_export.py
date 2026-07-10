@@ -78,7 +78,7 @@ def _write_coco(zf: zipfile.ZipFile, dataset: Dataset,
     coco: dict = {
         "info": {
             "description": f"{dataset.name} — generated and self-verified by "
-                           "Auto-Annotator",
+                           "aionVIS",
             "date_created": dataset.created_at,
         },
         "images": [],

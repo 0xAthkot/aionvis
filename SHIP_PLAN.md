@@ -43,9 +43,9 @@ everything through the local UI + runtime node attach.
 
 All on the dev machine. Burn zero paid time on avoidable errors.
 
-1. Clean tree, `npm run lint` + `npx tsc --noEmit` in `auto-annotator-ui`
+1. Clean tree, `npm run lint` + `npx tsc --noEmit` in `aionvis-ui`
    pass (0 errors).
-2. `npm run build` in `auto-annotator-ui` succeeds — this is exactly what
+2. `npm run build` in `aionvis-ui` succeeds — this is exactly what
    Vercel will run in Phase 5; fix any prod-build-only breakage now.
 3. Backend pytest suite passes in `backend/.venv`
    (`PYTHONIOENCODING=utf-8`).
@@ -189,14 +189,14 @@ thumbnails via `/files`) over https/wss with raw :8000 closed.
 ## Phase 5 — Vercel ship
 
 1. Vercel project → import the repo, **Root Directory =
-   `auto-annotator-ui`**. Env: `NEXT_PUBLIC_USE_MOCKS=true` (visitors
+   `aionvis-ui`**. Env: `NEXT_PUBLIC_USE_MOCKS=true` (visitors
    get the fully working mock console; real nodes are attached at
    runtime, so no backend URL is baked in).
 2. Deploy preview → verify landing, `/dashboard` in mock mode, a full
    simulated run.
 3. From the **deployed** site: Hardware → attach
    `https://node.yourdomain.com` + key → verify a real run streams live.
-4. `vercel --prod`. Rehearse `auto-annotator-ui/DEMO.md` (Pro mode —
+4. `vercel --prod`. Rehearse `aionvis-ui/DEMO.md` (Pro mode —
    fresh browsers default to Simple) against the production URL.
 
 **Exit gate:** production URL serves the landing + console; mock mode
@@ -207,7 +207,7 @@ works logged-out-cold; real node attach works from the shipped site.
 Paste this to start the implementation session:
 
 > Read HANDOFF.md and SHIP_PLAN.md top to bottom, then execute
-> SHIP_PLAN.md phase by phase to get Auto-Annotator production ready. I
+> SHIP_PLAN.md phase by phase to get aionVIS production ready. I
 > have no local GPU — everything local runs in mock mode; GPU work
 > happens on an AMD Developer Cloud MI300X droplet ($100 credits) that I
 > create in Phase 1 and you drive by telling me exactly what to run over

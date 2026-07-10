@@ -1,6 +1,6 @@
 """Dataset analytics: aggregate label statistics from the annotated images.
 
-Mirrors auto-annotator-ui/src/lib/mocks/analytics.ts — same grid size, same
+Mirrors aionvis-ui/src/lib/mocks/analytics.ts — same grid size, same
 coverage-weighted heatmap, same max-normalization — so mock mode and the
 real backend render identical charts for identical data.
 """

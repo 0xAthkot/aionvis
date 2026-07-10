@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
         store.save()
     sampler = asyncio.create_task(telemetry_sampler())
     print(
-        f"[auto-annotator] accelerator: {telemetry.GPU.name} "
+        f"[aionvis] accelerator: {telemetry.GPU.name} "
         f"({telemetry.GPU.stack_version}, {telemetry.GPU.vram_total_gb:.1f} GB)"
     )
     yield
@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
         await sampler
 
 
-app = FastAPI(title="Auto-Annotator Backend", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="aionVIS Backend", version="1.0.0", lifespan=lifespan)
 
 
 def request_key(request: Request) -> str:

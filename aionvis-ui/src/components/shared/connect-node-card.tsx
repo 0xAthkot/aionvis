@@ -96,7 +96,7 @@ export function ConnectNodeCard() {
               <CardTitle>Connect AMD Developer Cloud</CardTitle>
             </div>
             <CardDescription>
-              Point the console at a GPU node running the Auto-Annotator
+              Point the console at a GPU node running the aionVIS
               backend. Everything — runs, datasets, live agent streams —
               switches to it instantly; no rebuild.
             </CardDescription>

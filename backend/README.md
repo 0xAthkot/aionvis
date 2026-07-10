@@ -1,6 +1,6 @@
-# Auto-Annotator Backend
+# aionVIS Backend
 
-Real FastAPI implementation of [`../auto-annotator-ui/BACKEND_CONTRACT.md`](../auto-annotator-ui/BACKEND_CONTRACT.md):
+Real FastAPI implementation of [`../aionvis-ui/BACKEND_CONTRACT.md`](../aionvis-ui/BACKEND_CONTRACT.md):
 the autonomous agent swarm that the Control Plane UI drives.
 
 | Agent | What actually runs |
@@ -31,7 +31,7 @@ copy .env.example .env          # point LLM_BASE_URL at a vLLM for the real Prom
 .\.venv\Scripts\python -m uvicorn app.main:app --port 8000
 ```
 
-Then point the frontend at it (`auto-annotator-ui/.env.local`):
+Then point the frontend at it (`aionvis-ui/.env.local`):
 
 ```bash
 NEXT_PUBLIC_USE_MOCKS=false

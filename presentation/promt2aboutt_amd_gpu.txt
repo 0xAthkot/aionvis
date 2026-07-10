@@ -1,0 +1,5 @@
+The presentation should mention about the use of AMD GPU, its important for the judges
+Judges judge based on Creativity, originality, completeness, use of AMD platforms, product/market potential. 
+Nobody else has done anything similar to our project
+
+In the use cases, add that with this service we can create models for objects that don't have much photographic material, like things in space, where there is no dataset available

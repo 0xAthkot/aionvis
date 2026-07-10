@@ -104,5 +104,5 @@ export function titleForPath(pathname: string): string {
   const prefix = allNavItems
     .filter((i) => i.href !== "/" && pathname.startsWith(i.href))
     .sort((a, b) => b.href.length - a.href.length)[0];
-  return prefix?.title ?? "Auto-Annotator";
+  return prefix?.title ?? "aionVIS";
 }
