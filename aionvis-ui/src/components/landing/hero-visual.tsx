@@ -20,7 +20,14 @@ import { cn } from "@/lib/utils";
  * REAL SAM 3 + Critic-verified boxes — normalized cx/cy/w/h straight from
  * the dataset records (ds_0004 / ds_0005 / ds_0006, 2026-07-10).
  */
-type Box = { label: string; color: string; cx: number; cy: number; w: number; h: number };
+// chip: draw the label pill (highest-confidence box of each class per tile);
+// the rest render as bare outlines so EVERY stored box is visible without
+// the pills colliding.
+type Box = {
+  label: string; color: string;
+  cx: number; cy: number; w: number; h: number;
+  chip?: boolean;
+};
 type Scenario = {
   prompt: string;
   done: string;
@@ -34,25 +41,34 @@ const SCENARIOS: Scenario[] = [
     done: "model_0004 ready · mAP50 0.76 · exported .pt / ONNX",
     tiles: [
       {
-        src: "/landing/warehouse-ds0004-1.jpg",
+        src: "/landing/warehouse-ds0004-1.jpg", // img_0351, all 3 verified boxes
         boxes: [
-          { label: "forklift", color: "#d97706", cx: 0.4839, cy: 0.3701, w: 0.5025, h: 0.6513 },
-          { label: "worker", color: "#65a30d", cx: 0.4945, cy: 0.4504, w: 0.168, h: 0.268 },
+          { label: "forklift", color: "#d97706", cx: 0.4839, cy: 0.3701, w: 0.5025, h: 0.6513, chip: true },
+          { label: "pallet", color: "#0284c7", cx: 0.7949, cy: 0.7172, w: 0.4102, h: 0.5656, chip: true },
+          { label: "worker", color: "#65a30d", cx: 0.4945, cy: 0.4504, w: 0.168, h: 0.268, chip: true },
         ],
       },
       {
-        src: "/landing/warehouse-ds0004-2.jpg",
+        src: "/landing/warehouse-ds0004-2.jpg", // img_0119, all 6 verified boxes
         boxes: [
-          { label: "pallet", color: "#0284c7", cx: 0.3194, cy: 0.7146, w: 0.4659, h: 0.4426 },
-          { label: "worker", color: "#65a30d", cx: 0.465, cy: 0.5533, w: 0.1363, h: 0.2598 },
-          { label: "forklift", color: "#d97706", cx: 0.6621, cy: 0.3462, w: 0.5227, h: 0.5646 },
+          { label: "pallet", color: "#0284c7", cx: 0.3194, cy: 0.7146, w: 0.4659, h: 0.4426, chip: true },
+          { label: "worker", color: "#65a30d", cx: 0.465, cy: 0.5533, w: 0.1363, h: 0.2598, chip: true },
+          { label: "forklift", color: "#d97706", cx: 0.6621, cy: 0.3462, w: 0.5227, h: 0.5646, chip: true },
+          { label: "pallet", color: "#0284c7", cx: 0.8752, cy: 0.0539, w: 0.2496, h: 0.1072 },
+          { label: "pallet", color: "#0284c7", cx: 0.8654, cy: 0.0933, w: 0.2691, h: 0.1432 },
+          { label: "forklift", color: "#d97706", cx: 0.508, cy: 0.4983, w: 0.8496, h: 0.8643 },
         ],
       },
       {
-        src: "/landing/warehouse-ds0004-3.jpg",
+        src: "/landing/warehouse-ds0004-3.jpg", // img_0055, all 7 verified boxes
         boxes: [
-          { label: "forklift", color: "#d97706", cx: 0.7086, cy: 0.4259, w: 0.4203, h: 0.5217 },
-          { label: "worker", color: "#65a30d", cx: 0.174, cy: 0.4661, w: 0.1699, h: 0.2037 },
+          { label: "forklift", color: "#d97706", cx: 0.7086, cy: 0.4259, w: 0.4203, h: 0.5217, chip: true },
+          { label: "worker", color: "#65a30d", cx: 0.174, cy: 0.4661, w: 0.1699, h: 0.2037, chip: true },
+          { label: "pallet", color: "#0284c7", cx: 0.4091, cy: 0.2859, w: 0.3607, h: 0.3039, chip: true },
+          { label: "pallet", color: "#0284c7", cx: 0.7785, cy: 0.0955, w: 0.257, h: 0.1869 },
+          { label: "pallet", color: "#0284c7", cx: 0.1828, cy: 0.3797, w: 0.2719, h: 0.1719 },
+          { label: "pallet", color: "#0284c7", cx: 0.6191, cy: 0.0625, w: 0.268, h: 0.125 },
+          { label: "pallet", color: "#0284c7", cx: 0.9313, cy: 0.0323, w: 0.1375, h: 0.0646 },
         ],
       },
     ],
@@ -63,25 +79,33 @@ const SCENARIOS: Scenario[] = [
     done: "model_0005 ready · FLUX.2 + SAM 3 · zero human labels",
     tiles: [
       {
-        src: "/landing/farm-ds0005-1.jpg",
+        src: "/landing/farm-ds0005-1.jpg", // img_0002, all 13 verified boxes
         boxes: [
-          { label: "hay_bale", color: "#0284c7", cx: 0.2327, cy: 0.6119, w: 0.1768, h: 0.1785 },
+          { label: "hay_bale", color: "#0284c7", cx: 0.2327, cy: 0.6119, w: 0.1768, h: 0.1785, chip: true },
           { label: "hay_bale", color: "#0284c7", cx: 0.3985, cy: 0.4035, w: 0.0826, h: 0.0844 },
+          { label: "hay_bale", color: "#0284c7", cx: 0.2021, cy: 0.4316, w: 0.1039, h: 0.1008 },
+          { label: "hay_bale", color: "#0284c7", cx: 0.2687, cy: 0.4141, w: 0.101, h: 0.093 },
+          { label: "tractor", color: "#d97706", cx: 0.4939, cy: 0.5566, w: 0.2855, h: 0.2773, chip: true },
           { label: "hay_bale", color: "#0284c7", cx: 0.1341, cy: 0.4512, w: 0.1108, h: 0.1094 },
+          { label: "hay_bale", color: "#0284c7", cx: 0.119, cy: 0.3894, w: 0.1193, h: 0.0486 },
+          { label: "hay_bale", color: "#0284c7", cx: 0.2282, cy: 0.36, w: 0.1197, h: 0.0449 },
           { label: "hay_bale", color: "#0284c7", cx: 0.3274, cy: 0.3951, w: 0.0865, h: 0.091 },
-          { label: "tractor", color: "#d97706", cx: 0.4939, cy: 0.5566, w: 0.2855, h: 0.2773 },
+          { label: "hay_bale", color: "#0284c7", cx: 0.3794, cy: 0.3501, w: 0.0865, h: 0.04 },
+          { label: "hay_bale", color: "#0284c7", cx: 0.0567, cy: 0.4715, w: 0.1135, h: 0.118 },
+          { label: "hay_bale", color: "#0284c7", cx: 0.0312, cy: 0.4165, w: 0.0625, h: 0.0381 },
+          { label: "hay_bale", color: "#0284c7", cx: 0.0034, cy: 0.4887, w: 0.0067, h: 0.0695 },
         ],
       },
       {
-        src: "/landing/farm-ds0005-2.jpg",
+        src: "/landing/farm-ds0005-2.jpg", // img_0000, its 1 verified box
         boxes: [
-          { label: "tractor", color: "#d97706", cx: 0.5418, cy: 0.501, w: 0.332, h: 0.3332 },
+          { label: "tractor", color: "#d97706", cx: 0.5418, cy: 0.501, w: 0.332, h: 0.3332, chip: true },
         ],
       },
       {
-        src: "/landing/farm-ds0005-3.jpg",
+        src: "/landing/farm-ds0005-3.jpg", // img_0003, its 1 verified box
         boxes: [
-          { label: "tractor", color: "#d97706", cx: 0.5195, cy: 0.5293, w: 0.3, h: 0.3352 },
+          { label: "tractor", color: "#d97706", cx: 0.5195, cy: 0.5293, w: 0.3, h: 0.3352, chip: true },
         ],
       },
     ],
@@ -92,24 +116,26 @@ const SCENARIOS: Scenario[] = [
     done: "model_0006 ready · trained on 100% synthetic data",
     tiles: [
       {
-        src: "/landing/street-ds0006-1.jpg",
+        src: "/landing/street-ds0006-1.jpg", // img_0007, all 2 verified boxes
         boxes: [
-          { label: "delivery_van", color: "#0284c7", cx: 0.5391, cy: 0.3186, w: 0.493, h: 0.4597 },
-          { label: "cyclist", color: "#65a30d", cx: 0.2767, cy: 0.7477, w: 0.1389, h: 0.2047 },
+          { label: "delivery_van", color: "#0284c7", cx: 0.5391, cy: 0.3186, w: 0.493, h: 0.4597, chip: true },
+          { label: "cyclist", color: "#65a30d", cx: 0.2767, cy: 0.7477, w: 0.1389, h: 0.2047, chip: true },
         ],
       },
       {
-        src: "/landing/street-ds0006-2.jpg",
+        src: "/landing/street-ds0006-2.jpg", // img_0010, all 2 verified boxes
         boxes: [
-          { label: "delivery_van", color: "#0284c7", cx: 0.4971, cy: 0.3643, w: 0.4777, h: 0.4237 },
-          { label: "cyclist", color: "#65a30d", cx: 0.0725, cy: 0.7266, w: 0.1152, h: 0.2125 },
+          { label: "delivery_van", color: "#0284c7", cx: 0.4971, cy: 0.3643, w: 0.4777, h: 0.4237, chip: true },
+          { label: "cyclist", color: "#65a30d", cx: 0.0725, cy: 0.7266, w: 0.1152, h: 0.2125, chip: true },
         ],
       },
       {
-        src: "/landing/street-ds0006-4.jpg",
+        src: "/landing/street-ds0006-4.jpg", // img_0011, all 4 verified boxes
         boxes: [
-          { label: "delivery_van", color: "#0284c7", cx: 0.3146, cy: 0.5158, w: 0.2583, h: 0.2027 },
-          { label: "cyclist", color: "#65a30d", cx: 0.651, cy: 0.4912, w: 0.0457, h: 0.0832 },
+          { label: "delivery_van", color: "#0284c7", cx: 0.3146, cy: 0.5158, w: 0.2583, h: 0.2027, chip: true },
+          { label: "cyclist", color: "#65a30d", cx: 0.651, cy: 0.4912, w: 0.0457, h: 0.0832, chip: true },
+          { label: "delivery_van", color: "#0284c7", cx: 0.2845, cy: 0.4502, w: 0.1221, h: 0.084 },
+          { label: "cyclist", color: "#65a30d", cx: 0.0133, cy: 0.6055, w: 0.0266, h: 0.0859 },
         ],
       },
     ],
@@ -307,19 +333,21 @@ export function HeroVisual() {
                       height: `${b.h * 100}%`,
                     }}
                   >
-                    <span
-                      className={cn(
-                        "absolute -top-5 rounded-sm px-1 py-px text-[10px] font-medium whitespace-nowrap text-zinc-950",
-                        // Anchor right for boxes near the tile's right edge so
-                        // the label isn't clipped by overflow-hidden.
-                        b.cx > 0.8 ? "right-0" : "left-0",
-                      )}
-                      style={{ backgroundColor: b.color }}
-                    >
-                      {/* the ✓ lands when the Critic pass runs */}
-                      {b.label}
-                      {t >= VERIFY_AT && " ✓"}
-                    </span>
+                    {b.chip && (
+                      <span
+                        className={cn(
+                          "absolute -top-5 rounded-sm px-1 py-px text-[10px] font-medium whitespace-nowrap text-zinc-950",
+                          // Anchor right for boxes near the tile's right edge so
+                          // the label isn't clipped by overflow-hidden.
+                          b.cx > 0.8 ? "right-0" : "left-0",
+                        )}
+                        style={{ backgroundColor: b.color }}
+                      >
+                        {/* the ✓ lands when the Critic pass runs */}
+                        {b.label}
+                        {t >= VERIFY_AT && " ✓"}
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
