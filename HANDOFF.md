@@ -92,17 +92,23 @@ run it before any demo. `backend/reset_demo.py` resets demo state.
    `NEXT_PUBLIC_WS_BASE_URL=ws://<remote>:8000`,
    `NEXT_PUBLIC_USE_MOCKS=false` in `auto-annotator-ui/.env.local` — note
    env mode sends no API key, so it's for open same-network nodes only.)
-   The MI300X model lineup (decided 2026-07-08): Gemma 3 27B-IT via vLLM
-   (the `LLM_BASE_URL` default — Prompt Agent + Semantic Critic + model
-   cards; counts for the "Best Use of Gemma" challenge), FLUX.1-schnell or
-   SDXL synthesis (the user's explicit wizard choice, honored verbatim —
-   nodes below `FLUX_MIN_VRAM_GB` reject flux runs at creation, before
-   downloading anything; no silent fallback), YOLOE
-   vision backend (`VISION_BACKEND=yoloe`; the planned SAM 3 backend turned
-   out to need transformers>=5, which the SDXL pin forbids — SAM 3 is only
-   possible via a future sidecar venv, and `sam3` config now degrades to
-   YOLOE with a warning instead of failing the run; found on the MI300X
-   2026-07-10). Utilization knobs: `MAX_BATCH_SIZE`, `MAX_TRAIN_IMAGE_SIZE`,
+   The MI300X model lineup (rechosen 2026-07-10 after a live model/license
+   research pass — all Apache-2.0): **Gemma 4 26B-A4B-IT** (MoE, 4B active)
+   via the vLLM ROCm container at `--gpu-memory-utilization 0.40` (Prompt
+   Agent + Semantic Critic + model cards; "Best Use of Gemma" challenge),
+   **FLUX.2-klein-4B** (ungated, ~13 GB, works with the pinned diffusers
+   0.39) or SDXL synthesis (the user's explicit wizard choice, honored
+   verbatim — nodes below `FLUX_MIN_VRAM_GB` reject flux runs at creation;
+   no silent fallback), and **SAM 3 as the flagship labeler** running in
+   the `.venv-sam3` transformers-5 sidecar (sam3_worker.py, long-lived
+   line-protocol process — the RF-DETR pattern; the checkpoint is MANUALLY
+   gated on HF). The labeler is a per-run user choice
+   (`CreateRunRequest.visionBackend`: sam3 | yoloe, default = node
+   `VISION_BACKEND`) and is honored verbatim like the generator — a node
+   that can't run it rejects the run at creation with setup steps; the
+   old silent sam3→yoloe degrade was removed on product decision
+   (transparency doctrine, 2026-07-10). Utilization knobs:
+   `MAX_BATCH_SIZE`, `MAX_TRAIN_IMAGE_SIZE`,
    `KEEP_MODELS_WARM` (deploy_mi300x.sh sets 96 / 1024 / true) plus the
    parallel-swarm profile: `PIPELINE_MODE=streaming`, `GPU_SLOTS=2`,
    `AUTO_BATCH=true`.
