@@ -36,6 +36,11 @@ NEXT_PUBLIC_WS_BASE_URL=ws://localhost:8000
   on a bad token. `/files/**` (images, thumbnails, exported weights) stays
   public by design — `<img>` tags and download links can't send headers.
   An empty `AA_API_KEY` leaves the backend open for same-machine dev.
+  Besides the root `AA_API_KEY`, any per-person key minted via
+  `POST /settings/api-keys` (`aa_live_…`, secret returned once)
+  authenticates both REST and WS; `DELETE /settings/api-keys/{id}`
+  revokes it immediately — hand each teammate/judge their own key
+  instead of sharing the root.
   The UI stores the endpoint + key at runtime (Hardware page → "Connect
   AMD Developer Cloud") and attaches them to every request — no env flip
   or rebuild needed. User login stays mocked client-side; org scoping is

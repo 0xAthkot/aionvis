@@ -1,6 +1,5 @@
 import asyncio
 import contextlib
-import hmac
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
@@ -13,6 +12,7 @@ from . import telemetry
 from .config import DATA_DIR, settings
 from .events import bus
 from .routers import router
+from .security import valid_api_key
 from .store import store
 from .ws import telemetry_sampler, ws_router
 
@@ -49,13 +49,14 @@ def request_key(request: Request) -> str:
 
 @app.middleware("http")
 async def api_key_guard(request: Request, call_next):
-    """AA_API_KEY protects every /api/v1 route (the UI's remote-attach flow
-    sends it). Empty key = open, for same-machine dev. /files stays public —
+    """The root AA_API_KEY or any minted per-person key (see security.py)
+    unlocks every /api/v1 route (the UI's remote-attach flow sends it).
+    Empty root key = open, for same-machine dev. /files stays public —
     <img> tags and weight downloads can't send headers. Registered before
     CORSMiddleware so CORS wraps it: preflights never hit this, and 401s
     still carry CORS headers."""
     if settings.aa_api_key and request.url.path.startswith("/api/"):
-        if not hmac.compare_digest(request_key(request), settings.aa_api_key):
+        if not valid_api_key(request_key(request)):
             return JSONResponse(
                 status_code=401,
                 content={

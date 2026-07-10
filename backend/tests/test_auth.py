@@ -59,6 +59,31 @@ def test_ws_rejects_bad_token(keyed):
     assert exc.value.code == 1008
 
 
+def test_minted_key_lifecycle(keyed):
+    """Per-person keys minted via /settings/api-keys authenticate REST and
+    WS, and revocation kills them immediately."""
+    root = {"Authorization": "Bearer test-key-123"}
+    created = client.post("/api/v1/settings/api-keys",
+                          json={"name": "judge-a"}, headers=root)
+    assert created.status_code == 201
+    secret = created.json()["secret"]
+    assert secret.startswith("aa_live_")
+
+    # The listing never re-exposes the secret.
+    listed = client.get("/api/v1/settings/api-keys", headers=root).json()
+    assert all(k["secret"] is None for k in listed)
+
+    minted = {"Authorization": f"Bearer {secret}"}
+    assert client.get("/api/v1/projects", headers=minted).status_code == 200
+    with client.websocket_connect(f"/ws/v1/runs/run_x/events?token={secret}"):
+        pass
+
+    key_id = created.json()["id"]
+    assert client.delete(f"/api/v1/settings/api-keys/{key_id}",
+                         headers=root).status_code == 204
+    assert client.get("/api/v1/projects", headers=minted).status_code == 401
+
+
 def test_ws_accepts_token(keyed):
     with client.websocket_connect("/ws/v1/runs/run_x/events?token=test-key-123"):
         pass  # handshake accepted is the assertion

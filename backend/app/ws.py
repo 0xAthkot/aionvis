@@ -2,24 +2,25 @@
 
 import asyncio
 import contextlib
-import hmac
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from . import telemetry
 from .config import settings
 from .events import bus
+from .security import valid_api_key
 
 ws_router = APIRouter(prefix="/ws/v1")
 
 
 async def _authorized(ws: WebSocket) -> bool:
-    """Browsers can't set WebSocket headers, so AA_API_KEY rides in
-    `?token=`. Empty key = open (same-machine dev). Policy violation close
-    (1008) so the client sees an auth failure, not a network blip."""
+    """Browsers can't set WebSocket headers, so the key (root AA_API_KEY or
+    a minted per-person key — see security.py) rides in `?token=`. Empty
+    root key = open (same-machine dev). Policy violation close (1008) so
+    the client sees an auth failure, not a network blip."""
     if not settings.aa_api_key:
         return True
-    if hmac.compare_digest(ws.query_params.get("token", ""), settings.aa_api_key):
+    if valid_api_key(ws.query_params.get("token", "")):
         return True
     await ws.close(code=1008, reason="invalid or missing API key")
     return False
