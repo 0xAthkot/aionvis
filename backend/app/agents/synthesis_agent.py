@@ -14,6 +14,7 @@ orchestration) unless KEEP_MODELS_WARM=true, where they stay cached.
 
 import gc
 import json
+import threading
 import time
 from pathlib import Path
 from typing import Callable, Optional
@@ -26,6 +27,12 @@ from .gpu import device_str, flush_vram
 
 # KEEP_MODELS_WARM=true: one pipeline kept resident, keyed by checkpoint id.
 _warm_pipe: dict[str, object] = {}
+
+# diffusers builds its lazy module attrs outside Python's import lock — two
+# runs cold-starting concurrently (GPU_SLOTS=2) raced it and one died with
+# "cannot import name 'AutoPipelineForText2Image'". Serialize the first
+# import (hit live on the MI300X, 2026-07-10).
+_diffusers_import_lock = threading.Lock()
 
 
 def flux_supported() -> tuple[bool, str]:
@@ -57,7 +64,9 @@ class SynthesisAgent:
 
     def _load_pipe(self, ctx: RunContext, model_id: str, is_flux: bool):
         import torch
-        from diffusers import AutoPipelineForText2Image
+
+        with _diffusers_import_lock:
+            from diffusers import AutoPipelineForText2Image
 
         if settings.keep_models_warm and model_id in _warm_pipe:
             ctx.log("info", f"Reusing warm diffusion pipeline {model_id}",
