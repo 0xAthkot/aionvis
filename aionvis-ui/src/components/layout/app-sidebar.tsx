@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -288,13 +289,18 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild className="rounded-lg">
               <Link href="/" title="aionVIS home">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 shadow-sm shadow-primary/40">
+                {/* Collapsed rail can't fit the wordmark — keep the tile there. */}
+                <div className="hidden size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 shadow-sm shadow-primary/40 group-data-[collapsible=icon]:flex">
                   <Crosshair className="size-4.5 text-primary-foreground" />
                 </div>
-                <div className="grid flex-1 text-left leading-tight">
-                  <span className="truncate font-semibold tracking-tight">
-                    aionVIS
-                  </span>
+                <div className="grid flex-1 gap-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
+                  <Image
+                    src="/aionvis-wordmark.png"
+                    alt="aionVIS"
+                    width={1087}
+                    height={240}
+                    className="h-4.5 w-auto justify-self-start"
+                  />
                   <span className="truncate text-[11px] text-muted-foreground">
                     Command Center
                   </span>

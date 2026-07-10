@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import {
   Activity,
@@ -7,7 +8,6 @@ import {
   ChevronDown,
   Cloud,
   Cpu,
-  Crosshair,
   Download,
   FileText,
   Flag,
@@ -233,11 +233,15 @@ export default function LandingPage() {
       {/* ---- Navbar ---- */}
       <header className="fixed inset-x-0 top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-md">
         <nav className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded-md bg-primary">
-              <Crosshair className="size-4 text-primary-foreground" />
-            </div>
-            <span className="font-semibold tracking-tight">aionVIS</span>
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/aionvis-wordmark.png"
+              alt="aionVIS"
+              width={1087}
+              height={240}
+              priority
+              className="h-5 w-auto"
+            />
           </Link>
           <div className="hidden items-center gap-5 text-sm text-muted-foreground md:flex">
             {NAV_LINKS.map((l) => (
@@ -707,15 +711,18 @@ docker compose up --build
       {/* ---- Footer ---- */}
       <footer className="border-t border-white/5 py-10">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 text-center sm:px-6">
-          <div className="flex items-center gap-2">
-            <div className="flex size-6 items-center justify-center rounded-md bg-primary">
-              <Crosshair className="size-3.5 text-primary-foreground" />
-            </div>
-            <span className="text-sm font-semibold">aionVIS</span>
-          </div>
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/aionvis-wordmark.png"
+              alt="aionVIS"
+              width={1087}
+              height={240}
+              className="h-4 w-auto"
+            />
+          </Link>
           <p className="text-xs text-muted-foreground">
-            SDXL · SAM · YOLO26 / YOLO11 / YOLOv10 / RT-DETR · Gemma via
-            vLLM · PyTorch on ROCm · MI300X
+            FLUX.2 / SDXL · SAM 3 · YOLO26 / YOLO11 / YOLOv10 / RT-DETR /
+            RF-DETR · Gemma 4 via vLLM · PyTorch on ROCm · MI300X
           </p>
           <p className="text-xs text-muted-foreground/60">
             © 2026 aionVIS.

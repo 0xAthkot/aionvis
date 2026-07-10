@@ -1,10 +1,11 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Cloud, Crosshair, PlugZap, Sparkles } from "lucide-react";
+import { ArrowLeft, Cloud, PlugZap, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -74,18 +75,20 @@ export default function LoginPage() {
       <div className="w-full max-w-sm space-y-6">
         <Link
           href="/"
-          className="flex items-center justify-center gap-2.5"
+          className="flex flex-col items-center gap-2"
           title="Back to the landing page"
         >
-          <div className="flex size-9 items-center justify-center rounded-lg bg-primary">
-            <Crosshair className="size-5 text-primary-foreground" />
-          </div>
-          <div className="leading-tight">
-            <p className="font-semibold tracking-tight">aionVIS</p>
-            <p className="text-xs text-muted-foreground">
-              MLOps Command Center
-            </p>
-          </div>
+          <Image
+            src="/aionvis-wordmark.png"
+            alt="aionVIS"
+            width={1087}
+            height={240}
+            priority
+            className="h-7 w-auto"
+          />
+          <p className="text-xs text-muted-foreground">
+            MLOps Command Center
+          </p>
         </Link>
 
         <Button size="lg" className="w-full" onClick={enterDemo}>
