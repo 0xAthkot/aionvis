@@ -49,10 +49,13 @@ import { cn } from "@/lib/utils";
 
 /** Everything the Pro wizard exposes as knobs, chosen for the user. */
 const SIZES = [
+  // Epochs scale inversely with images (an epoch of 5k images is ~50
+  // gradient steps; one of 50 images is a single step) — anchored on the
+  // flagship's verified 500 img / 60 ep result.
   { id: "test", label: "Test", images: 50, epochs: 30 },
   { id: "small", label: "Small", images: 250, epochs: 45 },
-  { id: "medium", label: "Medium", images: 1000, epochs: 60 },
-  { id: "large", label: "Large", images: 5000, epochs: 100 },
+  { id: "medium", label: "Medium", images: 1000, epochs: 50 },
+  { id: "large", label: "Large", images: 5000, epochs: 40 },
 ] as const;
 type SizeId = (typeof SIZES)[number]["id"];
 
