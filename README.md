@@ -47,6 +47,10 @@ rejected.*
 
 ## Setup — three ways in, easiest first
 
+> **Want to run the whole thing on your own AMD droplet?** That's option 3 —
+> the complete walkthrough is **[docs/DROPLET_GUIDE.md](docs/DROPLET_GUIDE.md)**
+> (~30–45 min, ~$2/h, every trap we hit written down).
+
 ### 1 · Zero install (recommended first look)
 
 Open **[aionvis.com](https://aionvis.com)** → *Launch console* →
@@ -75,11 +79,16 @@ and the flagship recipe, with the traps we hit live called out. Short version:
 ```bash
 # on the node (AMD Developer Cloud MI300X, ROCm):
 git clone https://github.com/0xAthkot/aionvis && cd aionvis
-bash backend/deploy_mi300x.sh   # one-shot: ROCm torch stack, SAM 3 + RF-DETR
-                                # sidecars, streaming .env profile, mints an
-                                # API key, prints the vLLM/Gemma container
-                                # command and your endpoint URL + key
-python backend/smoke_test.py    # preflight: every endpoint + LLM + inference
+bash backend/deploy_mi300x.sh          # one-shot: ROCm torch stack, SAM 3
+                                       # sidecar, streaming .env profile; mints
+                                       # your API key and prints the endpoint +
+                                       # the vLLM/Gemma container command
+
+cd backend && source .venv/bin/activate
+uvicorn app.main:app --host 0.0.0.0 --port 8000   # leave running (use tmux)
+
+# in a second shell — preflight every endpoint, the LLM and inference:
+cd backend && .venv/bin/python smoke_test.py
 ```
 
 Then attach any console (option 1 or 2) to the node at runtime as above.

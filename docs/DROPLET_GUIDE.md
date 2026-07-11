@@ -42,6 +42,12 @@ sidecar venv, writes a tuned streaming `.env` profile
 you'll need: the endpoint URL, the key, and the exact vLLM `docker run`
 command for step 4.
 
+> RF-DETR is **not** installed by the script (its `transformers>=5` requirement
+> conflicts with the pinned SDXL stack, so it needs its own venv). Everything
+> else works without it — YOLO and RT-DETR need nothing extra. To train RF-DETR
+> models, add the `.venv-rfdetr` sidecar:
+> [README → Isolated model runtimes](../README.md#isolated-model-runtimes-sidecars).
+
 ## 3 · Hugging Face access (optional, 2 of 4 models)
 
 ```bash
@@ -58,15 +64,18 @@ huggingface-cli login
 
 ## 4 · Start the swarm
 
-Backend (first terminal / tmux pane):
+**Use `tmux`** (`tmux new -s aionvis`, new pane with `Ctrl-b "`) — otherwise
+closing your SSH session kills the backend.
+
+**Pane 1 — the backend:**
 
 ```bash
 cd backend && source .venv/bin/activate
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-Gemma via vLLM (second pane) — paste the `docker run … vllm/vllm-openai-rocm:v0.23.0`
-command **exactly as the deploy script printed it**. Two flags matter:
+**Pane 2 — Gemma via vLLM:** paste the `docker run … vllm/vllm-openai-rocm:v0.23.0`
+command **exactly as the deploy script printed it**. Two details matter:
 
 - `--gpu-memory-utilization 0.50` — required. vLLM's 0.9 default grabs
   ~170 of the 192 GB and starves FLUX, SAM 3 and training.
@@ -76,13 +85,17 @@ command **exactly as the deploy script printed it**. Two flags matter:
 
 Gemma is optional: while port 8001 is down, the Prompt Agent uses its
 deterministic template designer and the semantic critic is skipped — runs
-still complete end to end.
+still complete end to end. (First start downloads ~50 GB of weights.)
 
-Preflight everything:
+**Pane 3 — preflight.** Use the venv's interpreter (`httpx` lives there, not
+in system Python), with the backend from pane 1 already running:
 
 ```bash
-python smoke_test.py     # every endpoint + LLM + inference; picks up the key from .env
+cd backend && .venv/bin/python smoke_test.py
 ```
+
+It checks every endpoint, the LLM path and inference, and picks the API key
+up from `.env` automatically. All green = you're ready.
 
 ## 5 · Attach a console (easiest: local over plain HTTP)
 
@@ -96,6 +109,18 @@ Console → **Hardware → Connect AMD Developer Cloud** → paste
 `http://<droplet-ip>:8000` + the key from step 2 → **Connect**. Every
 screen and live WebSocket switches to your node instantly. (This works
 over plain HTTP because the local console is HTTP too.)
+
+Prefer to **host the console yourself** rather than run a dev server?
+Either works, and both keep the runtime node-attach flow above:
+
+```bash
+cd aionvis-ui && npm install && npm run build && npm start   # → :3000
+```
+
+…or deploy `aionvis-ui/` to your own Vercel/Netlify project (set the root
+directory to `aionvis-ui`; no env vars needed — it ships in mock mode and you
+attach your node from the UI). A hosted console is HTTPS, so your node then
+needs TLS — step 6.
 
 ## 6 · Attach from the hosted console (needs TLS, ~5 min)
 
