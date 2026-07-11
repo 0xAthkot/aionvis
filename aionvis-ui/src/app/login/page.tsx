@@ -136,21 +136,22 @@ export default function LoginPage() {
             <CardDescription>
               Run the real product on your own AMD Developer Cloud droplet.
               One script deploys the backend and prints the endpoint and API
-              key to paste here:{" "}
-              <a
-                href="https://github.com/0xAthkot/aionvis/blob/main/backend/deploy_mi300x.sh"
-                target="_blank"
-                rel="noreferrer"
-                className="font-mono text-xs text-foreground underline underline-offset-4"
-              >
-                deploy_mi300x.sh
-              </a>
+              key to paste here.
             </CardDescription>
+            <a
+              href="https://github.com/0xAthkot/aionvis/blob/main/backend/deploy_mi300x.sh"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 flex w-fit items-center gap-1.5 font-mono text-xs text-foreground underline underline-offset-4"
+            >
+              deploy_mi300x.sh
+              <ArrowUpRight className="size-3" />
+            </a>
             <a
               href="https://github.com/0xAthkot/aionvis/blob/main/docs/HOSTING_GUIDE.md"
               target="_blank"
               rel="noreferrer"
-              className="mt-1 flex items-center gap-1.5 text-xs text-primary underline-offset-4 hover:underline"
+              className="flex w-fit items-center gap-1.5 text-xs text-primary underline-offset-4 hover:underline"
             >
               <BookOpen className="size-3.5" />
               Deployment guide
