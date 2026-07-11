@@ -73,6 +73,10 @@ as option 1, served locally. Verified on a clean Windows machine.
 
 ### 3 · The real thing — full swarm on an AMD MI300X
 
+**→ Step-by-step guide: [`docs/DROPLET_GUIDE.md`](docs/DROPLET_GUIDE.md)** —
+droplet creation, one-shot install, Hugging Face gating, TLS via sslip.io,
+and the flagship recipe, with the traps we hit live called out. Short version:
+
 ```bash
 # on the node (AMD Developer Cloud MI300X, ROCm):
 git clone https://github.com/0xAthkot/aionvis && cd aionvis
@@ -85,8 +89,9 @@ python backend/smoke_test.py    # preflight: every endpoint + LLM + inference
 
 Then attach any console (option 1 or 2) to the node at runtime as above.
 The deploy script's printed output is self-contained — endpoint URL, API
-key, and the exact vLLM container command. To expose the node to the hosted
-console over HTTPS, see **External services** below (sslip.io + Caddy).
+key, and the exact vLLM container command. To attach the **hosted** console
+the node needs TLS (mixed content): sslip.io + Caddy, 5 minutes —
+[guide, step 6](docs/DROPLET_GUIDE.md).
 
 ### Alternative · Docker (CPU-only reference stack)
 
