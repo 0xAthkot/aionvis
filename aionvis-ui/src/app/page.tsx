@@ -735,7 +735,7 @@ docker compose up --build
             RF-DETR · Gemma 4 via vLLM · PyTorch on ROCm · MI300X
           </p>
           <p className="text-xs text-muted-foreground/60">
-            © 2026 aionVIS.
+            © 2026 aionVIS
           </p>
         </div>
       </footer>

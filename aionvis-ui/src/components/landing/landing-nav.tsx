@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface NavLink {
@@ -15,6 +15,11 @@ interface NavLink {
  */
 export function LandingNav({ links }: { links: NavLink[] }) {
   const [active, setActive] = useState("");
+  // Clicking a tab scrolls the page PAST intermediate sections, and the
+  // observer would flash each of them red on the way. While locked, the
+  // clicked tab keeps the highlight; the lock lifts once scrolling idles.
+  const clickLock = useRef(false);
+  const unlockTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     const sections = links
@@ -22,6 +27,7 @@ export function LandingNav({ links }: { links: NavLink[] }) {
       .filter((el): el is HTMLElement => el !== null);
     const observer = new IntersectionObserver(
       (entries) => {
+        if (clickLock.current) return;
         for (const entry of entries) {
           if (entry.isIntersecting) setActive(`#${entry.target.id}`);
         }
@@ -31,7 +37,20 @@ export function LandingNav({ links }: { links: NavLink[] }) {
       { rootMargin: "-15% 0px -75% 0px" },
     );
     sections.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
+
+    const onScroll = () => {
+      if (!clickLock.current) return;
+      window.clearTimeout(unlockTimer.current);
+      unlockTimer.current = window.setTimeout(() => {
+        clickLock.current = false;
+      }, 150);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", onScroll);
+      window.clearTimeout(unlockTimer.current);
+    };
   }, [links]);
 
   return (
@@ -40,7 +59,10 @@ export function LandingNav({ links }: { links: NavLink[] }) {
         <a
           key={l.href}
           href={l.href}
-          onClick={() => setActive(l.href)}
+          onClick={() => {
+            clickLock.current = true;
+            setActive(l.href);
+          }}
           className={cn(
             "relative py-1 text-muted-foreground transition-colors duration-300 hover:text-foreground",
             active === l.href && "text-primary hover:text-primary",
