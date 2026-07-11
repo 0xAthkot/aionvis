@@ -39,6 +39,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast: "cn-toast",
+          // Sonner's default description gray is unreadable on the dark
+          // popover background — lift it to the popover foreground.
+          description: "!text-popover-foreground/80",
         },
       }}
       {...props}

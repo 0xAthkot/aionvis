@@ -307,7 +307,8 @@ export const handlers = [
     const run = db.runs.find((r) => r.id === params.id);
     if (!run) return notFound("not_found", `Run '${params.id}' not found`);
     if (run.source.path !== "synthetic") return HttpResponse.json([]);
-    const count = Math.min(run.progress.imagesGenerated, 48);
+    // SVG-data-URI tiles are cheap; the run page windows them to 24/page.
+    const count = Math.min(run.progress.imagesGenerated, 500);
     const view = deploymentView(run.source.useCase);
     const scene = sceneContext(run.source.useCase) ||
       run.targetClasses.join(", ").replace(/_/g, " ");
