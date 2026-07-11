@@ -40,6 +40,8 @@ from .schemas import (
     PipelineRun,
     PredictionResult,
     PipelineStage,
+    PreviewImagesRequest,
+    PreviewImagesResponse,
     Project,
     RunPreviewImage,
     RunProgress,
@@ -374,6 +376,61 @@ async def expand_prompt(body: ExpandPromptRequest) -> ExpandPromptResponse:
         total_scenarios=body.randomization.scenario_count,
         model=prompt_agent.model_label,
         provider=prompt_agent.provider_label,
+    )
+
+
+@router.post("/foundry/preview-images")
+async def preview_images(body: PreviewImagesRequest) -> PreviewImagesResponse:
+    """Synthesis dry-run for the builder: design a few scene prompts, paint
+    one image each, and serve them from /files — before any run exists."""
+    import shutil
+    import uuid
+
+    from fastapi.concurrency import run_in_threadpool
+
+    from .agents.synthesis_agent import flux_supported, synthesis_agent
+    from .config import DATA_DIR
+
+    if body.generator == "flux":
+        ok, why = flux_supported()
+        if not ok:
+            raise HTTPException(409, f"FLUX.1-schnell cannot run here — {why}")
+
+    count = max(1, min(body.count or 3, 4))
+    scenarios = await prompt_agent.expand_async(
+        use_case=body.use_case,
+        target_classes=body.target_classes,
+        randomization=body.randomization,
+        count=count,
+        hard_cases=[],
+    )
+    scenarios = (scenarios or [body.use_case])[:count]
+
+    previews_root = DATA_DIR / "files" / "previews"
+    # Previews are throwaways — keep only the most recent handful around.
+    if previews_root.exists():
+        stale = sorted(
+            (d for d in previews_root.iterdir() if d.is_dir()),
+            key=lambda d: d.stat().st_mtime,
+        )[:-19]
+        for old in stale:
+            shutil.rmtree(old, ignore_errors=True)
+
+    token = uuid.uuid4().hex[:10]
+    try:
+        paths, model_id = await run_in_threadpool(
+            synthesis_agent.preview, body.generator, scenarios,
+            previews_root / token,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(409, str(exc))
+    base = f"{settings.public_base_url}/files/previews/{token}"
+    return PreviewImagesResponse(
+        images=[
+            RunPreviewImage(file_name=p.name, url=f"{base}/{p.name}", scenario=s)
+            for p, s in zip(paths, scenarios)
+        ],
+        model=model_id,
     )
 
 

@@ -76,7 +76,8 @@ class SynthesisAgent:
             raise RuntimeError(f"FLUX.1-schnell cannot run — {why}")
         return settings.flux_model, True
 
-    def _load_pipe(self, ctx: RunContext, model_id: str, is_flux: bool):
+    def _load_pipe(self, log: Callable[[str], None], model_id: str,
+                   is_flux: bool):
         import torch
 
         with _diffusers_import_lock:
@@ -84,8 +85,7 @@ class SynthesisAgent:
 
         with _load_lock:
             if settings.keep_models_warm and model_id in _warm_pipe:
-                ctx.log("info", f"Reusing warm diffusion pipeline {model_id}",
-                        agent="synthesis")
+                log(f"Reusing warm diffusion pipeline {model_id}")
                 return _warm_pipe[model_id]
 
             device = device_str()
@@ -93,9 +93,7 @@ class SynthesisAgent:
             # variants.
             dtype = (torch.bfloat16 if is_flux else torch.float16) \
                 if device != "cpu" else torch.float32
-            ctx.log("info",
-                    f"Loading diffusion pipeline {model_id} on {device}",
-                    agent="synthesis")
+            log(f"Loading diffusion pipeline {model_id} on {device}")
             pipe = AutoPipelineForText2Image.from_pretrained(
                 model_id,
                 torch_dtype=dtype,
@@ -113,6 +111,66 @@ class SynthesisAgent:
                 _warm_pipe.clear()  # at most one warm diffusion pipeline
                 _warm_pipe[model_id] = pipe
             return pipe
+
+    def _diffuse(self, pipe, prompt: str, *, is_flux: bool, is_turbo: bool,
+                 negative_prompt: Optional[str], guidance_scale: float,
+                 size: int):
+        """One serialized diffusion call — runs and previews share the lock."""
+        with _gen_lock:
+            if is_flux:
+                # FluxPipeline takes no negative_prompt; schnell is
+                # guidance-distilled (4 steps, guidance ignored).
+                return pipe(
+                    prompt=prompt,
+                    num_inference_steps=4,
+                    guidance_scale=0.0,
+                    max_sequence_length=256,
+                    width=size,
+                    height=size,
+                ).images[0]
+            return pipe(
+                prompt=prompt,
+                negative_prompt=None if is_turbo else negative_prompt,
+                num_inference_steps=4 if is_turbo else 25,
+                # SDXL-Turbo is trained for guidance_scale=0; honor
+                # the UI slider only for full SDXL.
+                guidance_scale=0.0 if is_turbo else guidance_scale,
+                width=size,
+                height=size,
+            ).images[0]
+
+    def preview(self, generator: str, scenarios: list[str],
+                out_dir: Path) -> tuple[list[Path], str]:
+        """Builder dry-run: paint one image per scenario with no run
+        attached. Shares the warm cache and the serialization locks with
+        real runs, so a preview can never race an in-flight synthesis
+        stage."""
+        if generator == "flux":
+            ok, why = flux_supported()
+            if not ok:
+                raise RuntimeError(f"FLUX.1-schnell cannot run — {why}")
+            model_id, is_flux = settings.flux_model, True
+        else:
+            model_id, is_flux = settings.sdxl_model, False
+        is_turbo = "turbo" in model_id.lower()
+
+        out_dir.mkdir(parents=True, exist_ok=True)
+        pipe = self._load_pipe(lambda msg: None, model_id, is_flux)
+        size = settings.synthesis_image_size
+        paths: list[Path] = []
+        for i, prompt in enumerate(scenarios):
+            image = self._diffuse(
+                pipe, prompt, is_flux=is_flux, is_turbo=is_turbo,
+                negative_prompt="blurry, watermark, text",
+                guidance_scale=7.5, size=size,
+            )
+            path = out_dir / f"preview_{i:02d}.jpg"
+            image.save(path, quality=92)
+            paths.append(path)
+        if not settings.keep_models_warm:
+            del pipe
+            gc.collect()
+        return paths, model_id
 
     def generate(
         self,
@@ -132,7 +190,9 @@ class SynthesisAgent:
         ctx.set_agent("synthesis", "waiting_gpu",
                       f"Loading {model_id} onto {telemetry.GPU.name}")
         flush_vram(ctx)
-        pipe = self._load_pipe(ctx, model_id, is_flux)
+        pipe = self._load_pipe(
+            lambda msg: ctx.log("info", msg, agent="synthesis"),
+            model_id, is_flux)
 
         size = settings.synthesis_image_size
         paths: list[Path] = []
@@ -143,29 +203,11 @@ class SynthesisAgent:
             ctx.check_cancelled()
             prompt = scenarios[i % len(scenarios)]
             t0 = time.monotonic()
-            with _gen_lock:
-                if is_flux:
-                    # FluxPipeline takes no negative_prompt; schnell is
-                    # guidance-distilled (4 steps, guidance ignored).
-                    image = pipe(
-                        prompt=prompt,
-                        num_inference_steps=4,
-                        guidance_scale=0.0,
-                        max_sequence_length=256,
-                        width=size,
-                        height=size,
-                    ).images[0]
-                else:
-                    image = pipe(
-                        prompt=prompt,
-                        negative_prompt=None if is_turbo else negative_prompt,
-                        num_inference_steps=4 if is_turbo else 25,
-                        # SDXL-Turbo is trained for guidance_scale=0; honor
-                        # the UI slider only for full SDXL.
-                        guidance_scale=0.0 if is_turbo else guidance_scale,
-                        width=size,
-                        height=size,
-                    ).images[0]
+            image = self._diffuse(
+                pipe, prompt, is_flux=is_flux, is_turbo=is_turbo,
+                negative_prompt=negative_prompt,
+                guidance_scale=guidance_scale, size=size,
+            )
             path = out_dir / f"img_{i:04d}.jpg"
             image.save(path, quality=92)
             paths.append(path)

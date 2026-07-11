@@ -119,6 +119,7 @@ recorded before the field existed).
 | Method | Path | Request → Response |
 |---|---|---|
 | POST | `/foundry/expand-prompt` | `ExpandPromptRequest` → `ExpandPromptResponse` |
+| POST | `/foundry/preview-images` | `PreviewImagesRequest` → `PreviewImagesResponse` |
 
 The Prompt Agent (Gemma 4 via vLLM on the MI300X) takes the USE CASE — what
 the model is for, in the user's words ("my drone needs to detect rotten
@@ -130,6 +131,14 @@ the design so the preview matches what the launched run will generate.
 Wire compat: `useCase` replaced the pre-v0.5 `basePrompt` field; the
 backend still accepts the old name on input and always serializes the new
 one.
+
+`/foundry/preview-images` is the Synthesis Agent's dry-run: it designs
+`count` scene prompts (default 3, cap 4) the same way, paints one image
+per prompt with the chosen `generator`, and returns `RunPreviewImage[]`
+with public `/files/previews/...` URLs. The generator choice is honored
+verbatim like a real run — a node that can't run FLUX answers 409 instead
+of substituting. Previews are throwaways; the backend keeps only the ~20
+most recent preview folders.
 
 ### Datasets
 | Method | Path | Request → Response |

@@ -17,6 +17,8 @@ import type {
   Paginated,
   PipelineRun,
   PredictionResult,
+  PreviewImagesRequest,
+  PreviewImagesResponse,
   RunPreviewImage,
 } from "@/lib/api/types";
 import { computeAnalytics } from "./analytics";
@@ -389,6 +391,28 @@ export const handlers = [
       totalScenarios: r.scenarioCount,
       model: "Gemma 4",
       provider: "vLLM · MI300X",
+    };
+    return HttpResponse.json(response);
+  }),
+
+  http.post(`${API_BASE}/foundry/preview-images`, async ({ request }) => {
+    // Noticeably slower than CRUD — "the diffusion model is painting".
+    await delay(1600 + Math.random() * 900);
+    const body = (await request.json()) as PreviewImagesRequest;
+    const count = Math.max(1, Math.min(body.count ?? 3, 4));
+    const view = deploymentView(body.useCase);
+    const scene = sceneContext(body.useCase) ||
+      body.targetClasses.join(", ").replace(/_/g, " ");
+    const response: PreviewImagesResponse = {
+      images: Array.from({ length: count }, (_, i) => ({
+        fileName: `preview_${String(i).padStart(2, "0")}.jpg`,
+        url: placeholderImage(i + 31, `preview ${i + 1}`, 640, 640),
+        scenario: `Photorealistic scene of ${scene}${view ? `, ${view}` : ""} — sample ${i + 1}`,
+      })),
+      model:
+        body.generator === "flux"
+          ? "FLUX.1-schnell (simulated)"
+          : "stabilityai/sdxl-turbo (simulated)",
     };
     return HttpResponse.json(response);
   }),

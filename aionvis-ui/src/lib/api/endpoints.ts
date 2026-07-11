@@ -46,6 +46,8 @@ export const endpoints = {
   foundry: {
     /** POST ExpandPromptRequest → ExpandPromptResponse (Prompt Agent dry-run) */
     expandPrompt: () => `${API_BASE}/foundry/expand-prompt`,
+    /** POST PreviewImagesRequest → PreviewImagesResponse (Synthesis dry-run) */
+    previewImages: () => `${API_BASE}/foundry/preview-images`,
   },
 
   datasets: {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ChevronDown, Flag, Rocket, Sparkles } from "lucide-react";
+import { ChevronDown, Flag, Images, Rocket, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { HelpTip } from "@/components/shared/help-tip";
 import { NewProjectDialog } from "@/components/shared/new-project-dialog";
@@ -31,6 +31,7 @@ import type {
   CreateSyntheticRunRequest,
   ExpandPromptResponse,
   FoundryFeedback,
+  PreviewImagesResponse,
   Project,
 } from "@/lib/api/types";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -177,6 +178,17 @@ export function SimpleFoundry() {
     placeholderData: (prev) => prev,
   });
 
+  const paint = useMutation({
+    mutationFn: () =>
+      apiPost<PreviewImagesResponse>(endpoints.foundry.previewImages(), {
+        useCase,
+        targetClasses: request.targetClasses,
+        randomization: request.source.randomization,
+        generator,
+        count: 3,
+      }),
+  });
+
   const launch = useLaunchRun();
 
   return (
@@ -289,10 +301,6 @@ export function SimpleFoundry() {
                 </button>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Your choice is final — a node that can&apos;t run FLUX declines
-              the run instead of quietly switching engines.
-            </p>
           </div>
 
           <div className="space-y-2">
@@ -322,10 +330,6 @@ export function SimpleFoundry() {
                 </button>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Also final — a node without the chosen labeler declines the run
-              and explains how to install it.
-            </p>
           </div>
 
           <div className="space-y-2">
@@ -439,7 +443,7 @@ export function SimpleFoundry() {
             <div className="flex items-center justify-between gap-2">
               <p className="flex items-center gap-2 text-sm font-medium">
                 <Sparkles className="size-3.5 text-primary" />
-                See what the swarm will paint
+                Read what the swarm will paint
               </p>
               <Button
                 type="button"
@@ -472,6 +476,67 @@ export function SimpleFoundry() {
               <p className="text-xs text-muted-foreground">
                 Optional — a sample of the scene variations the AI writes from
                 your sentence.
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="flex items-center gap-2 text-sm font-medium">
+                <Images className="size-3.5 text-primary" />
+                See what the swarm will paint
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={useCase.trim().length < 16 || paint.isPending}
+                onClick={() => paint.mutate()}
+              >
+                {paint.isPending ? "Painting…" : "Paint 3 samples"}
+              </Button>
+            </div>
+            {paint.isPending ? (
+              <div className="grid grid-cols-3 gap-2 pt-1">
+                {Array.from({ length: 3 }, (_, i) => (
+                  <Skeleton key={i} className="aspect-square w-full rounded-md" />
+                ))}
+              </div>
+            ) : paint.isError ? (
+              <p className="text-xs text-destructive">{paint.error.message}</p>
+            ) : paint.data ? (
+              <>
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  {paint.data.images.map((img) => (
+                    <Tooltip key={img.url}>
+                      <TooltipTrigger asChild>
+                        {/* Data URIs (mock) / remote-node files — next/image
+                            adds nothing here. */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={img.url}
+                          alt={img.scenario ?? img.fileName}
+                          className="aspect-square w-full rounded-md border object-cover"
+                        />
+                      </TooltipTrigger>
+                      {img.scenario && (
+                        <TooltipContent className="max-w-72">
+                          {img.scenario}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Painted by {paint.data.model} — the full build creates{" "}
+                  {sizeCfg.images} like these, then labels and verifies them.
+                </p>
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Optional — three sample photos painted from your sentence, so
+                you can judge the look before you build. Takes a moment on the
+                node&apos;s GPU.
               </p>
             )}
           </div>

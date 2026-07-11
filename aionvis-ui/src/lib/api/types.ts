@@ -645,3 +645,20 @@ export interface ExpandPromptResponse {
   model: string;
   provider: string;
 }
+
+/** Synthesis dry-run: paint a few sample images before committing a run. */
+export interface PreviewImagesRequest {
+  useCase: string;
+  targetClasses: string[];
+  randomization: DomainRandomizationConfig;
+  /** Honored verbatim like a real run — an ineligible node answers 409. */
+  generator: "sdxl" | "flux";
+  /** How many images to paint (backend caps at 4). Default 3. */
+  count?: number;
+}
+
+export interface PreviewImagesResponse {
+  images: RunPreviewImage[];
+  /** Checkpoint that painted them. */
+  model: string;
+}

@@ -532,6 +532,22 @@ class ExpandPromptResponse(ApiModel):
     provider: str
 
 
+class PreviewImagesRequest(ApiModel):
+    """Synthesis dry-run: paint a few sample images before committing a run."""
+
+    use_case: str
+    target_classes: list[str]
+    randomization: DomainRandomizationConfig
+    # Honored verbatim like a real run — an ineligible node answers 409.
+    generator: Literal["sdxl", "flux"]
+    count: Optional[int] = None  # capped at 4, default 3
+
+
+class PreviewImagesResponse(ApiModel):
+    images: list[RunPreviewImage]
+    model: str
+
+
 class UploadRegisterRequest(ApiModel):
     archive_name: str
     size_mb: float
