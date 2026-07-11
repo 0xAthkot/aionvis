@@ -33,7 +33,10 @@ export const endpoints = {
   runs: {
     /** GET → Paginated<PipelineRun> · POST CreateRunRequest → PipelineRun */
     list: () => `${API_BASE}/runs`,
-    /** GET → PipelineRun */
+    /**
+     * GET → PipelineRun · DELETE → 204 (removes the run + its dataset/model
+     * unless another surviving run references them; 409 while active)
+     */
     get: (id: string) => `${API_BASE}/runs/${id}`,
     /** POST → PipelineRun */
     cancel: (id: string) => `${API_BASE}/runs/${id}/cancel`,

@@ -195,6 +195,31 @@ export const handlers = [
     return HttpResponse.json(paginate(db.runs, request.url));
   }),
 
+  http.delete(`${API_BASE}/runs/:id`, async ({ params }) => {
+    await lag();
+    const run = db.runs.find((r) => r.id === params.id);
+    if (!run) return notFound("run_not_found", `No run ${params.id}`);
+    if (["queued", "running", "paused"].includes(run.status))
+      return HttpResponse.json(
+        { status: 409, code: "run_active",
+          message: "Run is active — cancel it before deleting." },
+        { status: 409 },
+      );
+    const surviving = db.runs.filter((r) => r.id !== run.id);
+    const keepDs = new Set(surviving.map((r) => r.datasetId).filter(Boolean));
+    const keepModels = new Set(surviving.map((r) => r.modelId).filter(Boolean));
+    if (run.datasetId && !keepDs.has(run.datasetId)) {
+      db.datasets = db.datasets.filter((d) => d.id !== run.datasetId);
+      db.annotatedImages = db.annotatedImages.filter(
+        (img) => img.datasetId !== run.datasetId,
+      );
+    }
+    if (run.modelId && !keepModels.has(run.modelId))
+      db.models = db.models.filter((m) => m.id !== run.modelId);
+    db.runs = surviving;
+    return new HttpResponse(null, { status: 204 });
+  }),
+
   http.post(`${API_BASE}/runs`, async ({ request }) => {
     await lag();
     const body = (await request.json()) as CreateRunRequest;

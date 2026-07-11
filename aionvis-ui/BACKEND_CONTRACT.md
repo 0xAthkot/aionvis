@@ -71,6 +71,7 @@ NEXT_PUBLIC_WS_BASE_URL=ws://localhost:8000
 | GET | `/runs` | → `Paginated<PipelineRun>` (newest first) |
 | POST | `/runs` | `CreateRunRequest` → `PipelineRun` (201, status `queued`) |
 | GET | `/runs/{id}` | → `PipelineRun` |
+| DELETE | `/runs/{id}` | → 204. Removes the run (logs + files) and its dataset/model unless another surviving run references them. 409 while active. |
 | POST | `/runs/{id}/cancel` | → `PipelineRun` (status `cancelled`) |
 | GET | `/runs/{id}/agents` | → `AgentInstance[]` (current states) |
 | GET | `/runs/{id}/logs` | → `LogEvent[]` (history; live tail is on the WebSocket) |

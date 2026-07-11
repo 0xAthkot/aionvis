@@ -402,6 +402,44 @@ def run_preview(run_id: str) -> list[RunPreviewImage]:
     ]
 
 
+@router.delete("/runs/{run_id}", status_code=204)
+def delete_run(run_id: str) -> None:
+    """Delete one run and what it produced: its logs, workdirs and generated
+    files, plus its dataset and model — unless another surviving run
+    references them. Active runs must be cancelled first (409)."""
+    import shutil
+
+    from .config import DATA_DIR
+
+    run = store.runs.get(run_id)
+    if run is None:
+        raise _not_found("Run", run_id)
+    if run.status in ("queued", "running", "paused"):
+        raise HTTPException(409, "Run is active — cancel it before deleting.")
+
+    surviving = [r for r in store.runs.values() if r.id != run_id]
+    keep_ds = {r.dataset_id for r in surviving if r.dataset_id}
+    keep_models = {r.model_id for r in surviving if r.model_id}
+
+    def rm(path: Path) -> None:
+        shutil.rmtree(path, ignore_errors=True)
+
+    store.runs.pop(run_id, None)
+    store.run_logs.pop(run_id, None)
+    rm(DATA_DIR / "runs" / run_id)
+    rm(DATA_DIR / "files" / "runs" / run_id)
+    if run.dataset_id and run.dataset_id not in keep_ds:
+        store.datasets.pop(run.dataset_id, None)
+        store.images.pop(run.dataset_id, None)
+        rm(DATA_DIR / "files" / "datasets" / run.dataset_id)
+        rm(DATA_DIR / "byod" / run.dataset_id)
+    if run.model_id and run.model_id not in keep_models:
+        store.models.pop(run.model_id, None)
+        rm(DATA_DIR / "files" / "models" / run.model_id)
+        rm(DATA_DIR / "predictions" / run.model_id)
+    store.save()
+
+
 # --- foundry ---------------------------------------------------------------------
 
 
