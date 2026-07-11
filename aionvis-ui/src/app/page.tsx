@@ -24,6 +24,7 @@ import { AgentPipeline } from "@/components/landing/agent-pipeline";
 import { ContactDialog } from "@/components/landing/contact-dialog";
 import { HeroVisual } from "@/components/landing/hero-visual";
 import { IndustryMarquee } from "@/components/landing/industry-marquee";
+import { LandingNav } from "@/components/landing/landing-nav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -246,13 +247,7 @@ export default function LandingPage() {
               className="h-5 w-auto"
             />
           </Link>
-          <div className="hidden items-center gap-5 text-sm text-muted-foreground md:flex">
-            {NAV_LINKS.map((l) => (
-              <a key={l.href} href={l.href} className="transition-colors hover:text-foreground">
-                {l.label}
-              </a>
-            ))}
-          </div>
+          <LandingNav links={NAV_LINKS} />
           <div className="ml-auto flex items-center gap-2">
             <Button asChild variant="ghost" size="sm">
               <Link href="/login">Sign in</Link>
