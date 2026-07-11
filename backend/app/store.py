@@ -77,23 +77,32 @@ class Store:
     # --- persistence ---------------------------------------------------------
 
     def save(self) -> None:
+        # list() snapshots every collection BEFORE Python-level iteration:
+        # save() is called from pipeline worker threads while API threads
+        # insert runs/logs — iterating the live dicts raced ("dictionary
+        # changed size during iteration", hit live 2026-07-11 when five
+        # runs were created back-to-back and killed four of them). The
+        # snapshot must also happen under the lock so concurrent saves
+        # serialize.
         def dump(items):
-            return [i.model_dump(by_alias=True) for i in items]
+            return [i.model_dump(by_alias=True) for i in list(items)]
 
-        snapshot = {
-            "organizations": dump(self.organizations),
-            "members": dump(self.members),
-            "projects": dump(self.projects),
-            "runs": dump(self.runs.values()),
-            "runLogs": {rid: dump(logs) for rid, logs in self.run_logs.items()},
-            "datasets": dump(self.datasets.values()),
-            "images": {did: dump(imgs) for did, imgs in self.images.items()},
-            "models": dump(self.models.values()),
-            "apiKeys": dump(self.api_keys.values()),
-            "feedback": dump(self.feedback.values()),
-            "gpuSecondsUsed": self.gpu_seconds_used,
-        }
         with self._save_lock:
+            snapshot = {
+                "organizations": dump(self.organizations),
+                "members": dump(self.members),
+                "projects": dump(self.projects),
+                "runs": dump(self.runs.values()),
+                "runLogs": {rid: dump(logs)
+                            for rid, logs in list(self.run_logs.items())},
+                "datasets": dump(self.datasets.values()),
+                "images": {did: dump(imgs)
+                           for did, imgs in list(self.images.items())},
+                "models": dump(self.models.values()),
+                "apiKeys": dump(self.api_keys.values()),
+                "feedback": dump(self.feedback.values()),
+                "gpuSecondsUsed": self.gpu_seconds_used,
+            }
             DATA_DIR.mkdir(parents=True, exist_ok=True)
             tmp = STATE_FILE.with_suffix(".json.tmp")
             tmp.write_text(json.dumps(snapshot, indent=1), encoding="utf-8")
