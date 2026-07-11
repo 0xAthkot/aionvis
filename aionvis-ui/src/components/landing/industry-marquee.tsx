@@ -52,49 +52,67 @@ const INDUSTRIES: {
     blurb:
       "Defect, weld and PPE detectors trained from a sentence - quality control models without a single hand-drawn box.",
     image: "/industries/manufacturing.jpg",
-    // ds_0017/img_0010.jpg - bottling-line run (run_0025)
+    // ds_0017/img_0001.jpg - bottling-line run (run_0025)
     boxes: [
-      { label: "bottle", color: "#d97706", cx: 0.3945, cy: 0.7839, w: 0.0664, h: 0.1636, chip: true }, // conf 0.934
-      { label: "bottle", color: "#d97706", cx: 0.3599, cy: 0.8661, w: 0.0732, h: 0.1593, chip: true }, // conf 0.934
-      { label: "bottle", color: "#d97706", cx: 0.4385, cy: 0.974, w: 0.0637, h: 0.1396, chip: true }, // conf 0.934
-      { label: "bottle", color: "#d97706", cx: 0.4678, cy: 0.8281, w: 0.0535, h: 0.1708 }, // conf 0.93
-      { label: "bottle", color: "#d97706", cx: 0.4684, cy: 0.6131, w: 0.0508, h: 0.1511 }, // conf 0.928
-      { label: "bottle", color: "#d97706", cx: 0.4945, cy: 0.7552, w: 0.0484, h: 0.1667 }, // conf 0.925
-      { label: "bottle", color: "#d97706", cx: 0.4249, cy: 0.7101, w: 0.0533, h: 0.164 }, // conf 0.925
-      { label: "bottle", color: "#d97706", cx: 0.5381, cy: 0.9107, w: 0.0605, h: 0.1557 }, // conf 0.923
-      { label: "bottle", color: "#d97706", cx: 0.5781, cy: 0.8325, w: 0.0562, h: 0.1453 }, // conf 0.919
-      { label: "bottle", color: "#d97706", cx: 0.292, cy: 0.9303, w: 0.0738, h: 0.1375 }, // conf 0.918
-      { label: "bottle", color: "#d97706", cx: 0.51, cy: 0.5243, w: 0.0488, h: 0.1651 }, // conf 0.914
-      { label: "bottle", color: "#d97706", cx: 0.8234, cy: 0.0624, w: 0.0547, h: 0.1716 }, // conf 0.907
-      { label: "bottle", color: "#d97706", cx: 0.7705, cy: 0.1745, w: 0.0574, h: 0.1535 }, // conf 0.903
-      { label: "bottle", color: "#d97706", cx: 0.5645, cy: 0.4833, w: 0.0469, h: 0.1271 }, // conf 0.901
-      { label: "bottle", color: "#d97706", cx: 0.8687, cy: 0.0051, w: 0.0641, h: 0.19 }, // conf 0.871
-      { label: "bottle", color: "#d97706", cx: 0.7289, cy: 0.1301, w: 0.0469, h: 0.1461 }, // conf 0.851
-      { label: "bottle", color: "#d97706", cx: 0.543, cy: 0.4361, w: 0.0352, h: 0.0776 }, // conf 0.809
-      { label: "bottle", color: "#d97706", cx: 0.718, cy: 0.062, w: 0.0312, h: 0.086 }, // conf 0.804
-      { label: "bottle", color: "#d97706", cx: 0.8215, cy: 0.2656, w: 0.0617, h: 0.1771 }, // conf 0.799
-      { label: "bottle", color: "#d97706", cx: 0.7262, cy: 0.2008, w: 0.0195, h: 0.036 }, // conf 0.785
-      { label: "bottle", color: "#d97706", cx: 0.5828, cy: 0.3729, w: 0.0406, h: 0.0625 }, // conf 0.767
-      { label: "bottle", color: "#d97706", cx: 0.6832, cy: 0.1308, w: 0.0477, h: 0.1291 }, // conf 0.75
-      { label: "bottle", color: "#d97706", cx: 0.6871, cy: 0.1748, w: 0.0391, h: 0.0735 }, // conf 0.743
-      { label: "bottle", color: "#d97706", cx: 0.6301, cy: 0.3565, w: 0.043, h: 0.0953 }, // conf 0.738
-      { label: "bottle", color: "#d97706", cx: 0.8531, cy: 0.1319, w: 0.0469, h: 0.1176 }, // conf 0.729
-      { label: "bottle", color: "#d97706", cx: 0.767, cy: 0.0144, w: 0.0371, h: 0.1748 }, // conf 0.708
-      { label: "bottle", color: "#d97706", cx: 0.8977, cy: 0.0661, w: 0.0469, h: 0.124 }, // conf 0.682
-      { label: "bottle", color: "#d97706", cx: 0.6523, cy: 0.1841, w: 0.0242, h: 0.0421 }, // conf 0.677
-      { label: "bottle", color: "#d97706", cx: 0.8219, cy: 0.2047, w: 0.0406, h: 0.0697 }, // conf 0.56
-      { label: "bottle", color: "#d97706", cx: 0.8844, cy: 0.1151, w: 0.0719, h: 0.2093 }, // conf 0.551
-      { label: "bottle", color: "#d97706", cx: 0.6281, cy: 0.3375, w: 0.0469, h: 0.0667 }, // conf 0.498
-      { label: "bottle", color: "#d97706", cx: 0.5826, cy: 0.3769, w: 0.0418, h: 0.0669 }, // conf 0.494
-      { label: "bottle", color: "#d97706", cx: 0.6178, cy: 0.3397, w: 0.0254, h: 0.0643 }, // conf 0.455
-      { label: "bottle", color: "#d97706", cx: 0.5352, cy: 0.6472, w: 0.0437, h: 0.1172 }, // conf 0.442
-      { label: "bottle", color: "#d97706", cx: 0.868, cy: 0.1691, w: 0.0469, h: 0.1068 }, // conf 0.429
-      { label: "bottle", color: "#d97706", cx: 0.6543, cy: 0.1839, w: 0.0227, h: 0.0385 }, // conf 0.381
-      { label: "bottle", color: "#d97706", cx: 0.8301, cy: 0.2083, w: 0.0445, h: 0.0781 }, // conf 0.371
-      { label: "bottle", color: "#d97706", cx: 0.7031, cy: 0.1079, w: 0.0234, h: 0.0765 }, // conf 0.37
-      { label: "bottle", color: "#d97706", cx: 0.8418, cy: 0.2224, w: 0.0227, h: 0.0959 }, // conf 0.359
-      { label: "bottle", color: "#d97706", cx: 0.6924, cy: 0.1024, w: 0.0332, h: 0.0771 }, // conf 0.355
-      { label: "worker", color: "#65a30d", cx: 0.6377, cy: 0.4869, w: 0.3262, h: 0.5697, chip: true }, // conf 0.966
+      { label: "bottle", color: "#d97706", cx: 0.1411, cy: 0.8361, w: 0.0695, h: 0.1568, chip: true }, // conf 0.909
+      { label: "bottle", color: "#d97706", cx: 0.2421, cy: 0.6167, w: 0.051, h: 0.1521 }, // conf 0.904
+      { label: "bottle", color: "#d97706", cx: 0.28, cy: 0.5489, w: 0.0498, h: 0.1197 }, // conf 0.898
+      { label: "bottle", color: "#d97706", cx: 0.1983, cy: 0.7193, w: 0.0529, h: 0.1563 }, // conf 0.898
+      { label: "bottle", color: "#d97706", cx: 0.3345, cy: 0.4443, w: 0.0482, h: 0.1219 }, // conf 0.879
+      { label: "bottle", color: "#d97706", cx: 0.3841, cy: 0.3573, w: 0.042, h: 0.1355 }, // conf 0.878
+      { label: "bottle", color: "#d97706", cx: 0.4926, cy: 0.5448, w: 0.0531, h: 0.1771 }, // conf 0.877
+      { label: "bottle", color: "#d97706", cx: 0.4686, cy: 0.6536, w: 0.0559, h: 0.1803 }, // conf 0.877
+      { label: "bottle", color: "#d97706", cx: 0.4475, cy: 0.7481, w: 0.0527, h: 0.164 }, // conf 0.864
+      { label: "bottle", color: "#d97706", cx: 0.3379, cy: 0.5781, w: 0.0449, h: 0.0989 }, // conf 0.857
+      { label: "bottle", color: "#d97706", cx: 0.3638, cy: 0.5429, w: 0.0396, h: 0.1068 }, // conf 0.856
+      { label: "bottle", color: "#d97706", cx: 0.4152, cy: 0.8372, w: 0.0664, h: 0.1755 }, // conf 0.853
+      { label: "bottle", color: "#d97706", cx: 0.4631, cy: 0.18, w: 0.0348, h: 0.1084 }, // conf 0.847
+      { label: "bottle", color: "#d97706", cx: 0.1757, cy: 0.9964, w: 0.0751, h: 0.1615 }, // conf 0.843
+      { label: "bottle", color: "#d97706", cx: 0.3887, cy: 0.4784, w: 0.0367, h: 0.0943 }, // conf 0.841
+      { label: "bottle", color: "#d97706", cx: 0.4914, cy: 0.1127, w: 0.0375, h: 0.1185 }, // conf 0.84
+      { label: "bottle", color: "#d97706", cx: 0.2871, cy: 0.7065, w: 0.05, h: 0.1265 }, // conf 0.832
+      { label: "bottle", color: "#d97706", cx: 0.4385, cy: 0.22, w: 0.0277, h: 0.0916 }, // conf 0.824
+      { label: "bottle", color: "#d97706", cx: 0.5422, cy: 0.0149, w: 0.0312, h: 0.1081 }, // conf 0.821
+      { label: "bottle", color: "#d97706", cx: 0.3861, cy: 0.9511, w: 0.0746, h: 0.2125 }, // conf 0.82
+      { label: "bottle", color: "#d97706", cx: 0.2246, cy: 0.8596, w: 0.0723, h: 0.2099 }, // conf 0.814
+      { label: "bottle", color: "#d97706", cx: 0.0486, cy: 0.9683, w: 0.0973, h: 0.1885 }, // conf 0.814
+      { label: "bottle", color: "#d97706", cx: 0.5229, cy: 0.4792, w: 0.0441, h: 0.1625 }, // conf 0.811
+      { label: "bottle", color: "#d97706", cx: 0.5414, cy: 0.3972, w: 0.0391, h: 0.1339 }, // conf 0.809
+      { label: "bottle", color: "#d97706", cx: 0.251, cy: 0.7735, w: 0.0605, h: 0.1531 }, // conf 0.808
+      { label: "bottle", color: "#d97706", cx: 0.4184, cy: 0.2631, w: 0.0391, h: 0.1297 }, // conf 0.808
+      { label: "bottle", color: "#d97706", cx: 0.4385, cy: 0.3347, w: 0.0316, h: 0.0912 }, // conf 0.799
+      { label: "bottle", color: "#d97706", cx: 0.418, cy: 0.4047, w: 0.0359, h: 0.1073 }, // conf 0.797
+      { label: "bottle", color: "#d97706", cx: 0.5738, cy: 0.3191, w: 0.0273, h: 0.1183 }, // conf 0.792
+      { label: "bottle", color: "#d97706", cx: 0.4562, cy: 0.296, w: 0.0312, h: 0.0872 }, // conf 0.779
+      { label: "bottle", color: "#d97706", cx: 0.5553, cy: 0.3527, w: 0.0285, h: 0.1125 }, // conf 0.768
+      { label: "bottle", color: "#d97706", cx: 0.4004, cy: 0.7148, w: 0.0437, h: 0.0973 }, // conf 0.762
+      { label: "bottle", color: "#d97706", cx: 0.5807, cy: 0.2611, w: 0.0301, h: 0.1268 }, // conf 0.754
+      { label: "bottle", color: "#d97706", cx: 0.3184, cy: 0.5151, w: 0.0238, h: 0.0469 }, // conf 0.75
+      { label: "bottle", color: "#d97706", cx: 0.3099, cy: 0.6484, w: 0.0791, h: 0.1031 }, // conf 0.742
+      { label: "bottle", color: "#d97706", cx: 0.6123, cy: 0.1661, w: 0.0293, h: 0.1287 }, // conf 0.742
+      { label: "bottle", color: "#d97706", cx: 0.4955, cy: 0.4087, w: 0.0324, h: 0.1013 }, // conf 0.736
+      { label: "bottle", color: "#d97706", cx: 0.4191, cy: 0.6385, w: 0.0477, h: 0.1251 }, // conf 0.716
+      { label: "bottle", color: "#d97706", cx: 0.6332, cy: 0.0947, w: 0.0312, h: 0.1305 }, // conf 0.696
+      { label: "bottle", color: "#d97706", cx: 0.4869, cy: 0.232, w: 0.0355, h: 0.0937 }, // conf 0.689
+      { label: "bottle", color: "#d97706", cx: 0.5191, cy: 0.0511, w: 0.0227, h: 0.0747 }, // conf 0.687
+      { label: "bottle", color: "#d97706", cx: 0.5043, cy: 0.1771, w: 0.0312, h: 0.0667 }, // conf 0.685
+      { label: "bottle", color: "#d97706", cx: 0.3386, cy: 0.8781, w: 0.0615, h: 0.1063 }, // conf 0.639
+      { label: "bottle", color: "#d97706", cx: 0.4506, cy: 0.5651, w: 0.0293, h: 0.0937 }, // conf 0.632
+      { label: "bottle", color: "#d97706", cx: 0.5961, cy: 0.2341, w: 0.0266, h: 0.1016 }, // conf 0.607
+      { label: "bottle", color: "#d97706", cx: 0.3921, cy: 0.3112, w: 0.0299, h: 0.0776 }, // conf 0.603
+      { label: "bottle", color: "#d97706", cx: 0.5461, cy: 0.2541, w: 0.0312, h: 0.086 }, // conf 0.594
+      { label: "bottle", color: "#d97706", cx: 0.5711, cy: 0.1979, w: 0.0234, h: 0.0751 }, // conf 0.546
+      { label: "bottle", color: "#d97706", cx: 0.5352, cy: 0.3001, w: 0.0297, h: 0.0721 }, // conf 0.541
+      { label: "bottle", color: "#d97706", cx: 0.5297, cy: 0.1251, w: 0.0437, h: 0.0945 }, // conf 0.538
+      { label: "bottle", color: "#d97706", cx: 0.3359, cy: 0.8667, w: 0.0625, h: 0.1251 }, // conf 0.511
+      { label: "bottle", color: "#d97706", cx: 0.6113, cy: 0.0913, w: 0.0195, h: 0.0487 }, // conf 0.505
+      { label: "bottle", color: "#d97706", cx: 0.4672, cy: 0.4861, w: 0.0273, h: 0.0797 }, // conf 0.422
+      { label: "bottle", color: "#d97706", cx: 0.4609, cy: 0.2385, w: 0.025, h: 0.0479 }, // conf 0.407
+      { label: "bottle", color: "#d97706", cx: 0.5312, cy: 0.2969, w: 0.0312, h: 0.0604 }, // conf 0.4
+      { label: "bottle", color: "#d97706", cx: 0.3033, cy: 0.9521, w: 0.0371, h: 0.0708 }, // conf 0.393
+      { label: "bottle", color: "#d97706", cx: 0.3609, cy: 0.8133, w: 0.0508, h: 0.0797 }, // conf 0.374
+      { label: "bottle", color: "#d97706", cx: 0.5586, cy: 0.0396, w: 0.0328, h: 0.0959 }, // conf 0.351
+      { label: "worker", color: "#65a30d", cx: 0.7434, cy: 0.7052, w: 0.2148, h: 0.5896, chip: true }, // conf 0.982
     ],
   },
   {
@@ -137,167 +155,18 @@ const INDUSTRIES: {
     blurb:
       "Give a robot eyes for new objects overnight - synthetic scenes cover bins, grips and clutter before the robot ever sees them.",
     image: "/industries/robotics.jpg",
-    // ds_0012/img_0004.jpg - cluttered-aisle run (run_0016)
+    // ds_0012/img_0002.jpg - cluttered-aisle run (run_0016)
     boxes: [
-      { label: "box", color: "#d97706", cx: 0.0405, cy: 0.9565, w: 0.0811, h: 0.2057, chip: true }, // conf 0.901
-      { label: "box", color: "#d97706", cx: 0.7852, cy: 0.6011, w: 0.0719, h: 0.0885 }, // conf 0.888
-      { label: "box", color: "#d97706", cx: 0.0391, cy: 0.4751, w: 0.0781, h: 0.1167 }, // conf 0.888
-      { label: "box", color: "#d97706", cx: 0.1841, cy: 0.9437, w: 0.0579, h: 0.1625 }, // conf 0.884
-      { label: "box", color: "#d97706", cx: 0.8176, cy: 0.6177, w: 0.0227, h: 0.0729 }, // conf 0.872
-      { label: "box", color: "#d97706", cx: 0.2273, cy: 0.5005, w: 0.063, h: 0.0864 }, // conf 0.872
-      { label: "box", color: "#d97706", cx: 0.7637, cy: 0.4844, w: 0.0477, h: 0.0792 }, // conf 0.868
-      { label: "box", color: "#d97706", cx: 0.0524, cy: 0.0999, w: 0.0501, h: 0.1488 }, // conf 0.866
-      { label: "box", color: "#d97706", cx: 0.2293, cy: 0.2797, w: 0.057, h: 0.1219 }, // conf 0.866
-      { label: "box", color: "#d97706", cx: 0.2359, cy: 0.8812, w: 0.0457, h: 0.1312 }, // conf 0.859
-      { label: "box", color: "#d97706", cx: 0.2375, cy: 0.5867, w: 0.0445, h: 0.0921 }, // conf 0.853
-      { label: "box", color: "#d97706", cx: 0.1258, cy: 0.8604, w: 0.0578, h: 0.2 }, // conf 0.837
-      { label: "box", color: "#d97706", cx: 0.292, cy: 0.5232, w: 0.0449, h: 0.0557 }, // conf 0.836
-      { label: "box", color: "#d97706", cx: 0.1268, cy: 0.1527, w: 0.0512, h: 0.1728 }, // conf 0.832
-      { label: "box", color: "#d97706", cx: 0.2916, cy: 0.5844, w: 0.0449, h: 0.0729 }, // conf 0.821
-      { label: "box", color: "#d97706", cx: 0.8068, cy: 0.4805, w: 0.0363, h: 0.0703 }, // conf 0.821
-      { label: "box", color: "#d97706", cx: 0.1688, cy: 0.0289, w: 0.0322, h: 0.1207 }, // conf 0.815
-      { label: "box", color: "#d97706", cx: 0.1995, cy: 0.0781, w: 0.0283, h: 0.1011 }, // conf 0.814
-      { label: "box", color: "#d97706", cx: 0.8922, cy: 0.4317, w: 0.0938, h: 0.1385 }, // conf 0.811
-      { label: "box", color: "#d97706", cx: 0.8367, cy: 0.4708, w: 0.0281, h: 0.0729 }, // conf 0.81
-      { label: "box", color: "#d97706", cx: 0.1884, cy: 0.2392, w: 0.0251, h: 0.0976 }, // conf 0.795
-      { label: "box", color: "#d97706", cx: 0.314, cy: 0.5177, w: 0.0346, h: 0.0677 }, // conf 0.788
-      { label: "box", color: "#d97706", cx: 0.1885, cy: 0.5328, w: 0.0566, h: 0.1156 }, // conf 0.786
-      { label: "box", color: "#d97706", cx: 0.1641, cy: 0.2175, w: 0.027, h: 0.1016 }, // conf 0.781
-      { label: "box", color: "#d97706", cx: 0.0391, cy: 0.6031, w: 0.0781, h: 0.1312 }, // conf 0.781
-      { label: "box", color: "#d97706", cx: 0.1885, cy: 0.6185, w: 0.0559, h: 0.0661 }, // conf 0.763
-      { label: "box", color: "#d97706", cx: 0.8672, cy: 0.6188, w: 0.075, h: 0.1292 }, // conf 0.756
-      { label: "box", color: "#d97706", cx: 0.3186, cy: 0.3709, w: 0.0309, h: 0.0831 }, // conf 0.735
-      { label: "box", color: "#d97706", cx: 0.0266, cy: 0.0821, w: 0.0527, h: 0.1424 }, // conf 0.731
-      { label: "box", color: "#d97706", cx: 0.7109, cy: 0.4839, w: 0.0344, h: 0.0907 }, // conf 0.707
-      { label: "box", color: "#d97706", cx: 0.7441, cy: 0.6079, w: 0.0125, h: 0.0573 }, // conf 0.706
-      { label: "box", color: "#d97706", cx: 0.7201, cy: 0.6049, w: 0.0168, h: 0.0557 }, // conf 0.705
-      { label: "box", color: "#d97706", cx: 0.2179, cy: 0.0921, w: 0.0548, h: 0.1323 }, // conf 0.679
-      { label: "box", color: "#d97706", cx: 0.3235, cy: 0.5807, w: 0.0189, h: 0.0583 }, // conf 0.649
-      { label: "box", color: "#d97706", cx: 0.708, cy: 0.5776, w: 0.0324, h: 0.0937 }, // conf 0.611
-      { label: "box", color: "#d97706", cx: 0.2933, cy: 0.7713, w: 0.0459, h: 0.124 }, // conf 0.601
-      { label: "box", color: "#d97706", cx: 0.3196, cy: 0.2591, w: 0.0264, h: 0.0959 }, // conf 0.599
-      { label: "box", color: "#d97706", cx: 0.8664, cy: 0.6197, w: 0.075, h: 0.1333 }, // conf 0.579
-      { label: "box", color: "#d97706", cx: 0.2852, cy: 0.3257, w: 0.0371, h: 0.1109 }, // conf 0.57
-      { label: "box", color: "#d97706", cx: 0.2969, cy: 0.2307, w: 0.0148, h: 0.0697 }, // conf 0.566
-      { label: "box", color: "#d97706", cx: 0.1325, cy: 0.6016, w: 0.0596, h: 0.1312 }, // conf 0.546
-      { label: "box", color: "#d97706", cx: 0.2852, cy: 0.7917, w: 0.0297, h: 0.1333 }, // conf 0.539
-      { label: "box", color: "#d97706", cx: 0.3107, cy: 0.25, w: 0.0176, h: 0.076 }, // conf 0.536
-      { label: "box", color: "#d97706", cx: 0.2805, cy: 0.8125, w: 0.0203, h: 0.1 }, // conf 0.53
-      { label: "box", color: "#d97706", cx: 0.279, cy: 0.1996, w: 0.0244, h: 0.0945 }, // conf 0.524
-      { label: "box", color: "#d97706", cx: 0.3022, cy: 0.7305, w: 0.0611, h: 0.1172 }, // conf 0.52
-      { label: "box", color: "#d97706", cx: 0.3584, cy: 0.5469, w: 0.0367, h: 0.0875 }, // conf 0.511
-      { label: "box", color: "#d97706", cx: 0.7707, cy: 0.8191, w: 0.0711, h: 0.1109 }, // conf 0.51
-      { label: "box", color: "#d97706", cx: 0.3138, cy: 0.7579, w: 0.0229, h: 0.1084 }, // conf 0.509
-      { label: "box", color: "#d97706", cx: 0.3016, cy: 0.7323, w: 0.0594, h: 0.1312 }, // conf 0.5
-      { label: "box", color: "#d97706", cx: 0.3594, cy: 0.6711, w: 0.0375, h: 0.0703 }, // conf 0.495
-      { label: "box", color: "#d97706", cx: 0.6859, cy: 0.576, w: 0.0156, h: 0.0833 }, // conf 0.493
-      { label: "box", color: "#d97706", cx: 0.3465, cy: 0.5591, w: 0.018, h: 0.086 }, // conf 0.489
-      { label: "box", color: "#d97706", cx: 0.409, cy: 0.5581, w: 0.0141, h: 0.0547 }, // conf 0.489
-      { label: "box", color: "#d97706", cx: 0.3896, cy: 0.6792, w: 0.0156, h: 0.0688 }, // conf 0.472
-      { label: "box", color: "#d97706", cx: 0.4252, cy: 0.6399, w: 0.0152, h: 0.0693 }, // conf 0.463
-      { label: "box", color: "#d97706", cx: 0.9609, cy: 0.6205, w: 0.075, h: 0.1287 }, // conf 0.455
-      { label: "box", color: "#d97706", cx: 0.424, cy: 0.5565, w: 0.0145, h: 0.0484 }, // conf 0.444
-      { label: "box", color: "#d97706", cx: 0.3496, cy: 0.7148, w: 0.0215, h: 0.1027 }, // conf 0.443
-      { label: "box", color: "#d97706", cx: 0.3916, cy: 0.5347, w: 0.0191, h: 0.0505 }, // conf 0.438
-      { label: "box", color: "#d97706", cx: 0.684, cy: 0.5117, w: 0.0227, h: 0.0505 }, // conf 0.423
-      { label: "box", color: "#d97706", cx: 0.3262, cy: 0.5789, w: 0.0188, h: 0.0588 }, // conf 0.42
-      { label: "box", color: "#d97706", cx: 0.3041, cy: 0.0493, w: 0.0723, h: 0.2341 }, // conf 0.416
-      { label: "box", color: "#d97706", cx: 0.3682, cy: 0.5768, w: 0.0207, h: 0.0453 }, // conf 0.415
-      { label: "box", color: "#d97706", cx: 0.2455, cy: 0.1476, w: 0.027, h: 0.0996 }, // conf 0.404
-      { label: "box", color: "#d97706", cx: 0.2791, cy: 0.318, w: 0.0238, h: 0.1057 }, // conf 0.403
-      { label: "box", color: "#d97706", cx: 0.2832, cy: 0.2067, w: 0.0164, h: 0.0861 }, // conf 0.398
-      { label: "box", color: "#d97706", cx: 0.7656, cy: 0.6869, w: 0.0516, h: 0.0511 }, // conf 0.388
-      { label: "box", color: "#d97706", cx: 0.2969, cy: 0.3271, w: 0.0176, h: 0.1093 }, // conf 0.387
-      { label: "box", color: "#d97706", cx: 0.0282, cy: 0.7877, w: 0.0564, h: 0.0453 }, // conf 0.371
-      { label: "box", color: "#d97706", cx: 0.3691, cy: 0.4235, w: 0.0219, h: 0.0563 }, // conf 0.37
-      { label: "box", color: "#d97706", cx: 0.3464, cy: 0.5771, w: 0.0166, h: 0.0521 }, // conf 0.36
-      { label: "box", color: "#d97706", cx: 0.6758, cy: 0.586, w: 0.0141, h: 0.0625 }, // conf 0.354
-      { label: "box", color: "#d97706", cx: 0.7152, cy: 0.1749, w: 0.0242, h: 0.1036 }, // conf 0.35
-      { label: "bin", color: "#0284c7", cx: 0.868, cy: 0.134, w: 0.0703, h: 0.1789, chip: true }, // conf 0.863
-      { label: "bin", color: "#0284c7", cx: 0.1872, cy: 0.8573, w: 0.0636, h: 0.0833 }, // conf 0.848
-      { label: "bin", color: "#0284c7", cx: 0.7809, cy: 0.2452, w: 0.043, h: 0.1232 }, // conf 0.835
-      { label: "bin", color: "#0284c7", cx: 0.2096, cy: 0.8159, w: 0.1019, h: 0.0609 }, // conf 0.82
-      { label: "bin", color: "#0284c7", cx: 0.7855, cy: 0.8719, w: 0.0445, h: 0.1292 }, // conf 0.816
-      { label: "bin", color: "#0284c7", cx: 0.8213, cy: 0.2015, w: 0.0449, h: 0.1361 }, // conf 0.808
-      { label: "bin", color: "#0284c7", cx: 0.8266, cy: 0.1229, w: 0.0625, h: 0.1031 }, // conf 0.778
-      { label: "bin", color: "#0284c7", cx: 0.7494, cy: 0.2748, w: 0.0371, h: 0.1412 }, // conf 0.769
-      { label: "bin", color: "#0284c7", cx: 0.6992, cy: 0.7552, w: 0.0586, h: 0.1041 }, // conf 0.726
-      { label: "bin", color: "#0284c7", cx: 0.7164, cy: 0.7875, w: 0.0234, h: 0.1041 }, // conf 0.725
-      { label: "bin", color: "#0284c7", cx: 0.8531, cy: 0.8375, w: 0.1016, h: 0.15 }, // conf 0.706
-      { label: "bin", color: "#0284c7", cx: 0.6602, cy: 0.7305, w: 0.0164, h: 0.0703 }, // conf 0.689
-      { label: "bin", color: "#0284c7", cx: 0.8547, cy: 0.9333, w: 0.1, h: 0.1667 }, // conf 0.689
-      { label: "bin", color: "#0284c7", cx: 0.6904, cy: 0.2344, w: 0.0301, h: 0.1073 }, // conf 0.685
-      { label: "bin", color: "#0284c7", cx: 0.3477, cy: 0.4036, w: 0.0203, h: 0.0604 }, // conf 0.682
-      { label: "bin", color: "#0284c7", cx: 0.6451, cy: 0.5177, w: 0.0262, h: 0.0469 }, // conf 0.629
-      { label: "bin", color: "#0284c7", cx: 0.709, cy: 0.3324, w: 0.0359, h: 0.1071 }, // conf 0.628
-      { label: "bin", color: "#0284c7", cx: 0.7709, cy: 0.8273, w: 0.0691, h: 0.1276 }, // conf 0.621
-      { label: "bin", color: "#0284c7", cx: 0.3912, cy: 0.4519, w: 0.0207, h: 0.0443 }, // conf 0.587
-      { label: "bin", color: "#0284c7", cx: 0.6729, cy: 0.2712, w: 0.0184, h: 0.0872 }, // conf 0.573
-      { label: "bin", color: "#0284c7", cx: 0.7514, cy: 0.0552, w: 0.0402, h: 0.1807 }, // conf 0.56
-      { label: "bin", color: "#0284c7", cx: 0.8547, cy: 0.9344, w: 0.1016, h: 0.1667 }, // conf 0.514
-      { label: "bin", color: "#0284c7", cx: 0.4045, cy: 0.6653, w: 0.0137, h: 0.064 }, // conf 0.489
-      { label: "bin", color: "#0284c7", cx: 0.9664, cy: 0.3643, w: 0.0672, h: 0.2369 }, // conf 0.458
-      { label: "bin", color: "#0284c7", cx: 0.9652, cy: 0.8445, w: 0.0695, h: 0.138 }, // conf 0.455
-      { label: "bin", color: "#0284c7", cx: 0.8539, cy: 0.8375, w: 0.1016, h: 0.1459 }, // conf 0.454
-      { label: "bin", color: "#0284c7", cx: 0.4094, cy: 0.3033, w: 0.0172, h: 0.0781 }, // conf 0.451
-      { label: "bin", color: "#0284c7", cx: 0.6729, cy: 0.7437, w: 0.0145, h: 0.0729 }, // conf 0.442
-      { label: "bin", color: "#0284c7", cx: 0.6992, cy: 0.3453, w: 0.0188, h: 0.0823 }, // conf 0.416
-      { label: "bin", color: "#0284c7", cx: 0.7162, cy: 0.3257, w: 0.0223, h: 0.0932 }, // conf 0.41
-      { label: "bin", color: "#0284c7", cx: 0.6129, cy: 0.5527, w: 0.0227, h: 0.0677 }, // conf 0.393
-      { label: "bin", color: "#0284c7", cx: 0.7182, cy: 0.7875, w: 0.0254, h: 0.1041 }, // conf 0.39
-      { label: "bin", color: "#0284c7", cx: 0.5869, cy: 0.3464, w: 0.0098, h: 0.0583 }, // conf 0.361
-      { label: "bin", color: "#0284c7", cx: 0.752, cy: 0.8341, w: 0.032, h: 0.1079 }, // conf 0.359
-      { label: "shelf", color: "#65a30d", cx: 0.8199, cy: 0.5188, w: 0.1727, h: 0.05, chip: true }, // conf 0.769
-      { label: "shelf", color: "#65a30d", cx: 0.0464, cy: 0.7063, w: 0.0929, h: 0.0688 }, // conf 0.761
-      { label: "shelf", color: "#65a30d", cx: 0.9586, cy: 0.4981, w: 0.0828, h: 0.0568 }, // conf 0.754
-      { label: "shelf", color: "#65a30d", cx: 0.8193, cy: 0.6817, w: 0.1738, h: 0.0948 }, // conf 0.739
-      { label: "shelf", color: "#65a30d", cx: 0.8164, cy: 0.0187, w: 0.1703, h: 0.356 }, // conf 0.732
-      { label: "shelf", color: "#65a30d", cx: 0.1836, cy: 0.6672, w: 0.1672, h: 0.0823 }, // conf 0.727
-      { label: "shelf", color: "#65a30d", cx: 0.9578, cy: 0.1199, w: 0.0844, h: 0.1347 }, // conf 0.701
-      { label: "shelf", color: "#65a30d", cx: 0.9586, cy: 0.7369, w: 0.0828, h: 0.0885 }, // conf 0.693
-      { label: "shelf", color: "#65a30d", cx: 0.6959, cy: 0.2689, w: 0.0645, h: 0.1336 }, // conf 0.693
-      { label: "shelf", color: "#65a30d", cx: 0.6953, cy: 0.1235, w: 0.0594, h: 0.1688 }, // conf 0.675
-      { label: "shelf", color: "#65a30d", cx: 0.046, cy: 0.1683, w: 0.092, h: 0.1115 }, // conf 0.674
-      { label: "shelf", color: "#65a30d", cx: 0.1814, cy: 0.1117, w: 0.166, h: 0.2561 }, // conf 0.655
-      { label: "shelf", color: "#65a30d", cx: 0.8189, cy: 0.2701, w: 0.1699, h: 0.194 }, // conf 0.642
-      { label: "shelf", color: "#65a30d", cx: 0.6992, cy: 0.6307, w: 0.0617, h: 0.0416 }, // conf 0.633
-      { label: "shelf", color: "#65a30d", cx: 0.65, cy: 0.5448, w: 0.0391, h: 0.0167 }, // conf 0.612
-      { label: "shelf", color: "#65a30d", cx: 0.6967, cy: 0.3988, w: 0.0613, h: 0.0763 }, // conf 0.611
-      { label: "shelf", color: "#65a30d", cx: 0.1836, cy: 0.2891, w: 0.1688, h: 0.1708 }, // conf 0.603
-      { label: "shelf", color: "#65a30d", cx: 0.2788, cy: 0.8899, w: 0.3604, h: 0.5391 }, // conf 0.578
-      { label: "shelf", color: "#65a30d", cx: 0.3594, cy: 0.362, w: 0.041, h: 0.0677 }, // conf 0.545
-      { label: "shelf", color: "#65a30d", cx: 0.3031, cy: 0.6271, w: 0.0703, h: 0.0416 }, // conf 0.538
-      { label: "shelf", color: "#65a30d", cx: 0.6227, cy: 0.2677, w: 0.0516, h: 0.1563 }, // conf 0.523
-      { label: "shelf", color: "#65a30d", cx: 0.4086, cy: 0.4396, w: 0.0547, h: 0.0749 }, // conf 0.495
-      { label: "shelf", color: "#65a30d", cx: 0.7408, cy: 0.6693, w: 0.3293, h: 0.124 }, // conf 0.487
-      { label: "shelf", color: "#65a30d", cx: 0.65, cy: 0.6088, w: 0.0352, h: 0.0303 }, // conf 0.485
-      { label: "shelf", color: "#65a30d", cx: 0.3621, cy: 0.6133, w: 0.1836, h: 0.064 }, // conf 0.481
-      { label: "shelf", color: "#65a30d", cx: 0.7402, cy: 0.8959, w: 0.3352, h: 0.5167 }, // conf 0.474
-      { label: "shelf", color: "#65a30d", cx: 0.3479, cy: 0.2544, w: 0.1645, h: 0.334 }, // conf 0.466
-      { label: "shelf", color: "#65a30d", cx: 0.6305, cy: 0.3315, w: 0.0742, h: 0.1828 }, // conf 0.455
-      { label: "shelf", color: "#65a30d", cx: 0.3045, cy: 0.4088, w: 0.0703, h: 0.0937 }, // conf 0.454
-      { label: "shelf", color: "#65a30d", cx: 0.6102, cy: 0.4341, w: 0.0391, h: 0.0745 }, // conf 0.451
-      { label: "shelf", color: "#65a30d", cx: 0.65, cy: 0.3615, w: 0.0344, h: 0.0729 }, // conf 0.449
-      { label: "shelf", color: "#65a30d", cx: 0.1672, cy: 0.3844, w: 0.1344, h: 0.0937 }, // conf 0.447
-      { label: "shelf", color: "#65a30d", cx: 0.6197, cy: 0.6008, w: 0.0957, h: 0.0536 }, // conf 0.443
-      { label: "shelf", color: "#65a30d", cx: 0.3035, cy: 0.8437, w: 0.0758, h: 0.1355 }, // conf 0.441
-      { label: "shelf", color: "#65a30d", cx: 0.6342, cy: 0.4584, w: 0.0645, h: 0.0751 }, // conf 0.441
-      { label: "shelf", color: "#65a30d", cx: 0.3984, cy: 0.3443, w: 0.0406, h: 0.0885 }, // conf 0.431
-      { label: "shelf", color: "#65a30d", cx: 0.1703, cy: 0.3021, w: 0.3406, h: 0.3708 }, // conf 0.423
-      { label: "shelf", color: "#65a30d", cx: 0.362, cy: 0.6076, w: 0.0475, h: 0.0328 }, // conf 0.42
-      { label: "shelf", color: "#65a30d", cx: 0.3276, cy: 0.2231, w: 0.1275, h: 0.2664 }, // conf 0.417
-      { label: "shelf", color: "#65a30d", cx: 0.6162, cy: 0.3759, w: 0.034, h: 0.0795 }, // conf 0.412
-      { label: "shelf", color: "#65a30d", cx: 0.3022, cy: 0.1496, w: 0.0713, h: 0.1377 }, // conf 0.411
-      { label: "shelf", color: "#65a30d", cx: 0.6264, cy: 0.2771, w: 0.0527, h: 0.1749 }, // conf 0.41
-      { label: "shelf", color: "#65a30d", cx: 0.218, cy: 0.1593, w: 0.2359, h: 0.3521 }, // conf 0.389
-      { label: "shelf", color: "#65a30d", cx: 0.5875, cy: 0.582, w: 0.0281, h: 0.0235 }, // conf 0.371
-      { label: "shelf", color: "#65a30d", cx: 0.832, cy: 0.2645, w: 0.3328, h: 0.4125 }, // conf 0.369
-      { label: "shelf", color: "#65a30d", cx: 0.4404, cy: 0.4315, w: 0.0332, h: 0.0755 }, // conf 0.369
-      { label: "shelf", color: "#65a30d", cx: 0.6514, cy: 0.2776, w: 0.0285, h: 0.076 }, // conf 0.364
-      { label: "shelf", color: "#65a30d", cx: 0.6289, cy: 0.3704, w: 0.075, h: 0.1653 }, // conf 0.363
-      { label: "shelf", color: "#65a30d", cx: 0.3584, cy: 0.4508, w: 0.0457, h: 0.0547 }, // conf 0.355
-      { label: "shelf", color: "#65a30d", cx: 0.1805, cy: 0.1083, w: 0.1672, h: 0.25 }, // conf 0.354
-      { label: "shelf", color: "#65a30d", cx: 0.4422, cy: 0.4427, w: 0.0281, h: 0.0521 }, // conf 0.35
+      { label: "box", color: "#d97706", cx: 0.4847, cy: 0.294, w: 0.7354, h: 0.3016, chip: true }, // conf 0.958
+      { label: "box", color: "#d97706", cx: 0.4846, cy: 0.7167, w: 0.7104, h: 0.3125 }, // conf 0.955
+      { label: "box", color: "#d97706", cx: 0.4886, cy: 0.5429, w: 0.7243, h: 0.2693 }, // conf 0.924
+      { label: "box", color: "#d97706", cx: 0.9746, cy: 0.396, w: 0.0508, h: 0.0809 }, // conf 0.774
+      { label: "box", color: "#d97706", cx: 0.9684, cy: 0.5003, w: 0.0633, h: 0.1369 }, // conf 0.75
+      { label: "box", color: "#d97706", cx: 0.9707, cy: 0.4563, w: 0.0586, h: 0.0448 }, // conf 0.456
+      { label: "box", color: "#d97706", cx: 0.9684, cy: 0.5213, w: 0.0633, h: 0.0948 }, // conf 0.434
+      { label: "shelf", color: "#65a30d", cx: 0.8258, cy: 0.7177, w: 0.3453, h: 0.3355, chip: true }, // conf 0.8
+      { label: "shelf", color: "#65a30d", cx: 0.8289, cy: 0.7167, w: 0.3391, h: 0.3333 }, // conf 0.501
+      { label: "shelf", color: "#65a30d", cx: 0.8266, cy: 0.7156, w: 0.3469, h: 0.3385 }, // conf 0.489
     ],
   },
   {
@@ -335,76 +204,42 @@ const INDUSTRIES: {
     blurb:
       "Shelf gaps, planogram drift and queue counts - describe the shelf, get the detector.",
     image: "/industries/retail.jpg",
-    // ds_0011/img_0002.jpg - supermarket-aisle run (run_0018)
+    // ds_0011/img_0005.jpg - supermarket-aisle run (run_0018)
     boxes: [
-      { label: "cart", color: "#d97706", cx: 0.6793, cy: 0.8052, w: 0.2352, h: 0.4396, chip: true }, // conf 0.972
-      { label: "cart", color: "#d97706", cx: 0.3345, cy: 0.8047, w: 0.1959, h: 0.426 }, // conf 0.967
-      { label: "cart", color: "#d97706", cx: 0.4002, cy: 0.4669, w: 0.1059, h: 0.2797 }, // conf 0.83
-      { label: "cart", color: "#d97706", cx: 0.4922, cy: 0.2141, w: 0.0172, h: 0.0581 }, // conf 0.426
-      { label: "shopper", color: "#0284c7", cx: 0.6082, cy: 0.3292, w: 0.0898, h: 0.3177, chip: true }, // conf 0.963
-      { label: "shopper", color: "#0284c7", cx: 0.4717, cy: 0.3547, w: 0.0926, h: 0.3541 }, // conf 0.949
-      { label: "shopper", color: "#0284c7", cx: 0.5352, cy: 0.2093, w: 0.0766, h: 0.2887 }, // conf 0.94
-      { label: "shopper", color: "#0284c7", cx: 0.7299, cy: 0.5073, w: 0.148, h: 0.2604 }, // conf 0.902
-      { label: "shopper", color: "#0284c7", cx: 0.5104, cy: 0.0396, w: 0.0293, h: 0.1405 }, // conf 0.869
-      { label: "shopper", color: "#0284c7", cx: 0.3557, cy: 0.2565, w: 0.1277, h: 0.2203 }, // conf 0.836
-      { label: "shopper", color: "#0284c7", cx: 0.2666, cy: 0.5085, w: 0.1461, h: 0.388 }, // conf 0.801
-      { label: "shopper", color: "#0284c7", cx: 0.5395, cy: 0.0568, w: 0.0398, h: 0.0655 }, // conf 0.683
-      { label: "shopper", color: "#0284c7", cx: 0.5016, cy: 0.1223, w: 0.0195, h: 0.1147 }, // conf 0.66
-      { label: "shopper", color: "#0284c7", cx: 0.502, cy: 0.0813, w: 0.0156, h: 0.0481 }, // conf 0.357
-      { label: "shelf", color: "#65a30d", cx: 0.1503, cy: 0.3196, w: 0.135, h: 0.1648, chip: true }, // conf 0.769
-      { label: "shelf", color: "#65a30d", cx: 0.0762, cy: 0.8412, w: 0.1523, h: 0.4303 }, // conf 0.746
-      { label: "shelf", color: "#65a30d", cx: 0.1765, cy: 0.4607, w: 0.0955, h: 0.1464 }, // conf 0.737
-      { label: "shelf", color: "#65a30d", cx: 0.1857, cy: 0.0007, w: 0.1017, h: 0.0364 }, // conf 0.733
-      { label: "shelf", color: "#65a30d", cx: 0.9027, cy: 0.0772, w: 0.1945, h: 0.1081 }, // conf 0.726
-      { label: "shelf", color: "#65a30d", cx: 0.8004, cy: 0.2144, w: 0.3977, h: 0.4399 }, // conf 0.72
-      { label: "shelf", color: "#65a30d", cx: 0.0348, cy: 0.1121, w: 0.0688, h: 0.046 }, // conf 0.71
-      { label: "shelf", color: "#65a30d", cx: 0.6664, cy: 0.3752, w: 0.0586, h: 0.1369 }, // conf 0.709
-      { label: "shelf", color: "#65a30d", cx: 0.1516, cy: 0.8685, w: 0.2312, h: 0.5964 }, // conf 0.707
-      { label: "shelf", color: "#65a30d", cx: 0.2085, cy: 0.0301, w: 0.0639, h: 0.0332 }, // conf 0.705
-      { label: "shelf", color: "#65a30d", cx: 0.066, cy: 0.0528, w: 0.1319, h: 0.0584 }, // conf 0.696
-      { label: "shelf", color: "#65a30d", cx: 0.8895, cy: 0.5475, w: 0.2211, h: 0.4049 }, // conf 0.692
-      { label: "shelf", color: "#65a30d", cx: 0.1073, cy: 0.0952, w: 0.0685, h: 0.0399 }, // conf 0.689
-      { label: "shelf", color: "#65a30d", cx: 0.1857, cy: 0.5451, w: 0.0918, h: 0.1849 }, // conf 0.688
-      { label: "shelf", color: "#65a30d", cx: 0.0298, cy: 0.1703, w: 0.0596, h: 0.0443 }, // conf 0.679
-      { label: "shelf", color: "#65a30d", cx: 0.9094, cy: 0.0148, w: 0.1813, h: 0.08 }, // conf 0.666
-      { label: "shelf", color: "#65a30d", cx: 0.9074, cy: 0.83, w: 0.1852, h: 0.4527 }, // conf 0.658
-      { label: "shelf", color: "#65a30d", cx: 0.9574, cy: 0.4703, w: 0.0852, h: 0.1312 }, // conf 0.649
-      { label: "shelf", color: "#65a30d", cx: 0.0734, cy: 0.7109, w: 0.1469, h: 0.3271 }, // conf 0.647
-      { label: "shelf", color: "#65a30d", cx: 0.2961, cy: 0.1417, w: 0.1602, h: 0.1649 }, // conf 0.637
-      { label: "shelf", color: "#65a30d", cx: 0.7865, cy: 0.5547, w: 0.0613, h: 0.124 }, // conf 0.622
-      { label: "shelf", color: "#65a30d", cx: 0.2535, cy: 0.2839, w: 0.0391, h: 0.0552 }, // conf 0.614
-      { label: "shelf", color: "#65a30d", cx: 0.1568, cy: 0.4207, w: 0.0918, h: 0.1252 }, // conf 0.606
-      { label: "shelf", color: "#65a30d", cx: 0.3353, cy: 0.3652, w: 0.0502, h: 0.1185 }, // conf 0.591
-      { label: "shelf", color: "#65a30d", cx: 0.7836, cy: 0.2345, w: 0.2906, h: 0.3393 }, // conf 0.589
-      { label: "shelf", color: "#65a30d", cx: 0.0584, cy: 0.576, w: 0.1155, h: 0.2115 }, // conf 0.583
-      { label: "shelf", color: "#65a30d", cx: 0.8059, cy: 0.4997, w: 0.0633, h: 0.1088 }, // conf 0.577
-      { label: "shelf", color: "#65a30d", cx: 0.3375, cy: 0.1459, w: 0.0781, h: 0.0916 }, // conf 0.573
-      { label: "shelf", color: "#65a30d", cx: 0.3132, cy: 0.2947, w: 0.0826, h: 0.1315 }, // conf 0.56
-      { label: "shelf", color: "#65a30d", cx: 0.2932, cy: 0.2701, w: 0.059, h: 0.0929 }, // conf 0.552
-      { label: "shelf", color: "#65a30d", cx: 0.4334, cy: 0.0608, w: 0.0957, h: 0.0117 }, // conf 0.546
-      { label: "shelf", color: "#65a30d", cx: 0.4336, cy: 0.012, w: 0.0992, h: 0.0121 }, // conf 0.536
-      { label: "shelf", color: "#65a30d", cx: 0.8727, cy: 0.9427, w: 0.1703, h: 0.4437 }, // conf 0.526
-      { label: "shelf", color: "#65a30d", cx: 0.8734, cy: 0.9448, w: 0.1656, h: 0.4396 }, // conf 0.524
-      { label: "shelf", color: "#65a30d", cx: 0.1859, cy: 0.1896, w: 0.3719, h: 0.35 }, // conf 0.519
-      { label: "shelf", color: "#65a30d", cx: 0.4246, cy: 0.102, w: 0.0633, h: 0.01 }, // conf 0.505
-      { label: "shelf", color: "#65a30d", cx: 0.4258, cy: 0.1667, w: 0.0609, h: 0.0125 }, // conf 0.499
-      { label: "shelf", color: "#65a30d", cx: 0.8777, cy: 0.3472, w: 0.1023, h: 0.1159 }, // conf 0.495
-      { label: "shelf", color: "#65a30d", cx: 0.1842, cy: 0.6528, w: 0.0401, h: 0.086 }, // conf 0.494
-      { label: "shelf", color: "#65a30d", cx: 0.6949, cy: 0.3117, w: 0.0945, h: 0.1901 }, // conf 0.479
-      { label: "shelf", color: "#65a30d", cx: 0.6953, cy: 0.2071, w: 0.1672, h: 0.2619 }, // conf 0.475
-      { label: "shelf", color: "#65a30d", cx: 0.8867, cy: 0.5407, w: 0.2234, h: 0.4063 }, // conf 0.469
-      { label: "shelf", color: "#65a30d", cx: 0.8781, cy: 0.7719, w: 0.2406, h: 0.5521 }, // conf 0.461
-      { label: "shelf", color: "#65a30d", cx: 0.6973, cy: 0.2357, w: 0.1922, h: 0.3224 }, // conf 0.458
-      { label: "shelf", color: "#65a30d", cx: 0.8746, cy: 0.9424, w: 0.1742, h: 0.4464 }, // conf 0.419
-      { label: "shelf", color: "#65a30d", cx: 0.2288, cy: 0.2141, w: 0.0486, h: 0.0508 }, // conf 0.418
-      { label: "shelf", color: "#65a30d", cx: 0.7309, cy: 0.182, w: 0.1977, h: 0.2292 }, // conf 0.401
-      { label: "shelf", color: "#65a30d", cx: 0.9602, cy: 0.3685, w: 0.0797, h: 0.1235 }, // conf 0.401
-      { label: "shelf", color: "#65a30d", cx: 0.7961, cy: 0.2552, w: 0.2578, h: 0.2896 }, // conf 0.386
-      { label: "shelf", color: "#65a30d", cx: 0.2836, cy: 0.2251, w: 0.0586, h: 0.0677 }, // conf 0.383
-      { label: "shelf", color: "#65a30d", cx: 0.2075, cy: 0.5867, w: 0.0283, h: 0.0536 }, // conf 0.382
-      { label: "shelf", color: "#65a30d", cx: 0.2477, cy: 0.2725, w: 0.0375, h: 0.0404 }, // conf 0.378
-      { label: "shelf", color: "#65a30d", cx: 0.2898, cy: 0.3275, w: 0.0375, h: 0.0591 }, // conf 0.368
-      { label: "shelf", color: "#65a30d", cx: 0.1867, cy: 0.2053, w: 0.3734, h: 0.38 }, // conf 0.355
+      { label: "cart", color: "#d97706", cx: 0.5211, cy: 0.836, w: 0.2188, h: 0.4969, chip: true }, // conf 0.977
+      { label: "shopper", color: "#0284c7", cx: 0.4893, cy: 0.6049, w: 0.1762, h: 0.3161, chip: true }, // conf 0.817
+      { label: "shelf", color: "#65a30d", cx: 0.8262, cy: 0.1297, w: 0.3477, h: 0.5719, chip: true }, // conf 0.836
+      { label: "shelf", color: "#65a30d", cx: 0.1646, cy: 0.0399, w: 0.3293, h: 0.4131 }, // conf 0.826
+      { label: "shelf", color: "#65a30d", cx: 0.8283, cy: 0.3964, w: 0.3434, h: 0.9635 }, // conf 0.782
+      { label: "shelf", color: "#65a30d", cx: 0.7477, cy: 0.7344, w: 0.0859, h: 0.3771 }, // conf 0.779
+      { label: "shelf", color: "#65a30d", cx: 0.1786, cy: 0.3193, w: 0.3572, h: 0.8176 }, // conf 0.777
+      { label: "shelf", color: "#65a30d", cx: 0.2348, cy: 0.6555, w: 0.2918, h: 1.0224 }, // conf 0.753
+      { label: "shelf", color: "#65a30d", cx: 0.3389, cy: 0.1463, w: 0.0645, h: 0.2284 }, // conf 0.724
+      { label: "shelf", color: "#65a30d", cx: 0.8205, cy: 0.5505, w: 0.3293, h: 1.2196 }, // conf 0.703
+      { label: "shelf", color: "#65a30d", cx: 0.143, cy: 0.8437, w: 0.1328, h: 0.4959 }, // conf 0.703
+      { label: "shelf", color: "#65a30d", cx: 0.7012, cy: 0.3003, w: 0.1406, h: 0.5557 }, // conf 0.693
+      { label: "shelf", color: "#65a30d", cx: 0.0562, cy: 0.2683, w: 0.0805, h: 0.124 }, // conf 0.677
+      { label: "shelf", color: "#65a30d", cx: 0.1117, cy: 0.7489, w: 0.2234, h: 0.7063 }, // conf 0.603
+      { label: "shelf", color: "#65a30d", cx: 0.8516, cy: 0.7136, w: 0.2594, h: 0.9021 }, // conf 0.597
+      { label: "shelf", color: "#65a30d", cx: 0.6891, cy: 0.1427, w: 0.0906, h: 0.3271 }, // conf 0.58
+      { label: "shelf", color: "#65a30d", cx: 0.2172, cy: 0.0253, w: 0.0531, h: 0.0789 }, // conf 0.562
+      { label: "shelf", color: "#65a30d", cx: 0.14, cy: 0.1277, w: 0.1216, h: 0.1736 }, // conf 0.542
+      { label: "shelf", color: "#65a30d", cx: 0.3652, cy: 0.2083, w: 0.0434, h: 0.1292 }, // conf 0.542
+      { label: "shelf", color: "#65a30d", cx: 0.1655, cy: 0.5873, w: 0.3311, h: 1.0483 }, // conf 0.519
+      { label: "shelf", color: "#65a30d", cx: 0.135, cy: 0.6844, w: 0.2699, h: 0.8645 }, // conf 0.496
+      { label: "shelf", color: "#65a30d", cx: 0.1536, cy: 0.1151, w: 0.0876, h: 0.1281 }, // conf 0.474
+      { label: "shelf", color: "#65a30d", cx: 0.3464, cy: 0.012, w: 0.0385, h: 0.0972 }, // conf 0.462
+      { label: "shelf", color: "#65a30d", cx: 0.7172, cy: 0.3771, w: 0.1031, h: 0.4 }, // conf 0.455
+      { label: "shelf", color: "#65a30d", cx: 0.8734, cy: 0.7763, w: 0.2203, h: 0.7807 }, // conf 0.451
+      { label: "shelf", color: "#65a30d", cx: 0.6416, cy: 0.2027, w: 0.0441, h: 0.1979 }, // conf 0.42
+      { label: "shelf", color: "#65a30d", cx: 0.8488, cy: 0.6741, w: 0.2695, h: 0.9809 }, // conf 0.405
+      { label: "shelf", color: "#65a30d", cx: 0.8016, cy: 0.7729, w: 0.0531, h: 0.2249 }, // conf 0.404
+      { label: "shelf", color: "#65a30d", cx: 0.6641, cy: 0.3085, w: 0.0844, h: 0.4057 }, // conf 0.388
+      { label: "shelf", color: "#65a30d", cx: 0.1894, cy: 0.8284, w: 0.2025, h: 0.6765 }, // conf 0.377
+      { label: "shelf", color: "#65a30d", cx: 0.0878, cy: 0.8347, w: 0.1756, h: 0.5599 }, // conf 0.369
+      { label: "shelf", color: "#65a30d", cx: 0.8869, cy: 0.5404, w: 0.2262, h: 0.6609 }, // conf 0.367
+      { label: "shelf", color: "#65a30d", cx: 0.3133, cy: 0.1419, w: 0.0645, h: 0.2027 }, // conf 0.363
+      { label: "shelf", color: "#65a30d", cx: 0.718, cy: 0.3771, w: 0.1016, h: 0.4 }, // conf 0.36
     ],
   },
   {
