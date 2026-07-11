@@ -15,9 +15,9 @@ const PAGE_SIZE = 24;
 
 /**
  * Live gallery of the Synthesis Agent's output. Polls the preview endpoint
- * while the run is active, so images pop in one by one as SDXL/FLUX mints
- * them — the "watch the foundry work" moment of the demo. Newest first:
- * page 1 always shows the freshest paint.
+ * while the run is active. Pages are chronological and STABLE: new images
+ * append to the last page only, so the browser fetches a page's tiles
+ * once — never the whole run. "Latest" jumps to where the paint lands.
  */
 export function FoundryPreview({
   runId,
@@ -37,14 +37,11 @@ export function FoundryPreview({
 
   if (!images?.length) return null;
 
-  const newestFirst = [...images].reverse();
-  const totalPages = Math.max(1, Math.ceil(newestFirst.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(images.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
-  const tiles = newestFirst.slice(
-    (safePage - 1) * PAGE_SIZE,
-    safePage * PAGE_SIZE,
-  );
+  const tiles = images.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
   const streaming = active && images.length < imagesTotal;
+  const onLastPage = safePage === totalPages;
 
   return (
     <section className="space-y-3">
@@ -52,7 +49,8 @@ export function FoundryPreview({
         <div className="space-y-1">
           <h2 className="section-label">Foundry output</h2>
           <p className="text-sm text-muted-foreground">
-            Synthetic images minted by the Synthesis Agent — newest first
+            Synthetic images minted by the Synthesis Agent — new images land
+            on the last page
           </p>
         </div>
         <Badge variant="outline" className="gap-1.5 font-mono text-xs">
@@ -77,7 +75,7 @@ export function FoundryPreview({
               loading="lazy"
               className="size-full object-cover transition-transform group-hover:scale-105"
             />
-            {i === 0 && safePage === 1 && streaming && (
+            {i === tiles.length - 1 && onLastPage && streaming && (
               <span className="absolute inset-0 animate-pulse rounded-md ring-2 ring-primary ring-inset" />
             )}
           </div>
@@ -92,7 +90,7 @@ export function FoundryPreview({
             onClick={() => setPage(safePage - 1)}
           >
             <ArrowLeft className="size-3.5" />
-            Newer
+            Previous
           </Button>
           <span className="text-xs text-muted-foreground tabular-nums">
             page {safePage} / {totalPages}
@@ -103,9 +101,15 @@ export function FoundryPreview({
             disabled={safePage >= totalPages}
             onClick={() => setPage(safePage + 1)}
           >
-            Older
+            Next
             <ArrowRight className="size-3.5" />
           </Button>
+          {streaming && !onLastPage && (
+            <Button variant="ghost" size="sm" onClick={() => setPage(totalPages)}>
+              Latest
+              <span className="size-1.5 animate-pulse rounded-full bg-primary" />
+            </Button>
+          )}
         </div>
       )}
     </section>
