@@ -98,23 +98,23 @@ const INDUSTRIES: {
     blurb:
       "Give a robot eyes for new objects overnight - synthetic scenes cover bins, grips and clutter before the robot ever sees them.",
     image: "/industries/robotics.jpg",
-    // ds_0012/img_0010.jpg - cluttered-aisle run (run_0016)
+    // ds_0012/img_0004.jpg - cluttered-aisle run (run_0016)
     boxes: [
-      { label: "box", color: "#d97706", cx: 0.627, cy: 0.2615, w: 0.0906, h: 0.1115, chip: true }, // conf 0.941
-      { label: "box", color: "#d97706", cx: 0.5109, cy: 0.2365, w: 0.1383, h: 0.132 }, // conf 0.941
-      { label: "box", color: "#d97706", cx: 0.6256, cy: 0.1113, w: 0.091, h: 0.1184 }, // conf 0.936
-      { label: "box", color: "#d97706", cx: 0.4502, cy: 0.0515, w: 0.0926, h: 0.1293 }, // conf 0.935
-      { label: "box", color: "#d97706", cx: 0.5869, cy: 0.4852, w: 0.0566, h: 0.1349 }, // conf 0.931
-      { label: "bin", color: "#0284c7", cx: 0.1938, cy: 0.8303, w: 0.0812, h: 0.2355, chip: true }, // conf 0.962
-      { label: "bin", color: "#0284c7", cx: 0.3606, cy: 0.7857, w: 0.2021, h: 0.2213 }, // conf 0.96
-      { label: "bin", color: "#0284c7", cx: 0.5416, cy: 0.7193, w: 0.1965, h: 0.1927 }, // conf 0.957
-      { label: "bin", color: "#0284c7", cx: 0.651, cy: 0.6792, w: 0.1855, h: 0.1708 }, // conf 0.943
-      { label: "bin", color: "#0284c7", cx: 0.7986, cy: 0.8041, w: 0.073, h: 0.1407 }, // conf 0.94
-      { label: "shelf", color: "#65a30d", cx: 0.5093, cy: 0.8516, w: 0.4971, h: 0.2511, chip: true }, // conf 0.899
-      { label: "shelf", color: "#65a30d", cx: 0.8672, cy: 0.6927, w: 0.2063, h: 0.1084 }, // conf 0.875
-      { label: "shelf", color: "#65a30d", cx: 0.8689, cy: 0.526, w: 0.2059, h: 0.0615 }, // conf 0.773
-      { label: "shelf", color: "#65a30d", cx: 0.447, cy: 0.5919, w: 0.6177, h: 0.1265 }, // conf 0.765
-      { label: "shelf", color: "#65a30d", cx: 0.8684, cy: 0.3531, w: 0.207, h: 0.0469 }, // conf 0.737
+      { label: "box", color: "#d97706", cx: 0.0405, cy: 0.9565, w: 0.0811, h: 0.2057, chip: true }, // conf 0.901
+      { label: "box", color: "#d97706", cx: 0.7852, cy: 0.6011, w: 0.0719, h: 0.0885 }, // conf 0.888
+      { label: "box", color: "#d97706", cx: 0.0391, cy: 0.4751, w: 0.0781, h: 0.1167 }, // conf 0.888
+      { label: "box", color: "#d97706", cx: 0.1841, cy: 0.9437, w: 0.0579, h: 0.1625 }, // conf 0.884
+      { label: "box", color: "#d97706", cx: 0.8176, cy: 0.6177, w: 0.0227, h: 0.0729 }, // conf 0.872
+      { label: "bin", color: "#0284c7", cx: 0.868, cy: 0.134, w: 0.0703, h: 0.1789, chip: true }, // conf 0.863
+      { label: "bin", color: "#0284c7", cx: 0.1872, cy: 0.8573, w: 0.0636, h: 0.0833 }, // conf 0.848
+      { label: "bin", color: "#0284c7", cx: 0.7809, cy: 0.2452, w: 0.043, h: 0.1232 }, // conf 0.835
+      { label: "bin", color: "#0284c7", cx: 0.2096, cy: 0.8159, w: 0.1019, h: 0.0609 }, // conf 0.82
+      { label: "bin", color: "#0284c7", cx: 0.7855, cy: 0.8719, w: 0.0445, h: 0.1292 }, // conf 0.816
+      { label: "shelf", color: "#65a30d", cx: 0.8199, cy: 0.5188, w: 0.1727, h: 0.05, chip: true }, // conf 0.769
+      { label: "shelf", color: "#65a30d", cx: 0.0464, cy: 0.7063, w: 0.0929, h: 0.0688 }, // conf 0.761
+      { label: "shelf", color: "#65a30d", cx: 0.9586, cy: 0.4981, w: 0.0828, h: 0.0568 }, // conf 0.754
+      { label: "shelf", color: "#65a30d", cx: 0.8193, cy: 0.6817, w: 0.1738, h: 0.0948 }, // conf 0.739
+      { label: "shelf", color: "#65a30d", cx: 0.8164, cy: 0.0187, w: 0.1703, h: 0.356 }, // conf 0.732
     ],
   },
   {
