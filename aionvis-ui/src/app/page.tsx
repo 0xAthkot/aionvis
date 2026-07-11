@@ -585,7 +585,9 @@ docker compose up --build
               </h2>
               <p className="mt-4 text-muted-foreground">
                 From factory floors to farm fields — if you can describe it,
-                the swarm can detect it.
+                the swarm can detect it. Every image below is real aionVIS
+                output: generated on the MI300X from that industry&apos;s
+                use-case sentence, no stock photos.
               </p>
             </div>
           </div>
