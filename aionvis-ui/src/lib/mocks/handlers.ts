@@ -348,30 +348,45 @@ export const handlers = [
   http.post(`${API_BASE}/runs/estimate`, async ({ request }) => {
     await lag();
     const body = (await request.json()) as CreateRunRequest;
+    // Same math as the backend's _estimate, calibrated against real MI300X
+    // streaming runs (2026-07-11); the rate is the AMD Developer Cloud
+    // droplet's $2/hour.
+    const USD_PER_HOUR = 2;
     const images = body.source.path === "synthetic"
       ? body.source.randomization.imageCount
       : body.source.imageCount;
-    const synthesisMin = body.source.path === "synthetic" ? images * 0.03 : 0;
-    const segmentationMin = images * 0.012;
     const arch = body.training.architecture;
-    // Mirrors the backend's per-architecture factor (RT-DETR ≈ 3× a nano YOLO).
-    const archFactor = arch.startsWith("rtdetr")
-      ? arch.endsWith("l") ? 3 : 4.5
-      : ({ n: 1, s: 1.3, m: 1.8, l: 2.5, x: 3.5 }[arch.slice(-1)] ?? 1);
-    const trainingMin = body.training.epochs * (images / 1000) * 0.9 * archFactor;
+    const archFactor = arch.startsWith("rf-detr")
+      ? arch.endsWith("large") ? 4.5 : 3
+      : arch.startsWith("rtdetr")
+        ? arch.endsWith("l") ? 3 : 4.5
+        : ({ n: 1, s: 1.3, m: 1.8, l: 2.5, x: 3.5 }[arch.slice(-1)] ?? 1);
+    const genSeconds = body.source.path === "synthetic"
+      ? body.source.generator === "flux" ? 1.5 : 5
+      : 0;
+    const synthesisMin = (images * genSeconds) / 60;
+    const segmentationMin = (images * 0.3) / 60;
+    const criticMin = (images * 0.2) / 60;
+    const trainingMin =
+      body.training.epochs * (0.05 + images * 0.0005 * archFactor);
+    const totalMin =
+      (body.source.path === "synthetic" ? 0.3 + synthesisMin : 0) +
+      segmentationMin + criticMin + 0.3 + trainingMin;
     const estimate: CostEstimate = {
-      gpuMinutes: Math.round(synthesisMin + segmentationMin + trainingMin),
-      estimatedUsd: +((synthesisMin + segmentationMin + trainingMin) * 0.33).toFixed(2),
+      gpuMinutes: +totalMin.toFixed(1),
+      estimatedUsd: +((totalMin * USD_PER_HOUR) / 60).toFixed(2),
+      usdPerHour: USD_PER_HOUR,
       breakdown: [
         ...(body.source.path === "synthetic"
           ? [
-              { stage: "prompt_expansion", minutes: 2 },
-              { stage: "synthesis", minutes: Math.round(synthesisMin) },
+              { stage: "prompt_expansion", minutes: 0.3 },
+              { stage: "synthesis", minutes: +synthesisMin.toFixed(2) },
             ] as CostEstimate["breakdown"]
           : []),
-        { stage: "segmentation", minutes: Math.round(segmentationMin) },
-        { stage: "critic_review", minutes: Math.round(segmentationMin * 0.4) },
-        { stage: "training", minutes: Math.round(trainingMin) },
+        { stage: "segmentation", minutes: +segmentationMin.toFixed(2) },
+        { stage: "critic_review", minutes: +criticMin.toFixed(2) },
+        { stage: "dataset_compile", minutes: 0.3 },
+        { stage: "training", minutes: +trainingMin.toFixed(2) },
       ],
     };
     return HttpResponse.json(estimate);

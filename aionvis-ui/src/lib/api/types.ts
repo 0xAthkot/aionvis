@@ -583,6 +583,12 @@ export interface ApiKey {
 export interface CostEstimate {
   gpuMinutes: number;
   estimatedUsd: number;
+  /**
+   * The hourly rate the USD figure derives from — $2/h for the AMD
+   * Developer Cloud MI300X droplet. Shown next to the money number so the
+   * quote carries its provenance.
+   */
+  usdPerHour: number;
   breakdown: { stage: PipelineStage; minutes: number }[];
 }
 

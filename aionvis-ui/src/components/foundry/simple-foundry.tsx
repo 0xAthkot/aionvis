@@ -563,7 +563,8 @@ export function SimpleFoundry() {
                     {estimate.data.estimatedUsd.toFixed(2)}
                   </span>{" "}
                   <span className="text-xs text-muted-foreground">
-                    quoted before anything runs
+                    quoted before anything runs · at $
+                    {estimate.data.usdPerHour}/h (AMD Developer Cloud droplet)
                   </span>
                 </p>
               ) : (

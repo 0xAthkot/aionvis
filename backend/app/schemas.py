@@ -479,6 +479,10 @@ class CostBreakdownItem(ApiModel):
 class CostEstimate(ApiModel):
     gpu_minutes: float
     estimated_usd: float
+    # The hourly rate the USD figure is derived from — $2/h for the AMD
+    # Developer Cloud MI300X droplet; surfaces in the UI so the money
+    # number carries its provenance.
+    usd_per_hour: float
     breakdown: list[CostBreakdownItem]
 
 

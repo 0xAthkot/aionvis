@@ -104,6 +104,9 @@ export function LaunchSummary({
               <span>~{estimate.data.gpuMinutes} GPU min</span>
               <span>${estimate.data.estimatedUsd.toFixed(2)}</span>
             </div>
+            <p className="text-right text-xs text-muted-foreground">
+              at ${estimate.data.usdPerHour}/h — AMD Developer Cloud droplet
+            </p>
           </div>
         )}
       </CardContent>

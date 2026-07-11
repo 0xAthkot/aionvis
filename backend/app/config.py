@@ -112,7 +112,8 @@ class Settings(BaseSettings):
     auto_batch: bool = False
 
     # --- pricing model for /runs/estimate (USD per GPU-minute) ---
-    gpu_usd_per_min: float = 0.033
+    # Derived from the AMD Developer Cloud MI300X droplet at $2/hour.
+    gpu_usd_per_min: float = 2 / 60
 
     def model_post_init(self, __context) -> None:
         # Config problems degrade, never crash the server.

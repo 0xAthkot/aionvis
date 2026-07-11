@@ -316,31 +316,42 @@ def _arch_factor(arch: str) -> float:
 
 
 def _estimate(body: CreateRunRequest) -> CostEstimate:
-    """Heuristic dry-run pricing; mirrors the stage plan the orchestrator runs."""
+    """Heuristic dry-run pricing; mirrors the stage plan the orchestrator
+    runs. Constants calibrated 2026-07-11 against real MI300X streaming
+    runs (flagship 500 img / 60 ep / yolo26m: 37.5 min total, 30.2 min
+    training; 50 img / 30 ep / yolo11n: 2-5 min): FLUX.2-klein ≈ 1.5 s and
+    full SDXL ≈ 5 s per image, and a training epoch costs a fixed ~3 s of
+    validation overhead plus ~0.03 s per image scaled by architecture."""
     epochs = min(body.training.epochs, settings.max_epochs)
-    train_min = epochs * 0.02 * _arch_factor(body.training.architecture)
+    factor = _arch_factor(body.training.architecture)
+
+    def train_min(images: int) -> float:
+        return epochs * (0.05 + images * 0.0005 * factor)
+
     if body.source.path == "synthetic":
         images = min(body.source.randomization.image_count, settings.max_images_per_run)
+        gen_s = 1.5 if getattr(body.source, "generator", "sdxl") == "flux" else 5.0
         stages: list[tuple[PipelineStage, float]] = [
-            ("prompt_expansion", 0.4),
-            ("synthesis", images * 4 / 60),
-            ("segmentation", images * 1.5 / 60),
-            ("critic_review", images * 0.5 / 60),
+            ("prompt_expansion", 0.3),
+            ("synthesis", images * gen_s / 60),
+            ("segmentation", images * 0.3 / 60),
+            ("critic_review", images * 0.2 / 60),
             ("dataset_compile", 0.3),
-            ("training", images * train_min),
+            ("training", train_min(images)),
         ]
     else:
         images = body.source.image_count
         stages = [
-            ("segmentation", images * 1.5 / 60),
-            ("critic_review", images * 0.5 / 60),
+            ("segmentation", images * 0.3 / 60),
+            ("critic_review", images * 0.2 / 60),
             ("dataset_compile", 0.3),
-            ("training", images * train_min),
+            ("training", train_min(images)),
         ]
     total_min = sum(m for _, m in stages)
     return CostEstimate(
         gpu_minutes=round(total_min, 1),
         estimated_usd=round(total_min * settings.gpu_usd_per_min, 2),
+        usd_per_hour=round(settings.gpu_usd_per_min * 60, 2),
         breakdown=[
             CostBreakdownItem(stage=s, minutes=round(m, 2)) for s, m in stages
         ],
