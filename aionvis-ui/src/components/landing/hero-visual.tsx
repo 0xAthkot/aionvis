@@ -35,6 +35,11 @@ type Box = {
 type Scenario = {
   prompt: string;
   done: string;
+  /** The replayed run's real size and its designed-scene count (one scene
+   * per ~10 images, floor 16 / capped by the image count — the pipeline's
+   * actual scaling rule). */
+  images: number;
+  scenarios: number;
   tiles: { src: string; boxes: Box[] }[];
 };
 
@@ -43,6 +48,8 @@ const SCENARIOS: Scenario[] = [
     // ds_0004 · run_0007 - the 500-image flagship (FLUX.2-klein + SAM 3)
     prompt: "our warehouse safety cameras need to spot forklifts, pallets and workers",
     done: "model_0004 ready · mAP50 0.76 · exported .pt / ONNX",
+    images: 500,
+    scenarios: 50,
     tiles: [
       {
         src: "/landing/warehouse-ds0004-1.jpg", // img_0351, all 3 verified boxes
@@ -80,6 +87,8 @@ const SCENARIOS: Scenario[] = [
     // ds_0005 · run_0008 - farm-aerial landing refresh
     prompt: "my farm drone needs to spot tractors and hay bales across the fields",
     done: "model_0005 ready · FLUX.2 + SAM 3 · zero human labels",
+    images: 12,
+    scenarios: 12,
     tiles: [
       {
         src: "/landing/farm-ds0005-1.jpg", // img_0002, all 13 verified boxes
@@ -117,6 +126,8 @@ const SCENARIOS: Scenario[] = [
     // ds_0006 · run_0010 - street-camera landing refresh
     prompt: "our street cameras need to detect delivery vans and cyclists",
     done: "model_0006 ready · trained on 100% synthetic data",
+    images: 12,
+    scenarios: 12,
     tiles: [
       {
         src: "/landing/street-ds0006-1.jpg", // img_0007, all 2 verified boxes
@@ -204,7 +215,7 @@ export function HeroVisual() {
           : t >= TILE_AT[0]
             ? "Rendering scenarios (FLUX.2)"
             : expanded
-              ? "48 domain-randomized scenarios queued"
+              ? `${scenario.scenarios} domain-randomized scenarios queued`
               : "Describe what the model should detect";
 
   return (
@@ -218,14 +229,6 @@ export function HeroVisual() {
             {typed}
             {!expanded && <span className="animate-pulse text-muted-foreground">▍</span>}
           </p>
-          <span
-            className={cn(
-              "ml-auto shrink-0 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-0.5 text-[11px] text-primary transition-opacity duration-500",
-              expanded ? "opacity-100" : "opacity-0",
-            )}
-          >
-            → 48 scenarios
-          </span>
         </div>
 
         {/* agent strip - who is working right now */}
@@ -453,6 +456,14 @@ export function HeroVisual() {
                     />
                   </div>
                 )}
+                <span
+                  className={cn(
+                    "hidden shrink-0 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-0.5 text-[11px] text-primary transition-opacity duration-500 sm:block",
+                    expanded ? "opacity-100" : "opacity-0",
+                  )}
+                >
+                  {scenario.scenarios} scenarios · {scenario.images} images
+                </span>
               </>
             )}
           </div>
