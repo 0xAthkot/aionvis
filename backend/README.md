@@ -75,12 +75,13 @@ the semantic critic VLM, and model cards. Use the vLLM ROCm **container**
 
 ```bash
 # inside the vllm/vllm-openai-rocm container (see deploy_mi300x.sh)
-vllm serve google/gemma-4-26B-A4B-it --port 8001 --gpu-memory-utilization 0.40
+vllm serve google/gemma-4-26B-A4B-it --port 8001 --gpu-memory-utilization 0.50
 ```
 
-`--gpu-memory-utilization 0.40` is required when vLLM shares the card with
+`--gpu-memory-utilization 0.50` is required when vLLM shares the card with
 the swarm: its 0.9 default would grab ~170 GB of the 192 GB and starve
-FLUX, SAM 3 and training.
+FLUX, SAM 3 and training. (0.50 is the live MI300X profile — the warm
+swarm measures ~125 GB resident with ~67 GB left for training.)
 
 Without a reachable endpoint the Prompt Agent uses its deterministic
 template fallback and the semantic critic is skipped — the pipeline still
