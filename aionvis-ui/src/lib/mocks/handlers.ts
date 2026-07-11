@@ -14,7 +14,6 @@ import type {
   ExpandPromptRequest,
   ExpandPromptResponse,
   FoundryFeedback,
-  ModelExportFormat,
   Paginated,
   PipelineRun,
   PredictionResult,
@@ -488,12 +487,13 @@ export const handlers = [
     await lag();
     const model = db.models.find((m) => m.id === params.id);
     if (!model) return notFound("model_not_found", `No model ${params.id}`);
-    const body = (await request.json()) as { format: ModelExportFormat };
-    // openvino exports download as a zipped model directory.
-    const suffix =
-      body.format === "openvino" ? "_openvino.zip" : `.${body.format}`;
+    await request.json(); // { format } — the stub is format-agnostic
+    // Stub bytes as a data URI so the download click actually produces a
+    // file in mock mode (same pattern as the dataset export above); the
+    // page names it via the anchor's download attribute.
     return HttpResponse.json({
-      downloadUrl: `/downloads/${model.fileName.replace(/\.pt$/, suffix)}`,
+      downloadUrl:
+        "data:application/octet-stream;base64,UEsFBgAAAAAAAAAAAAAAAAAAAAAAAA==",
     });
   }),
 

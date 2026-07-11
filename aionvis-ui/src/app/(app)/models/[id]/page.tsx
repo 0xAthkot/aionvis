@@ -58,10 +58,20 @@ export default function ModelDetailPage({
   const exportModel = useMutation({
     mutationFn: (format: ModelExportFormat) =>
       apiPost<{ downloadUrl: string }>(endpoints.models.export(id), { format }),
-    onSuccess: (res, format) =>
+    onSuccess: (res, format) => {
+      // Trigger the browser download directly — no extra click. The backend
+      // serves absolute /files URLs (public, no auth header needed); the
+      // mock returns a data: URI, where the download name below applies.
+      const suffix =
+        format === "openvino" ? "_openvino.zip" : `.${format}`;
+      const a = document.createElement("a");
+      a.href = res.downloadUrl;
+      a.download = model?.fileName.replace(/\.pt$/, suffix) ?? `${id}${suffix}`;
+      a.click();
       toast.success(`Export ready (${format.toUpperCase()})`, {
-        description: `${res.downloadUrl} — served by the backend once connected.`,
-      }),
+        description: `Downloading ${a.download}…`,
+      });
+    },
     onError: (err) => toast.error("Export failed", { description: err.message }),
   });
 
