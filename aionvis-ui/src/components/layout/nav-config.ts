@@ -3,6 +3,7 @@ import {
   Cpu,
   Database,
   FlaskConical,
+  FolderKanban,
   LayoutDashboard,
   Play,
   Settings,
@@ -39,6 +40,13 @@ export const navGroups: NavGroup[] = [
         icon: LayoutDashboard,
         description: "Fleet overview and recent activity",
         help: "Your home screen — what the swarm is doing right now.",
+      },
+      {
+        title: "Projects",
+        href: "/projects",
+        icon: FolderKanban,
+        description: "Every project with its runs, datasets and models",
+        help: "One row per goal you're building models for — see everything each project produced, search and filter across all of them.",
       },
       {
         title: "Synthetic Foundry",
