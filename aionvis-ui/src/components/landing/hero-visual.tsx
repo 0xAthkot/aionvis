@@ -10,7 +10,9 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Fragment, useEffect, useState } from "react";
+import { Skeleton17 } from "@/components/datasets/bbox-image";
 import { cn } from "@/lib/utils";
+import { HERO_OVERLAYS } from "./hero-overlays";
 
 /**
  * Looping visual replay of a run for the landing hero: use case typed →
@@ -269,11 +271,15 @@ export function HeroVisual() {
           })}
         </div>
 
-        {/* generated tiles with verified boxes */}
+        {/* generated tiles: SAM 3 mask contours while the Vision + Critic
+            agents work, then the trained model's output (boxes, and
+            skeletons where the pose teacher found people) from MLOps on */}
         <div className="grid grid-cols-3 gap-3 sm:gap-4">
           {scenario.tiles.map((tile, i) => {
             const shown = t >= TILE_AT[i];
             const boxed = t >= BOX_AT[i];
+            const masksPhase = t < TRAIN_START;
+            const overlays = HERO_OVERLAYS[tile.src] ?? [];
             return (
               <div
                 key={tile.src}
@@ -319,11 +325,48 @@ export function HeroVisual() {
                         : "Rendering image…"}
                   </span>
                 </div>
+                {boxed && (
+                  <svg
+                    aria-hidden
+                    className="absolute inset-0 z-10 size-full"
+                    viewBox="0 0 1 1"
+                    preserveAspectRatio="none"
+                  >
+                    {tile.boxes.map((b, bi) => {
+                      const ov = overlays[bi];
+                      if (masksPhase) {
+                        if (!ov?.polygon) return null;
+                        const pts: string[] = [];
+                        for (let p = 0; p + 1 < ov.polygon.length; p += 2)
+                          pts.push(`${ov.polygon[p]},${ov.polygon[p + 1]}`);
+                        return (
+                          <polygon
+                            key={bi}
+                            points={pts.join(" ")}
+                            fill={b.color}
+                            fillOpacity={0.15}
+                            stroke={b.color}
+                            strokeWidth={2}
+                            vectorEffect="non-scaling-stroke"
+                            strokeLinejoin="round"
+                          />
+                        );
+                      }
+                      return ov?.keypoints ? (
+                        <Skeleton17 key={bi} flat={ov.keypoints} color={b.color} />
+                      ) : null;
+                    })}
+                  </svg>
+                )}
                 {tile.boxes.map((b) => (
                   <div
                     key={b.label + b.cx}
                     className={cn(
-                      "absolute rounded-sm border-2 transition-all duration-500",
+                      "absolute rounded-sm transition-all duration-500",
+                      // The rectangle is the trained model's output - it
+                      // lands with the MLOps agent; until then the SVG
+                      // above shows the raw SAM 3 contours.
+                      !masksPhase && "border-2",
                       boxed ? "scale-100 opacity-100" : "scale-110 opacity-0",
                       // Chipped boxes stack above bare outlines so their
                       // label pills are never covered (each box is its own

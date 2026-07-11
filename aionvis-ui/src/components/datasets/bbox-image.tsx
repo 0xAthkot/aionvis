@@ -30,7 +30,7 @@ function polygonPoints(flat: number[]): string {
   return pts.join(" ");
 }
 
-function Skeleton17({ flat, color }: { flat: number[]; color: string }) {
+export function Skeleton17({ flat, color }: { flat: number[]; color: string }) {
   const kp = (i: number): [number, number, number] => [
     flat[i * 3], flat[i * 3 + 1], flat[i * 3 + 2],
   ];
