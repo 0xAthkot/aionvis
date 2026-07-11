@@ -6,6 +6,7 @@ import {
   Eye,
   ImageIcon,
   MessageSquareText,
+  RadioTower,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -35,6 +36,8 @@ type Box = {
 type Scenario = {
   prompt: string;
   done: string;
+  /** Final beat: the trained model shipping to the machine that asked for it. */
+  deploy: string;
   /** The replayed run's real size and its designed-scene count (one scene
    * per ~10 images, floor 16 / capped by the image count — the pipeline's
    * actual scaling rule). */
@@ -48,6 +51,7 @@ const SCENARIOS: Scenario[] = [
     // ds_0004 · run_0007 - the 500-image flagship (FLUX.2-klein + SAM 3)
     prompt: "our warehouse safety cameras need to spot forklifts, pallets and workers",
     done: "model_0004 ready · mAP50 0.76 · exported .pt / ONNX",
+    deploy: "Sending the model to the warehouse safety cameras",
     images: 500,
     scenarios: 50,
     tiles: [
@@ -87,6 +91,7 @@ const SCENARIOS: Scenario[] = [
     // ds_0005 · run_0008 - farm-aerial landing refresh
     prompt: "my farm drone needs to spot tractors and hay bales across the fields",
     done: "model_0005 ready · FLUX.2 + SAM 3 · zero human labels",
+    deploy: "Sending the model to the farm drone",
     images: 12,
     scenarios: 12,
     tiles: [
@@ -126,6 +131,7 @@ const SCENARIOS: Scenario[] = [
     // ds_0006 · run_0010 - street-camera landing refresh
     prompt: "our street cameras need to detect delivery vans and cyclists",
     done: "model_0006 ready · trained on 100% synthetic data",
+    deploy: "Sending the model to the street cameras",
     images: 12,
     scenarios: 12,
     tiles: [
@@ -166,6 +172,7 @@ const VERIFY_AT = 31; // Critic pass: the ✓ appears on every label
 const TRAIN_START = 35;
 const TRAIN_END = 49;
 const DONE_AT = 50;
+const DEPLOY_AT = 55; // the model ships to the machine that asked for it
 const LOOP_AT = 66;
 
 const AGENTS = [
@@ -200,6 +207,7 @@ export function HeroVisual() {
   const expanded = t > TYPE_END + 1;
   const training = t >= TRAIN_START && t < DONE_AT;
   const done = t >= DONE_AT;
+  const deploying = t >= DEPLOY_AT;
   const progress = Math.min(1, Math.max(0, (t - TRAIN_START) / (TRAIN_END - TRAIN_START)));
   const activeAgent = AGENTS.reduce((acc, a, i) => (t >= a.from ? i : acc), 0);
 
@@ -465,6 +473,31 @@ export function HeroVisual() {
                 </span>
               </>
             )}
+          </div>
+        </div>
+
+        {/* the payoff: the finished model ships to the machine that asked for it.
+            The row always occupies its height so the pill above never shifts. */}
+        <div className="flex h-5 items-center justify-center">
+          <div
+            className={cn(
+              "flex items-center gap-2",
+              // fade IN only: a fade-out would outlive the loop reset and show
+              // the next scenario's deploy line while its prompt is still typing
+              deploying
+                ? "opacity-100 transition-opacity duration-700"
+                : "opacity-0",
+            )}
+          >
+            <RadioTower
+              className={cn(
+                "size-3.5 text-primary",
+                deploying && "animate-pulse",
+              )}
+            />
+            <p className="truncate text-xs text-muted-foreground">
+              {scenario.deploy}
+            </p>
           </div>
         </div>
       </div>
