@@ -139,16 +139,16 @@ const SCENARIOS: Scenario[] = [
       {
         src: "/landing/street-ds0006-2.jpg", // img_0008, all 3 verified boxes
         boxes: [
-          { label: "delivery_van", color: "#d97706", cx: 0.2278, cy: 0.5443, w: 0.3252, h: 0.2145, chip: true },
-          { label: "delivery_van", color: "#d97706", cx: 0.4106, cy: 0.4639, w: 0.0631, h: 0.0527 },
-          { label: "cyclist", color: "#0284c7", cx: 0.5414, cy: 0.5318, w: 0.0391, h: 0.0723, chip: true },
+          { label: "delivery_van", color: "#0284c7", cx: 0.2278, cy: 0.5443, w: 0.3252, h: 0.2145, chip: true },
+          { label: "delivery_van", color: "#0284c7", cx: 0.4106, cy: 0.4639, w: 0.0631, h: 0.0527 },
+          { label: "cyclist", color: "#65a30d", cx: 0.5414, cy: 0.5318, w: 0.0391, h: 0.0723, chip: true },
         ],
       },
       {
         src: "/landing/street-ds0006-4.jpg", // img_0009, all 2 verified boxes
         boxes: [
-          { label: "delivery_van", color: "#d97706", cx: 0.4424, cy: 0.524, w: 0.4637, h: 0.5137, chip: true },
-          { label: "cyclist", color: "#0284c7", cx: 0.8293, cy: 0.3467, w: 0.0477, h: 0.0652, chip: true },
+          { label: "delivery_van", color: "#0284c7", cx: 0.4424, cy: 0.524, w: 0.4637, h: 0.5137, chip: true },
+          { label: "cyclist", color: "#65a30d", cx: 0.8293, cy: 0.3467, w: 0.0477, h: 0.0652, chip: true },
         ],
       },
     ],
