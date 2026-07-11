@@ -5,7 +5,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Cloud, PlugZap, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  BookOpen,
+  Cloud,
+  PlugZap,
+  Sparkles,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -127,17 +135,19 @@ export default function LoginPage() {
             </div>
             <CardDescription>
               Run the real product on your own AMD Developer Cloud droplet.
-              Deploy the backend with{" "}
-              <a
-                href="https://github.com/0xAthkot/aionvis/blob/main/backend/deploy_mi300x.sh"
-                target="_blank"
-                rel="noreferrer"
-                className="font-mono text-xs text-foreground underline underline-offset-4"
-              >
-                deploy_mi300x.sh
-              </a>{" "}
-              — it prints the endpoint and API key to paste here.
+              One script deploys the backend and prints the endpoint and API
+              key to paste here.
             </CardDescription>
+            <a
+              href="https://github.com/0xAthkot/aionvis/blob/main/docs/DROPLET_GUIDE.md"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 flex items-center gap-1.5 text-xs text-primary underline-offset-4 hover:underline"
+            >
+              <BookOpen className="size-3.5" />
+              Deployment guide — 30 min, ~$2/h
+              <ArrowUpRight className="size-3" />
+            </a>
           </CardHeader>
           <form onSubmit={connectAndEnter}>
             <CardContent className="space-y-4">

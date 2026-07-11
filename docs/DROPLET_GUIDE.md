@@ -9,6 +9,50 @@ snapshot or destroy the droplet when you're done; billing runs while it's up.
 
 ---
 
+## TL;DR — the whole deployment
+
+Create an **MI300X instance** on the AMD Developer Cloud (open inbound TCP
+8000), add your SSH key, then:
+
+```bash
+ssh root@<droplet-ip>
+git clone https://github.com/0xAthkot/aionvis && cd aionvis
+bash backend/deploy_mi300x.sh        # installs everything; prints your API key
+
+tmux new -s aionvis                  # so the server survives SSH exit
+cd backend && source .venv/bin/activate
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+Now attach a console — it asks for that endpoint + the API key the script
+printed. Pick whichever suits you:
+
+- **Console on your machine** (nothing else to install on the node):
+
+  ```bash
+  cd aionvis-ui && npm install && npm run dev     # → localhost:3000
+  ```
+
+  Sign in with `http://<droplet-ip>:8000` + the key. Works over plain HTTP
+  because the console is HTTP too.
+
+- **The hosted console at [aionvis.com](https://aionvis.com)** (nothing to
+  install anywhere): it's HTTPS, so browsers refuse to call a plain `http://`
+  node — give the node a certificate first with **Caddy + sslip.io**
+  (**step 6**, ~5 min, no domain needed), then sign in with
+  `https://<ip-with-dashes>.sslip.io`.
+
+Either way the whole console — runs, live streams, datasets, playground — is
+then driving your GPU.
+
+**Gemma 4** is optional (step 4): without it the Prompt Agent falls back to a
+deterministic template designer and the semantic critic is skipped, but runs
+still complete end to end.
+
+Everything below is the same thing, slowly, with the traps.
+
+---
+
 ## 1 · Create the droplet
 
 1. AMD Developer Cloud → new **MI300X** instance. Prefer the
