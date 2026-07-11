@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Search } from "lucide-react";
+import { Search, TriangleAlert } from "lucide-react";
+import { features } from "@/config/features";
+import { useIntegrationsStore } from "@/lib/stores/integrations";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -123,6 +126,52 @@ function GpuStatusChip() {
   );
 }
 
+/** Stable no-op subscription — the mount check never needs to re-fire. */
+const EMPTY_SUBSCRIBE = () => () => {};
+
+/**
+ * Persistent "this is a simulation" warning. Shown only when the console is
+ * genuinely serving mock data: the in-browser mock is on AND no GPU node is
+ * attached. A node attached at runtime (or an env-configured backend) is real
+ * data and must never be labelled a demo.
+ */
+function DemoModeBanner() {
+  const connected = useIntegrationsStore((s) => s.amdCloudConnected);
+  // The store rehydrates from localStorage on the client; render nothing on the
+  // server pass so the first client paint can't disagree with it.
+  const mounted = useSyncExternalStore(
+    EMPTY_SUBSCRIBE,
+    () => true,
+    () => false,
+  );
+
+  if (!mounted || !features.useMocks || connected) return null;
+
+  return (
+    <div className="mx-auto hidden min-w-0 items-center gap-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs lg:flex">
+      <TriangleAlert className="size-3.5 shrink-0 text-amber-400" />
+      <span className="truncate text-amber-200/90">
+        Demo mode — simulated data only. To train real models,{" "}
+        <Link
+          href="/login"
+          className="font-medium text-amber-100 underline underline-offset-2"
+        >
+          sign in with your GPU node
+        </Link>{" "}
+        (endpoint + API key).
+      </span>
+      <a
+        href="https://github.com/0xAthkot/aionvis/blob/main/docs/HOSTING_GUIDE.md"
+        target="_blank"
+        rel="noreferrer"
+        className="shrink-0 font-medium text-amber-100 underline underline-offset-2"
+      >
+        Deployment guide
+      </a>
+    </div>
+  );
+}
+
 export function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const pathname = usePathname();
 
@@ -130,8 +179,9 @@ export function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
     <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl">
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mr-1 h-4!" />
-      <h1 className="text-sm font-medium">{titleForPath(pathname)}</h1>
-      <div className="ml-auto flex items-center gap-3">
+      <h1 className="shrink-0 text-sm font-medium">{titleForPath(pathname)}</h1>
+      <DemoModeBanner />
+      <div className="ml-auto flex shrink-0 items-center gap-3">
         <ModeToggle />
         <GpuStatusChip />
         <Button
