@@ -326,15 +326,20 @@ export function HeroVisual() {
                   </span>
                 </div>
                 {boxed && (
-                  <svg
-                    aria-hidden
-                    className="absolute inset-0 z-10 size-full"
-                    viewBox="0 0 1 1"
-                    preserveAspectRatio="none"
-                  >
-                    {tile.boxes.map((b, bi) => {
-                      const ov = overlays[bi];
-                      if (masksPhase) {
+                  <>
+                    {/* Both overlay layers stay mounted and CROSS-FADE at
+                        the MLOps handoff — an unmount would snap. */}
+                    <svg
+                      aria-hidden
+                      className={cn(
+                        "absolute inset-0 z-10 size-full transition-opacity duration-700",
+                        masksPhase ? "opacity-100" : "opacity-0",
+                      )}
+                      viewBox="0 0 1 1"
+                      preserveAspectRatio="none"
+                    >
+                      {tile.boxes.map((b, bi) => {
+                        const ov = overlays[bi];
                         if (!ov?.polygon) return null;
                         const pts: string[] = [];
                         for (let p = 0; p + 1 < ov.polygon.length; p += 2)
@@ -351,22 +356,34 @@ export function HeroVisual() {
                             strokeLinejoin="round"
                           />
                         );
-                      }
-                      return ov?.keypoints ? (
-                        <Skeleton17 key={bi} flat={ov.keypoints} color={b.color} />
-                      ) : null;
-                    })}
-                  </svg>
+                      })}
+                    </svg>
+                    <svg
+                      aria-hidden
+                      className={cn(
+                        "absolute inset-0 z-10 size-full transition-opacity duration-700",
+                        masksPhase ? "opacity-0" : "opacity-100",
+                      )}
+                      viewBox="0 0 1 1"
+                      preserveAspectRatio="none"
+                    >
+                      {tile.boxes.map((b, bi) =>
+                        overlays[bi]?.keypoints ? (
+                          <Skeleton17
+                            key={bi}
+                            flat={overlays[bi].keypoints}
+                            color={b.color}
+                          />
+                        ) : null,
+                      )}
+                    </svg>
+                  </>
                 )}
                 {tile.boxes.map((b) => (
                   <div
                     key={b.label + b.cx}
                     className={cn(
-                      "absolute rounded-sm transition-all duration-500",
-                      // The rectangle is the trained model's output - it
-                      // lands with the MLOps agent; until then the SVG
-                      // above shows the raw SAM 3 contours.
-                      !masksPhase && "border-2",
+                      "absolute rounded-sm border-2 transition-all duration-700",
                       boxed ? "scale-100 opacity-100" : "scale-110 opacity-0",
                       // Chipped boxes stack above bare outlines so their
                       // label pills are never covered (each box is its own
@@ -374,7 +391,10 @@ export function HeroVisual() {
                       b.chip ? "z-20" : "z-0",
                     )}
                     style={{
-                      borderColor: b.color,
+                      // The rectangle is the trained model's output - its
+                      // color fades in at the MLOps handoff while the SAM 3
+                      // contours fade out (cross-fade, not a snap).
+                      borderColor: masksPhase ? "transparent" : b.color,
                       left: `${(b.cx - b.w / 2) * 100}%`,
                       top: `${(b.cy - b.h / 2) * 100}%`,
                       width: `${b.w * 100}%`,
