@@ -290,6 +290,16 @@ def run_inference(artifact: ModelArtifact, image_path: Path) -> dict:
             w=round(x2 - x1, 4), h=round(y2 - y1, 4),
             confidence=round(float(b.conf.item()), 3),
         ))
+    masks = getattr(res, "masks", None)
+    if masks is not None and res.boxes is not None:
+        # Segment models: pair each detection with its mask outline
+        # (normalized, downsampled, flattened) — the same polygon shape
+        # dataset labels carry, so clients render outlines, not just boxes.
+        for box, poly in zip(boxes[-len(res.boxes):], masks.xyn):
+            pts = poly.tolist()
+            if len(pts) >= 3:
+                step = max(1, len(pts) // 64)
+                box.polygon = [round(v, 4) for p in pts[::step] for v in p]
     if res.boxes is None and getattr(res, "obb", None) is not None:
         # OBB models emit rotated boxes; give the playground their
         # axis-aligned hull plus the rotated corners as the polygon.
