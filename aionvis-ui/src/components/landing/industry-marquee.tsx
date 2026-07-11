@@ -174,8 +174,8 @@ const INDUSTRIES: {
 export type OutputMode = "boxes" | "masks" | "obb" | "pose" | "labels";
 
 export const OUTPUT_MODES: { id: OutputMode; label: string }[] = [
-  { id: "boxes", label: "Boxes" },
   { id: "masks", label: "Masks" },
+  { id: "boxes", label: "Boxes" },
   { id: "obb", label: "Rotated boxes" },
   { id: "pose", label: "Pose" },
   { id: "labels", label: "Labels" },
@@ -331,7 +331,8 @@ export function IndustryMarquee() {
   const [dragging, setDragging] = useState(false);
   // Same images, every model-output type — the same real labels the
   // console shows, cycled through the five representations we train.
-  const [mode, setMode] = useState<OutputMode>("boxes");
+  // Masks lead: they're the richest view of what SAM 3 actually labels.
+  const [mode, setMode] = useState<OutputMode>("masks");
   const state = useRef({
     offset: 0,
     half: 0,
