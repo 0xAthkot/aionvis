@@ -28,6 +28,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
+  // Full title, not template-relative: the root layout's title.template
+  // does not apply to a page in its own segment, only to child segments.
   title: "aionVIS · Autonomous vision model training",
   description:
     "An autonomous agent swarm that turns one sentence into a trained, deployable detection model. Zero human annotation. Built entirely on AMD MI300X.",

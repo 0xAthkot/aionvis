@@ -14,7 +14,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "aionVIS Console",
+  // Every tab title leads with the brand: "aionVIS · <page>".
+  title: {
+    default: "aionVIS · Console",
+    template: "aionVIS · %s",
+  },
   description:
     "Autonomous agent swarm that generates, self-verifies and labels training data, then trains YOLO models natively on AMD hardware.",
 };

@@ -1,12 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import {
   CommandPalette,
   useCommandPalette,
 } from "@/components/layout/command-palette";
+import { titleForPath } from "@/components/layout/nav-config";
 import { Topbar } from "@/components/layout/topbar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useAuthStore } from "@/lib/stores/auth";
@@ -21,10 +22,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     () => false,
   );
   const palette = useCommandPalette();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (hydrated && !user) router.replace("/login");
   }, [hydrated, user, router]);
+
+  // Console pages are client components, so they can't export Next metadata;
+  // keep the tab title ("aionVIS · <page>") in sync with the route here,
+  // reusing the same route→title mapping as the topbar heading.
+  useEffect(() => {
+    const title = titleForPath(pathname);
+    document.title =
+      title === "aionVIS" ? "aionVIS · Console" : `aionVIS · ${title}`;
+  }, [pathname]);
 
   if (!hydrated || !user) return null;
 
