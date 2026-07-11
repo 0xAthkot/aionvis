@@ -63,11 +63,13 @@ class Store:
                 return candidate
 
     def _id_taken(self, prefix: str, candidate: str) -> bool:
-        pools: dict[str, dict] = {
-            "run": self.runs,
-            "ds": self.datasets,
-            "model": self.models,
-            "key": self.api_keys,
+        pools: dict[str, set[str]] = {
+            "run": set(self.runs),
+            "ds": set(self.datasets),
+            "model": set(self.models),
+            "key": set(self.api_keys),
+            "fb": set(self.feedback),
+            "proj": {p.id for p in self.projects},
         }
         pool = pools.get(prefix)
         return pool is not None and candidate in pool
@@ -111,6 +113,23 @@ class Store:
         # from persisted state (she would re-save herself otherwise).
         self.members = [m for m in self.members if m.email != "maria@aionvis.dev"]
         self.projects = parse(Project, raw.get("projects", []))
+        # Migration: pre-fix restarts could reissue an existing project id
+        # (the "proj" counter wasn't reseeded), after which every by-id
+        # lookup mixed two projects. Re-id later duplicates; runs/feedback
+        # keep pointing at the oldest holder — artifacts created under a
+        # collision were already mixed and can't be untangled automatically.
+        taken = {p.id for p in self.projects}
+        seen: set[str] = set()
+        for p in self.projects:
+            if p.id in seen:
+                old, n = p.id, 1
+                while f"proj_{n:04d}" in taken:
+                    n += 1
+                p.id = f"proj_{n:04d}"
+                taken.add(p.id)
+                print(f"[store] duplicate project id {old}: "
+                      f"re-id'd '{p.name}' as {p.id}")
+            seen.add(p.id)
         self.runs = {r.id: r for r in parse(PipelineRun, raw.get("runs", []))}
         self.run_logs = {
             rid: parse(LogEvent, logs) for rid, logs in raw.get("runLogs", {}).items()
@@ -148,6 +167,13 @@ class Store:
         bump("ds", self.datasets)
         bump("model", self.models)
         bump("key", self.api_keys)
+        bump("fb", self.feedback)
+        # Projects and feedback are also next_id-allocated; leaving them out
+        # of the reseed reissued proj_0001 after every restart — a new
+        # project then collided with an old one and every by-id lookup mixed
+        # the two (hit live 2026-07-11: a hotwheels run trained on another
+        # project's classes).
+        bump("proj", [p.id for p in self.projects])
 
     # --- seed ----------------------------------------------------------------
 
