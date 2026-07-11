@@ -91,7 +91,9 @@ architectures higher. `training.task` (`detect` default | `segment` | `obb`
 | `pose`) picks the model head: segment/obb reuse the Critic-verified mask
 polygons, pose keypoints come from a pretrained teacher at compile time,
 and non-detect tasks require YOLO11/YOLO26 (400 otherwise). Verified boxes
-carry an optional `polygon` (flat normalized pairs).
+carry an optional `polygon` (flat normalized pairs); pose-run labels and
+pose-model predictions additionally carry `keypoints` — flat normalized
+COCO-17 `[x, y, v, …]` triplets (v: 0 = missing, 2 = visible).
 
 **Pipeline mode.** The backend sets `PipelineRun.pipelineMode` at run
 creation from its hardware config (`PIPELINE_MODE`), never from the request:

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Check, Download, X } from "lucide-react";
 import { toast } from "sonner";
-import { BBoxImage } from "@/components/datasets/bbox-image";
+import { BBoxImage, type BBoxView } from "@/components/datasets/bbox-image";
 import { DatasetAnalyticsPanel } from "@/components/datasets/dataset-analytics";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,8 @@ import type {
   Dataset,
   DatasetExportRequest,
   Paginated,
+  PipelineRun,
+  TrainingTask,
 } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
@@ -69,6 +71,25 @@ export default function DatasetDetailPage({
   const totalPages = imagePage
     ? Math.max(1, Math.ceil(imagePage.total / PAGE_SIZE))
     : 1;
+
+  // What the run's trained model will output — powers the "SAM 3 masks vs
+  // model output" view switch. Segment IS the native output; no switch.
+  const { data: sourceRun } = useQuery({
+    queryKey: ["run", dataset?.runId],
+    queryFn: () => api<PipelineRun>(endpoints.runs.get(dataset!.runId!)),
+    enabled: !!dataset?.runId,
+  });
+  const task: TrainingTask = sourceRun?.training.task ?? "detect";
+  const [view, setView] = useState<BBoxView>("sam");
+  const modelViewLabel: Record<TrainingTask, string> = {
+    detect: "Boxes",
+    segment: "Masks",
+    obb: "Rotated boxes",
+    pose: "Pose",
+    classify: "Labels",
+  };
+  const showViewSwitch = !!dataset?.runId && task !== "segment";
+  const activeView: BBoxView = showViewSwitch ? view : "sam";
 
   const curate = useMutation({
     mutationFn: ({
@@ -212,13 +233,28 @@ export default function DatasetDetailPage({
                 {acceptRate}% accepted on this page
               </p>
             </div>
-            <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
-              <TabsList>
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="accepted">Accepted</TabsTrigger>
-                <TabsTrigger value="rejected">Rejected</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex flex-wrap items-center gap-2">
+              {showViewSwitch && (
+                <Tabs
+                  value={activeView}
+                  onValueChange={(v) => setView(v as BBoxView)}
+                >
+                  <TabsList>
+                    <TabsTrigger value="sam">SAM 3 masks</TabsTrigger>
+                    <TabsTrigger value="model">
+                      {modelViewLabel[task]}
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              )}
+              <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
+                <TabsList>
+                  <TabsTrigger value="all">All</TabsTrigger>
+                  <TabsTrigger value="accepted">Accepted</TabsTrigger>
+                  <TabsTrigger value="rejected">Rejected</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
           </div>
           <div>
             {!imagePage ? (
@@ -236,7 +272,12 @@ export default function DatasetDetailPage({
                       className="block w-full rounded-md ring-primary focus-visible:ring-2"
                       onClick={() => setSelectedId(image.id)}
                     >
-                      <BBoxImage image={image} classes={dataset.classes} />
+                      <BBoxImage
+                        image={image}
+                        classes={dataset.classes}
+                        view={activeView}
+                        task={task}
+                      />
                     </button>
                     <span
                       className={cn(
@@ -337,6 +378,8 @@ export default function DatasetDetailPage({
                 image={selected}
                 classes={dataset.classes}
                 showLabels
+                view={activeView}
+                task={task}
                 // Shrink-wrap so the whole card (verdict + buttons) fits the
                 // viewport; %-positioned boxes stay aligned at any size.
                 className="mx-auto w-fit [&>img]:max-h-[55dvh] [&>img]:w-auto [&>img]:max-w-full"

@@ -117,13 +117,18 @@ def _iou_xyxyn(a, b) -> float:
 
 
 def _pose_line(b: BoundingBox, teacher_pairs: list) -> tuple[str, bool]:
-    """Detect line + best-matching teacher keypoints (v=0 when unmatched)."""
+    """Detect line + best-matching teacher keypoints (v=0 when unmatched).
+    Matched keypoints are also attached to the label itself — the stored
+    dataset record shares this BoundingBox, so the UI can draw the skeleton
+    the pose model will learn."""
     box_xyxyn = (b.cx - b.w / 2, b.cy - b.h / 2, b.cx + b.w / 2, b.cy + b.h / 2)
     best, best_iou = None, settings.pose_match_iou
     for person_box, kpts in teacher_pairs:
         iou = _iou_xyxyn(box_xyxyn, person_box)
         if iou >= best_iou:
             best, best_iou = kpts, iou
+    if best is not None:
+        b.keypoints = [round(float(v), 4) for trip in best for v in trip]
     kpts = best or [(0.0, 0.0, 0)] * 17
     flat = " ".join(f"{x:.4f} {y:.4f} {v}" for x, y, v in kpts)
     return f"{b.class_id} {b.cx} {b.cy} {b.w} {b.h} {flat}", best is not None

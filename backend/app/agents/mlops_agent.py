@@ -290,6 +290,19 @@ def run_inference(artifact: ModelArtifact, image_path: Path) -> dict:
             w=round(x2 - x1, 4), h=round(y2 - y1, 4),
             confidence=round(float(b.conf.item()), 3),
         ))
+    kpts = getattr(res, "keypoints", None)
+    if kpts is not None and res.boxes is not None and len(boxes) >= len(res.boxes):
+        # Pose models: attach each detection's COCO-17 skeleton as flat
+        # [x, y, v] triplets — same shape pose dataset labels carry.
+        xyn = kpts.xyn.cpu().numpy()
+        conf = kpts.conf.cpu().numpy() if kpts.conf is not None else None
+        for j, box in enumerate(boxes[-len(res.boxes):]):
+            flat = []
+            for k in range(xyn.shape[1]):
+                v = 2 if conf is None or conf[j][k] > 0.5 else 0
+                flat += [round(float(xyn[j][k][0]), 4),
+                         round(float(xyn[j][k][1]), 4), v]
+            box.keypoints = flat
     masks = getattr(res, "masks", None)
     if masks is not None and res.boxes is not None:
         # Segment models: pair each detection with its mask outline

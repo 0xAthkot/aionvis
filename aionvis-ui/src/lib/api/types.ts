@@ -353,6 +353,12 @@ export interface BoundingBox {
    * Present on Critic-verified labels; powers segment/obb training + export.
    */
   polygon?: number[];
+  /**
+   * COCO-17 keypoints as flat normalized [x, y, v, …] triplets (v: 0 =
+   * missing, 2 = visible). Present on pose-run labels (teacher-matched at
+   * compile time) and on pose-model predictions.
+   */
+  keypoints?: number[];
 }
 
 export interface CritiqueRecord {

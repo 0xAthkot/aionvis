@@ -298,6 +298,10 @@ class BoundingBox(ApiModel):
     # Simplified mask contour as flat normalized pairs [x1, y1, x2, y2, …];
     # present on Critic-verified labels, powers segment/obb training + export.
     polygon: Optional[list[float]] = None
+    # COCO-17 keypoints as flat normalized [x, y, v, …] triplets (v: 0 =
+    # missing, 2 = visible). Present on pose-run labels (teacher-matched at
+    # compile time) and on pose-model predictions.
+    keypoints: Optional[list[float]] = None
 
 
 class SplitStat(ApiModel):

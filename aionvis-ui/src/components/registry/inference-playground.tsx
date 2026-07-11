@@ -201,7 +201,15 @@ export function InferencePlayground({ model }: { model: ModelArtifact }) {
         {preview && (
           <div className="space-y-3">
             {annotated ? (
-              <BBoxImage image={annotated} classes={classes} showLabels />
+              // Predictions render as the model's own output type: boxes,
+              // mask outlines, rotated corners, skeletons or a label.
+              <BBoxImage
+                image={annotated}
+                classes={classes}
+                showLabels
+                view="model"
+                task={model.task ?? "detect"}
+              />
             ) : (
               <div className="relative overflow-hidden rounded-md">
                 {/* Local object URL preview; next/image adds nothing here. */}
