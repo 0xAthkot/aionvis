@@ -455,7 +455,6 @@ class DashboardStats(ApiModel):
     images_generated: int
     images_labeled: int
     gpu_hours_used: float
-    credits_remaining_usd: float
 
 
 class ApiKey(ApiModel):

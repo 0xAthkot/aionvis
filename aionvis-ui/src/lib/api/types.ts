@@ -563,7 +563,6 @@ export interface DashboardStats {
   imagesGenerated: number;
   imagesLabeled: number;
   gpuHoursUsed: number;
-  creditsRemainingUsd: number;
 }
 
 export interface ApiKey {

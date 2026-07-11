@@ -56,7 +56,7 @@ export function StatCards() {
           value: simple
             ? `${data.gpuHoursUsed.toFixed(1)} h`
             : data.gpuHoursUsed.toFixed(1),
-          hint: `$${data.creditsRemainingUsd.toFixed(2)} credits left`,
+          hint: "all time",
         },
       ]
     : null;

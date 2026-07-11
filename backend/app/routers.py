@@ -83,9 +83,6 @@ def dashboard_stats() -> DashboardStats:
         images_generated=images_generated,
         images_labeled=images_labeled,
         gpu_hours_used=round(gpu_hours, 2),
-        credits_remaining_usd=round(
-            500.0 - gpu_hours * 60 * settings.gpu_usd_per_min, 2
-        ),
     )
 
 

@@ -512,7 +512,6 @@ export const dashboardStats: DashboardStats = {
   imagesGenerated: 700,
   imagesLabeled: 1120,
   gpuHoursUsed: 6.4,
-  creditsRemainingUsd: 78.6,
 };
 
 export const apiKeys: ApiKey[] = [

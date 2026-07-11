@@ -271,12 +271,6 @@ function SidebarStatus({ simple }: { simple: boolean }) {
               {stats.modelsTrained}
             </span>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sidebar-foreground/55">Credits left</span>
-            <span className="font-medium tabular-nums">
-              ${stats.creditsRemainingUsd.toFixed(2)}
-            </span>
-          </div>
         </div>
       )}
     </div>
