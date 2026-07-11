@@ -200,14 +200,31 @@ function pcbImages(): AnnotatedImage[] {
       height: 480,
       url: placeholderImage(i, `synth_${String(i).padStart(4, "0")}.png`),
       thumbnailUrl: placeholderImage(i, `synth_${String(i).padStart(4, "0")}.png`, 320, 240),
-      boxes: Array.from({ length: boxCount }, (_, b) => ({
-        classId: (i + b) % classCount,
-        cx: 0.25 + ((i * 7 + b * 13) % 50) / 100,
-        cy: 0.3 + ((i * 11 + b * 17) % 40) / 100,
-        w: 0.12 + ((i + b) % 4) * 0.04,
-        h: 0.1 + ((i + b) % 3) * 0.05,
-        confidence: +(0.82 + ((i + b) % 15) / 100).toFixed(2),
-      })),
+      boxes: Array.from({ length: boxCount }, (_, b) => {
+        const cx = 0.25 + ((i * 7 + b * 13) % 50) / 100;
+        const cy = 0.3 + ((i * 11 + b * 17) % 40) / 100;
+        const w = 0.12 + ((i + b) % 4) * 0.04;
+        const h = 0.1 + ((i + b) % 3) * 0.05;
+        // Real Critic-verified labels carry the mask contour; mirror that
+        // on most boxes with a wobbly octagon inscribed in the box.
+        const polygon =
+          (i + b) % 3 === 0
+            ? undefined
+            : Array.from({ length: 8 }, (_, k) => {
+                const ang = (k / 8) * 2 * Math.PI;
+                const jitter = 0.78 + ((i * 3 + b * 5 + k * 7) % 5) * 0.05;
+                return [
+                  +(cx + (Math.cos(ang) * w * jitter) / 2).toFixed(4),
+                  +(cy + (Math.sin(ang) * h * jitter) / 2).toFixed(4),
+                ];
+              }).flat();
+        return {
+          classId: (i + b) % classCount,
+          cx, cy, w, h,
+          confidence: +(0.82 + ((i + b) % 15) / 100).toFixed(2),
+          polygon,
+        };
+      }),
       split: i % 5 === 4 ? "val" : "train",
       curationState: rejected ? "rejected" : "accepted",
       critique: rejected
