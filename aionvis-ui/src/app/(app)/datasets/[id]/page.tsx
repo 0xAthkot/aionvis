@@ -80,7 +80,10 @@ export default function DatasetDetailPage({
     enabled: !!dataset?.runId,
   });
   const task: TrainingTask = sourceRun?.training.task ?? "detect";
-  const [view, setView] = useState<BBoxView>("sam");
+  // Default to the model-output view — it's what the user is building;
+  // the raw SAM 3 masks stay one click away (and remain the only view for
+  // segment datasets, where masks ARE the model output).
+  const [view, setView] = useState<BBoxView>("model");
   const modelViewLabel: Record<TrainingTask, string> = {
     detect: "Boxes",
     segment: "Masks",
@@ -88,7 +91,9 @@ export default function DatasetDetailPage({
     pose: "Pose",
     classify: "Labels",
   };
-  const showViewSwitch = !!dataset?.runId && task !== "segment";
+  // Only offer the switch once the source run (and so the task) is known —
+  // otherwise a pose dataset would flash as boxes while the run loads.
+  const showViewSwitch = !!dataset?.runId && !!sourceRun && task !== "segment";
   const activeView: BBoxView = showViewSwitch ? view : "sam";
 
   const curate = useMutation({
