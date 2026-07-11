@@ -115,9 +115,9 @@ const SCENARIOS: Scenario[] = [
         ],
       },
       {
-        src: "/landing/farm-ds0005-3.jpg", // img_0003, its 1 verified box
+        src: "/landing/farm-ds0005-3.jpg", // img_0009, its 1 verified box
         boxes: [
-          { label: "tractor", color: "#d97706", cx: 0.5195, cy: 0.5293, w: 0.3, h: 0.3352, chip: true },
+          { label: "tractor", color: "#d97706", cx: 0.5059, cy: 0.5738, w: 0.2852, h: 0.3563, chip: true },
         ],
       },
     ],
@@ -137,19 +137,18 @@ const SCENARIOS: Scenario[] = [
         ],
       },
       {
-        src: "/landing/street-ds0006-2.jpg", // img_0010, all 2 verified boxes
+        src: "/landing/street-ds0006-2.jpg", // img_0008, all 3 verified boxes
         boxes: [
-          { label: "delivery_van", color: "#0284c7", cx: 0.4971, cy: 0.3643, w: 0.4777, h: 0.4237, chip: true },
-          { label: "cyclist", color: "#65a30d", cx: 0.0725, cy: 0.7266, w: 0.1152, h: 0.2125, chip: true },
+          { label: "delivery_van", color: "#d97706", cx: 0.2278, cy: 0.5443, w: 0.3252, h: 0.2145, chip: true },
+          { label: "delivery_van", color: "#d97706", cx: 0.4106, cy: 0.4639, w: 0.0631, h: 0.0527 },
+          { label: "cyclist", color: "#0284c7", cx: 0.5414, cy: 0.5318, w: 0.0391, h: 0.0723, chip: true },
         ],
       },
       {
-        src: "/landing/street-ds0006-4.jpg", // img_0011, all 4 verified boxes
+        src: "/landing/street-ds0006-4.jpg", // img_0009, all 2 verified boxes
         boxes: [
-          { label: "delivery_van", color: "#0284c7", cx: 0.3146, cy: 0.5158, w: 0.2583, h: 0.2027, chip: true },
-          { label: "cyclist", color: "#65a30d", cx: 0.651, cy: 0.4912, w: 0.0457, h: 0.0832, chip: true },
-          { label: "delivery_van", color: "#0284c7", cx: 0.2845, cy: 0.4502, w: 0.1221, h: 0.084 },
-          { label: "cyclist", color: "#65a30d", cx: 0.0133, cy: 0.6055, w: 0.0266, h: 0.0859 },
+          { label: "delivery_van", color: "#d97706", cx: 0.4424, cy: 0.524, w: 0.4637, h: 0.5137, chip: true },
+          { label: "cyclist", color: "#0284c7", cx: 0.8293, cy: 0.3467, w: 0.0477, h: 0.0652, chip: true },
         ],
       },
     ],
