@@ -224,7 +224,14 @@ class Pipeline:
         ctx.set_agent("prompt", "thinking",
                       "Designing scene prompts from the use case")
         ctx.check_cancelled()
-        n_scenarios = min(rand.scenario_count, run.progress.images_total, 16)
+        # Scene variety scales with the run: one designed scene per ~10
+        # images, floor 16 (the old fixed cap), ceiling 256 — past that,
+        # diffusion sampling noise carries the intra-scene variety. The
+        # prompt agent designs large sets in batches, so big counts stay
+        # reliable.
+        scale_cap = max(16, min(256, (run.progress.images_total + 9) // 10))
+        n_scenarios = min(rand.scenario_count, run.progress.images_total,
+                          scale_cap)
         # Active learning: hard cases flagged in the playground steer this
         # expansion, then are marked consumed.
         pending = [f for f in store.feedback.values()

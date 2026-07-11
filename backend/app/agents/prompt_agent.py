@@ -85,6 +85,12 @@ _INTENT_WORDS = re.compile(
 )
 
 
+# One LLM call designs at most this many scenes. Large sets are built in
+# batches (each steered away from what previous batches designed): a single
+# "give me 200 prompts" completion truncates or degenerates long before 200.
+_BATCH = 16
+
+
 class PromptAgent:
     display_name = "Prompt Agent"
 
@@ -151,17 +157,30 @@ class PromptAgent:
                               hard)
         if key in self._cache:
             return self._cache[key]
+        scenarios: list[str] = []
         try:
-            async with httpx.AsyncClient(timeout=60) as client:
-                data = await self._chat(client, use_case, target_classes,
-                                         randomization, count, hard)
+            async with httpx.AsyncClient(timeout=120) as client:
+                while len(scenarios) < count:
+                    want = min(_BATCH, count - len(scenarios))
+                    batch = await self._chat(
+                        client, use_case, target_classes, randomization, want,
+                        hard if not scenarios else (),
+                        avoid=tuple(scenarios[-10:]),
+                    )
+                    new = [s for s in batch if s not in scenarios]
+                    if not new:  # model has nothing fresh; pad below
+                        break
+                    scenarios.extend(new)
         except httpx.HTTPError as exc:
             # A dead endpoint or retired model must degrade, never 500 the wizard.
             print(f"[prompt-agent] LLM call failed ({exc}); using fallback")
-            return self._fallback(use_case, target_classes, randomization,
-                                  count, hard)
-        self._cache_put(key, data)
-        return data
+            if not scenarios:
+                return self._fallback(use_case, target_classes, randomization,
+                                      count, hard)
+        scenarios = self._pad(scenarios, use_case, target_classes,
+                              randomization, count, hard)
+        self._cache_put(key, scenarios)
+        return scenarios
 
     def expand(self, use_case: str, target_classes: list[str],
                randomization: DomainRandomizationConfig, count: int,
@@ -175,22 +194,46 @@ class PromptAgent:
                               hard)
         if key in self._cache:
             return self._cache[key]
+        scenarios: list[str] = []
         try:
-            with httpx.Client(timeout=60) as client:
-                resp = client.post(
-                    f"{settings.llm_base_url}/chat/completions",
-                    headers=self._headers(),
-                    json=self._payload(use_case, target_classes, randomization,
-                                       count, hard),
-                )
-                resp.raise_for_status()
-                scenarios = self._parse(resp.json(), use_case, target_classes,
-                                        randomization, count)
+            with httpx.Client(timeout=120) as client:
+                while len(scenarios) < count:
+                    want = min(_BATCH, count - len(scenarios))
+                    resp = client.post(
+                        f"{settings.llm_base_url}/chat/completions",
+                        headers=self._headers(),
+                        json=self._payload(use_case, target_classes,
+                                           randomization, want,
+                                           hard if not scenarios else (),
+                                           avoid=tuple(scenarios[-10:])),
+                    )
+                    resp.raise_for_status()
+                    batch = self._parse(resp.json(), use_case, target_classes,
+                                        randomization, want)
+                    new = [s for s in batch if s not in scenarios]
+                    if not new:  # model has nothing fresh; pad below
+                        break
+                    scenarios.extend(new)
         except httpx.HTTPError as exc:
             print(f"[prompt-agent] LLM call failed ({exc}); using fallback")
-            return self._fallback(use_case, target_classes, randomization, count)
+            if not scenarios:
+                return self._fallback(use_case, target_classes, randomization,
+                                      count, hard)
+        scenarios = self._pad(scenarios, use_case, target_classes,
+                              randomization, count, hard)
         self._cache_put(key, scenarios)
         return scenarios
+
+    def _pad(self, scenarios: list[str], use_case, target_classes,
+             randomization, count: int, hard_cases: tuple) -> list[str]:
+        """Top up with template scenes when the LLM under-delivers, so the
+        synthesis stage always gets the full designed variety."""
+        if len(scenarios) < count:
+            extra = self._fallback(use_case, target_classes, randomization,
+                                   count - len(scenarios),
+                                   hard_cases if not scenarios else ())
+            scenarios = scenarios + [s for s in extra if s not in scenarios]
+        return scenarios[:count]
 
     # --- LLM call ------------------------------------------------------------
 
@@ -201,7 +244,7 @@ class PromptAgent:
         return {"Authorization": f"Bearer {settings.llm_api_key}"}
 
     def _payload(self, use_case, target_classes, randomization, count,
-                 hard_cases: tuple = ()) -> dict:
+                 hard_cases: tuple = (), avoid: tuple = ()) -> dict:
         user = (
             f"Use case — what the model is for: {use_case}\n"
             f"Target classes (every prompt must plausibly show them, as the "
@@ -218,6 +261,13 @@ class PromptAgent:
                 "\nA deployed model trained on earlier data FAILED on these "
                 f"observed cases — dedicate several scenarios to covering them:\n{cases}"
             )
+        if avoid:
+            seen = "\n".join(f"- {a[:120]}" for a in avoid)
+            user += (
+                "\nThis batch extends a larger set. Scenes already designed — "
+                "do NOT repeat these setups; pick different angles, lighting, "
+                f"backgrounds and arrangements:\n{seen}"
+            )
         return {
             "model": settings.llm_model,
             "messages": [
@@ -231,12 +281,13 @@ class PromptAgent:
         }
 
     async def _chat(self, client: httpx.AsyncClient, use_case, target_classes,
-                    randomization, count, hard_cases: tuple = ()) -> list[str]:
+                    randomization, count, hard_cases: tuple = (),
+                    avoid: tuple = ()) -> list[str]:
         resp = await client.post(
             f"{settings.llm_base_url}/chat/completions",
             headers=self._headers(),
             json=self._payload(use_case, target_classes, randomization, count,
-                               hard_cases),
+                               hard_cases, avoid),
         )
         resp.raise_for_status()
         return self._parse(resp.json(), use_case, target_classes, randomization, count)
