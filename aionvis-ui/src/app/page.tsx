@@ -587,7 +587,8 @@ docker compose up --build
                 From factory floors to farm fields — if you can describe it,
                 the swarm can detect it. Every image below is real aionVIS
                 output: generated on the MI300X from that industry&apos;s
-                use-case sentence, no stock photos.
+                use-case sentence, with its real swarm-verified detection
+                boxes — no stock photos, no hand-drawn labels.
               </p>
             </div>
           </div>
