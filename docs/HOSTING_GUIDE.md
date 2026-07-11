@@ -196,18 +196,6 @@ localhost (`--host 127.0.0.1` — Caddy is the public face now, close raw
 8000), and attach the hosted console with the `https://…` URL + key.
 REST and WebSockets both proxy; the stream runs over `wss://` automatically.
 
-## 7 · The flagship recipe
-
-In the wizard, type the use case —
-
-> *our warehouse safety cameras need to spot forklifts, wooden pallets and
-> workers in safety vests in the aisles*
-
-— 500 images, FLUX.2 + SAM 3, `yolo26m`, 60 epochs. On one MI300X this
-measured **~38 minutes end to end (~$1.25)**: watch the concurrent agent
-lanes in Mission Control, then try the trained model in the playground and
-export it (.pt / ONNX).
-
 ## Troubleshooting
 
 | Symptom | Meaning / fix |

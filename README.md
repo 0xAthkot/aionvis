@@ -48,7 +48,7 @@ rejected.*
 ## Setup — three ways in, easiest first
 
 > **Want to run the whole thing on your own AMD droplet?** That's option 3 —
-> the complete walkthrough is **[docs/DROPLET_GUIDE.md](docs/DROPLET_GUIDE.md)**
+> the complete walkthrough is **[docs/HOSTING_GUIDE.md](docs/HOSTING_GUIDE.md)**
 > (~30–45 min, ~$2/h, every trap we hit written down).
 
 ### 1 · Zero install (recommended first look)
@@ -72,9 +72,9 @@ as option 1, served locally. Verified on a clean Windows machine.
 
 ### 3 · The real thing — full swarm on an AMD MI300X
 
-**→ Step-by-step guide: [`docs/DROPLET_GUIDE.md`](docs/DROPLET_GUIDE.md)** —
-droplet creation, one-shot install, Hugging Face gating, TLS via sslip.io,
-and the flagship recipe, with the traps we hit live called out. Short version:
+**→ Step-by-step guide: [`docs/HOSTING_GUIDE.md`](docs/HOSTING_GUIDE.md)** —
+droplet creation, one-shot install, Hugging Face gating and TLS via sslip.io,
+with the traps we hit live called out. Short version:
 
 ```bash
 # on the node (AMD Developer Cloud MI300X, ROCm):
@@ -95,7 +95,7 @@ Then attach any console (option 1 or 2) to the node at runtime as above.
 The deploy script's printed output is self-contained — endpoint URL, API
 key, and the exact vLLM container command. To attach the **hosted** console
 the node needs TLS (mixed content): sslip.io + Caddy, 5 minutes —
-[guide, step 6](docs/DROPLET_GUIDE.md).
+[guide, step 6](docs/HOSTING_GUIDE.md).
 
 ### Alternative · Docker (CPU-only reference stack)
 
