@@ -6,6 +6,7 @@ import { useState } from "react";
 import { LaunchSummary } from "@/components/foundry/launch-summary";
 import { SimpleFoundry } from "@/components/foundry/simple-foundry";
 import { PageHeader } from "@/components/layout/page-header";
+import { DeleteProjectDialog } from "@/components/shared/delete-project-dialog";
 import { HelpTip } from "@/components/shared/help-tip";
 import { NewProjectDialog } from "@/components/shared/new-project-dialog";
 import { TagInput } from "@/components/shared/tag-input";
@@ -265,6 +266,10 @@ export default function FoundryPage() {
                       </SelectContent>
                     </Select>
                     <NewProjectDialog onCreated={(p) => selectProject(p.id)} />
+                    <DeleteProjectDialog
+                      project={projects?.find((p) => p.id === projectId) ?? null}
+                      onDeleted={() => setProjectId("")}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">

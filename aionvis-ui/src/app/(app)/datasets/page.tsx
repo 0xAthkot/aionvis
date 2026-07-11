@@ -3,18 +3,26 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, Database } from "lucide-react";
+import { ArrowLeft, ArrowRight, Database, Search } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { HelpTip } from "@/components/shared/help-tip";
 import { StartRunDialog } from "@/components/datasets/start-run-dialog";
 import { UploadDropzone } from "@/components/datasets/upload-dropzone";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
-import type { AnnotatedImage, Dataset, Paginated } from "@/lib/api/types";
+import { fuzzyAny } from "@/lib/fuzzy";
+import type {
+  AnnotatedImage,
+  Dataset,
+  Paginated,
+  PipelineRun,
+  Project,
+} from "@/lib/api/types";
 
 const statusLabel: Record<Dataset["status"], string> = {
   uploading: "Uploading",
@@ -175,6 +183,44 @@ export default function DatasetsPage() {
     ? Math.max(1, Math.ceil(datasetPage.total / LIBRARY_PAGE_SIZE))
     : 1;
 
+  // Search spans the WHOLE library, not just the current page: while a
+  // query is typed we fetch one big page and filter it client-side; the
+  // project link comes from dataset.projectId, or through its run.
+  const [query, setQuery] = useState("");
+  const searching = query.trim().length > 0;
+  const { data: searchPool } = useQuery({
+    queryKey: ["datasets", "search-pool"],
+    queryFn: () =>
+      api<Paginated<Dataset>>(`${endpoints.datasets.list()}?page=1&pageSize=500`),
+    enabled: searching,
+  });
+  const { data: projects } = useQuery({
+    queryKey: ["projects"],
+    queryFn: () => api<Project[]>(endpoints.projects.list()),
+    enabled: searching,
+  });
+  const { data: runPage } = useQuery({
+    queryKey: ["runs", "search-pool"],
+    queryFn: () =>
+      api<Paginated<PipelineRun>>(`${endpoints.runs.list()}?page=1&pageSize=500`),
+    enabled: searching,
+  });
+  const visible = useMemo(() => {
+    if (!searching) return datasets;
+    const projectName = new Map(projects?.map((p) => [p.id, p.name]) ?? []);
+    const projectByRun = new Map(
+      runPage?.items.map((r) => [r.id, r.projectId]) ?? [],
+    );
+    return (searchPool?.items ?? datasets ?? []).filter((d) =>
+      fuzzyAny(
+        query,
+        d.name,
+        projectName.get(d.projectId ?? projectByRun.get(d.runId ?? "") ?? ""),
+        ...d.classes.map((c) => c.name),
+      ),
+    );
+  }, [searching, datasets, searchPool, projects, runPage, query]);
+
   return (
     <main className="stagger-children mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
       <PageHeader
@@ -201,36 +247,55 @@ export default function DatasetsPage() {
           </h2>
           {datasetPage && datasetPage.total > 0 && (
             <p className="text-xs text-muted-foreground">
-              {datasetPage.total} datasets
-              {totalPages > 1 && ` · page ${page} of ${totalPages}`} ·{" "}
-              {datasets
-                ?.reduce((n, d) => n + d.imageCount, 0)
-                .toLocaleString()}{" "}
-              images and{" "}
-              {datasets?.filter((d) => d.status === "ready").length} ready to
-              train on{totalPages > 1 && " on this page"}
+              {searching ? (
+                <>{visible?.length ?? 0} of {searchPool?.total ?? datasetPage.total} datasets match</>
+              ) : (
+                <>
+                  {datasetPage.total} datasets
+                  {totalPages > 1 && ` · page ${page} of ${totalPages}`} ·{" "}
+                  {datasets
+                    ?.reduce((n, d) => n + d.imageCount, 0)
+                    .toLocaleString()}{" "}
+                  images and{" "}
+                  {datasets?.filter((d) => d.status === "ready").length} ready
+                  to train on{totalPages > 1 && " on this page"}
+                </>
+              )}
             </p>
           )}
         </div>
-        {datasets?.length === 0 ? (
+        {datasetPage && datasetPage.total > 0 && (
+          <div className="relative max-w-sm">
+            <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by dataset, project or class…"
+              className="pl-8"
+              aria-label="Search datasets"
+            />
+          </div>
+        )}
+        {visible?.length === 0 ? (
           <div className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-xl border border-dashed">
             <p className="text-sm text-muted-foreground">
-              No datasets yet — upload a .zip above or run the Synthetic
-              Foundry.
+              {searching
+                ? `Nothing matches “${query}” — try part of a dataset, project or class name.`
+                : "No datasets yet — upload a .zip above or run the Synthetic Foundry."}
             </p>
           </div>
         ) : (
           <div className="divide-y divide-border/60 border-t border-border/60">
-            {!datasets
+            {!visible
               ? Array.from({ length: 2 }, (_, i) => (
                   <Skeleton key={i} className="my-4 h-32 w-full" />
                 ))
-              : datasets.map((dataset) => (
+              : visible.map((dataset) => (
                   <DatasetRow key={dataset.id} dataset={dataset} />
                 ))}
           </div>
         )}
-        {totalPages > 1 && (
+        {totalPages > 1 && !searching && (
           <div className="flex items-center justify-center gap-3 pt-1">
             <Button
               variant="outline"

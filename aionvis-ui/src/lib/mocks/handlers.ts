@@ -134,6 +134,39 @@ export const handlers = [
       : notFound("project_not_found", `No project ${params.id}`);
   }),
 
+  http.delete(`${API_BASE}/projects/:id`, async ({ params }) => {
+    await lag();
+    const idx = db.projects.findIndex((p) => p.id === params.id);
+    if (idx === -1)
+      return notFound("project_not_found", `No project ${params.id}`);
+    const doomed = db.runs.filter((r) => r.projectId === params.id);
+    if (doomed.some((r) => ["queued", "running", "paused"].includes(r.status)))
+      return HttpResponse.json(
+        { status: 409, code: "project_busy",
+          message: "Project has active runs — cancel them first." },
+        { status: 409 },
+      );
+    const surviving = db.runs.filter((r) => r.projectId !== params.id);
+    const keepDs = new Set(surviving.map((r) => r.datasetId).filter(Boolean));
+    const keepModels = new Set(surviving.map((r) => r.modelId).filter(Boolean));
+    for (const r of doomed) {
+      if (r.datasetId && !keepDs.has(r.datasetId)) {
+        db.datasets = db.datasets.filter((d) => d.id !== r.datasetId);
+        db.annotatedImages = db.annotatedImages.filter(
+          (img) => img.datasetId !== r.datasetId,
+        );
+      }
+      if (r.modelId && !keepModels.has(r.modelId))
+        db.models = db.models.filter((m) => m.id !== r.modelId);
+    }
+    db.runs = surviving;
+    for (let i = feedbackStore.length - 1; i >= 0; i--) {
+      if (feedbackStore[i].projectId === params.id) feedbackStore.splice(i, 1);
+    }
+    db.projects.splice(idx, 1);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
   http.get(`${API_BASE}/projects/:id/feedback`, async ({ params }) => {
     await lag();
     return HttpResponse.json(

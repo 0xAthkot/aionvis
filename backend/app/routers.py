@@ -132,6 +132,54 @@ def create_project(body: CreateProjectRequest) -> Project:
     return project
 
 
+@router.delete("/projects/{project_id}", status_code=204)
+def delete_project(project_id: str) -> None:
+    """Cascade-delete a project: its runs (logs, workdirs, generated
+    files), the datasets and models those runs produced — unless another
+    surviving run references them — and its playground feedback. Refused
+    (409) while any of the project's runs is still active."""
+    import shutil
+
+    from .config import DATA_DIR
+
+    if not any(p.id == project_id for p in store.projects):
+        raise _not_found("Project", project_id)
+    doomed = [r for r in store.runs.values() if r.project_id == project_id]
+    active = [r.id for r in doomed if r.status in ("queued", "running", "paused")]
+    if active:
+        raise HTTPException(
+            409, f"Project has active runs ({', '.join(active)}) — cancel "
+                 "them before deleting.")
+
+    surviving = [r for r in store.runs.values() if r.project_id != project_id]
+    keep_ds = {r.dataset_id for r in surviving if r.dataset_id}
+    keep_models = {r.model_id for r in surviving if r.model_id}
+
+    def rm(path: Path) -> None:
+        shutil.rmtree(path, ignore_errors=True)
+
+    for r in doomed:
+        store.runs.pop(r.id, None)
+        store.run_logs.pop(r.id, None)
+        rm(DATA_DIR / "runs" / r.id)
+        rm(DATA_DIR / "files" / "runs" / r.id)
+        if r.dataset_id and r.dataset_id not in keep_ds:
+            store.datasets.pop(r.dataset_id, None)
+            store.images.pop(r.dataset_id, None)
+            rm(DATA_DIR / "files" / "datasets" / r.dataset_id)
+            rm(DATA_DIR / "byod" / r.dataset_id)
+        if r.model_id and r.model_id not in keep_models:
+            store.models.pop(r.model_id, None)
+            rm(DATA_DIR / "files" / "models" / r.model_id)
+            rm(DATA_DIR / "predictions" / r.model_id)
+    store.feedback = {
+        fid: f for fid, f in store.feedback.items()
+        if f.project_id != project_id
+    }
+    store.projects = [p for p in store.projects if p.id != project_id]
+    store.save()
+
+
 @router.get("/projects/{project_id}/feedback")
 def project_feedback(project_id: str) -> list[FoundryFeedback]:
     return sorted(

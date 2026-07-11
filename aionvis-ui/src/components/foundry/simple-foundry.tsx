@@ -3,6 +3,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronDown, Flag, Images, Rocket, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { DeleteProjectDialog } from "@/components/shared/delete-project-dialog";
 import { HelpTip } from "@/components/shared/help-tip";
 import { NewProjectDialog } from "@/components/shared/new-project-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -226,6 +227,10 @@ export function SimpleFoundry() {
                 </SelectContent>
               </Select>
               <NewProjectDialog onCreated={(p) => setProjectId(p.id)} />
+              <DeleteProjectDialog
+                project={project ?? null}
+                onDeleted={() => setProjectId("")}
+              />
             </div>
           </div>
 
@@ -268,7 +273,8 @@ export function SimpleFoundry() {
                 >
                   <p className="text-sm font-medium">{s.label}</p>
                   <p className="text-xs text-muted-foreground">
-                    {s.images.toLocaleString("en-US")} images · {s.epochs} epochs
+                    {s.images >= 1000 ? `${s.images / 1000}k` : s.images}{" "}
+                    images · {s.epochs} epochs
                   </p>
                 </button>
               ))}

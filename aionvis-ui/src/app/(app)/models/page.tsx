@@ -1,18 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Boxes, GitCompareArrows, X } from "lucide-react";
+import { ArrowRight, Boxes, GitCompareArrows, Search, X } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { HelpTip } from "@/components/shared/help-tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
-import type { ModelArtifact } from "@/lib/api/types";
+import { fuzzyAny } from "@/lib/fuzzy";
+import type {
+  ModelArtifact,
+  Paginated,
+  PipelineRun,
+  Project,
+} from "@/lib/api/types";
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
@@ -120,6 +127,42 @@ export default function ModelsPage() {
     queryFn: () => api<ModelArtifact[]>(endpoints.models.list()),
   });
   const [selected, setSelected] = useState<string[]>([]);
+  const [query, setQuery] = useState("");
+
+  // Models don't carry a project id — join through their run. Both lists
+  // are fetched lazily, only once the user actually types a query.
+  const searching = query.trim().length > 0;
+  const { data: projects } = useQuery({
+    queryKey: ["projects"],
+    queryFn: () => api<Project[]>(endpoints.projects.list()),
+    enabled: searching,
+  });
+  const { data: runPage } = useQuery({
+    queryKey: ["runs", "search-pool"],
+    queryFn: () =>
+      api<Paginated<PipelineRun>>(`${endpoints.runs.list()}?page=1&pageSize=500`),
+    enabled: searching,
+  });
+  const projectNameByRunId = useMemo(() => {
+    const byId = new Map(projects?.map((p) => [p.id, p.name]) ?? []);
+    return new Map(
+      runPage?.items.map((r) => [r.id, byId.get(r.projectId)]) ?? [],
+    );
+  }, [projects, runPage]);
+
+  const visible = useMemo(
+    () =>
+      (models ?? []).filter((m) =>
+        fuzzyAny(
+          query,
+          m.name,
+          m.architecture,
+          projectNameByRunId.get(m.runId),
+          ...m.classes,
+        ),
+      ),
+    [models, query, projectNameByRunId],
+  );
 
   const toggle = (id: string) =>
     setSelected((prev) =>
@@ -177,6 +220,19 @@ export default function ModelsPage() {
       />
 
       {models && models.length > 0 && (
+        <div className="relative max-w-sm">
+          <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by model, project, class or architecture…"
+            className="pl-8"
+            aria-label="Search models"
+          />
+        </div>
+      )}
+
+      {models && models.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {[
             ["Models", String(models.length)],
@@ -215,9 +271,16 @@ export default function ModelsPage() {
             No models yet — launch a run from the Foundry to train one.
           </p>
         </div>
+      ) : visible.length === 0 ? (
+        <div className="flex min-h-40 flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed">
+          <p className="text-sm text-muted-foreground">
+            Nothing matches “{query}” — try part of a model, project or class
+            name.
+          </p>
+        </div>
       ) : (
         <div className="divide-y divide-border/60 border-t border-border/60">
-          {models.map((model) => (
+          {visible.map((model) => (
             <ModelRow
               key={model.id}
               model={model}

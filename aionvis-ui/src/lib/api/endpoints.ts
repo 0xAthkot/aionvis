@@ -20,7 +20,11 @@ export const endpoints = {
   projects: {
     /** GET → Project[] · POST CreateProjectRequest → Project (201) */
     list: () => `${API_BASE}/projects`,
-    /** GET → Project */
+    /**
+     * GET → Project · DELETE → 204 (cascade: the project's runs, the
+     * datasets/models those runs produced — unless another surviving run
+     * references them — and its feedback; 409 while a run is active)
+     */
     get: (id: string) => `${API_BASE}/projects/${id}`,
     /** GET → FoundryFeedback[] · POST CreateFeedbackRequest → FoundryFeedback */
     feedback: (id: string) => `${API_BASE}/projects/${id}/feedback`,
