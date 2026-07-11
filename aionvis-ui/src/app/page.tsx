@@ -10,6 +10,7 @@ import {
   Download,
   FileText,
   Flag,
+  GitFork,
   KeyRound,
   Minus,
   ShieldCheck,
@@ -723,6 +724,26 @@ docker compose up --build
             FLUX.2 / SDXL · SAM 3 · YOLO26 / YOLO11 / YOLOv10 / RT-DETR /
             RF-DETR · Gemma 4 via vLLM · PyTorch on ROCm · MI300X
           </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs">
+            <a
+              href="https://github.com/0xAthkot/aionvis"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <GitFork className="size-3.5" />
+              Open-Source Version
+            </a>
+            <a
+              href="https://www.aionvis.com/idea.pdf"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <FileText className="size-3.5" />
+              Idea
+            </a>
+          </div>
           <p className="text-xs text-muted-foreground/60">
             © 2026 aionVIS
           </p>
