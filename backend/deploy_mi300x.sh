@@ -66,7 +66,7 @@ SDXL_MODEL=stabilityai/stable-diffusion-xl-base-1.0
 # FLUX.2 klein: Apache-2.0, ungated, ~13 GB — the flux wizard choice.
 FLUX_MODEL=black-forest-labs/FLUX.2-klein-4B
 # Gemma 4 MoE (Apache-2.0): near-31B quality, 4B active params — serve with
-# vLLM at --gpu-memory-utilization 0.40 (see the echo at the end).
+# vLLM at --gpu-memory-utilization 0.50 (see the echo at the end).
 LLM_MODEL=google/gemma-4-26B-A4B-it
 MAX_IMAGES_PER_RUN=500
 MAX_EPOCHS=100
@@ -75,9 +75,9 @@ MAX_BATCH_SIZE=96
 MAX_TRAIN_IMAGE_SIZE=1024
 KEEP_MODELS_WARM=true
 # Parallel swarm: synthesis/vision/critic overlap on the resident models,
-# two runs share the card, training sizes its batch to the free VRAM.
+# four runs share the card, training sizes its batch to the free VRAM.
 PIPELINE_MODE=streaming
-GPU_SLOTS=2
+GPU_SLOTS=4
 AUTO_BATCH=true
 # Local vLLM has no per-token cost — audit more crops per run.
 SEMANTIC_CRITIC_MAX_CHECKS=32
@@ -111,8 +111,8 @@ echo "      -e GLOO_SOCKET_IFNAME=lo -e NCCL_SOCKET_IFNAME=lo \\"
 echo "      -v \$HOME/.cache/huggingface:/root/.cache/huggingface \\"
 echo "      vllm/vllm-openai-rocm:v0.23.0 \\"
 echo "      --model google/gemma-4-26B-A4B-it --port 8001 \\"
-echo "      --gpu-memory-utilization 0.40"
-echo "  (0.40 is REQUIRED on the shared card: vLLM's 0.9 default would grab"
+echo "      --gpu-memory-utilization 0.50"
+echo "  (0.50 is the ceiling on the shared card: vLLM's 0.9 default would grab"
 echo "  ~170 GB and starve FLUX/SAM 3/training. Matches the LLM_MODEL default;"
 echo "  while port 8001 is down the backend uses its deterministic template"
 echo "  fallback and skips the semantic critic)"
