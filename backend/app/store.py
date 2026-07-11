@@ -107,6 +107,9 @@ class Store:
 
         self.organizations = parse(Organization, raw.get("organizations", []))
         self.members = parse(Member, raw.get("members", []))
+        # Migration: pre-v0.5 seeds shipped a fictional teammate; purge her
+        # from persisted state (she would re-save herself otherwise).
+        self.members = [m for m in self.members if m.email != "maria@aionvis.dev"]
         self.projects = parse(Project, raw.get("projects", []))
         self.runs = {r.id: r for r in parse(PipelineRun, raw.get("runs", []))}
         self.run_logs = {
@@ -164,13 +167,6 @@ class Store:
                 name="Athanasios Kotidis",
                 email="athkot@proton.me",
                 role="owner",
-            ),
-            Member(
-                id="member_2",
-                org_id=org.id,
-                name="Maria Kefalogianni",
-                email="maria@aionvis.dev",
-                role="operator",
             ),
         ]
         self.projects = [
