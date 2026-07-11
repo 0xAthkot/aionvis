@@ -34,11 +34,6 @@ SAM 3, every box verified by the Critic Agent (geometry + Gemma 4 VLM). No
 human drew or reviewed a single label — 22,718 were accepted this way, 42,214
 rejected.*
 
-![Trained model predicting a tractor at 0.97 confidence](docs/img/playground-tractor.jpg)
-
-*The output side: a swarm-trained model's own prediction in the console's
-inference playground.*
-
 ## Measured on one AMD Instinct MI300X (2026-07-10)
 
 | | |
