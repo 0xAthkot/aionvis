@@ -99,7 +99,7 @@ over plain HTTP because the local console is HTTP too.)
 
 ## 6 · Attach from the hosted console (needs TLS, ~5 min)
 
-[aionvis.vercel.app](https://aionvis.vercel.app) is served over HTTPS, so
+[aionvis.com](https://aionvis.com) is served over HTTPS, so
 browsers block plain `http://`/`ws://` calls to your node (mixed content).
 Give the node a certificate with **sslip.io** — no domain, no signup:
 `<your-ip-with-dashes>.sslip.io` already resolves to your IP.

@@ -2,7 +2,7 @@
 
 **One sentence in → deployable detection model out. Zero human labeling.**
 
-**▶ Live demo, no setup: [aionvis.vercel.app](https://aionvis.vercel.app)** — sign in
+**▶ Live demo, no setup: [aionvis.com](https://aionvis.com)** — sign in
 with any credentials (demo auth). Everything works in the browser, including a
 simulated end-to-end run in Mission Control.
 
@@ -49,7 +49,7 @@ rejected.*
 
 ### 1 · Zero install (recommended first look)
 
-Open **[aionvis.vercel.app](https://aionvis.vercel.app)** → *Launch console* →
+Open **[aionvis.com](https://aionvis.com)** → *Launch console* →
 sign in with any credentials. The console runs on an in-browser mock (MSW):
 every screen, wizard, dataset view and a full simulated run work with no
 backend and no GPU. If you have a live aionVIS node, attach it at runtime:
@@ -153,7 +153,7 @@ All models are open-weight and self-hosted; the only services involved:
 | Service | Role | Notes |
 |---|---|---|
 | **AMD Developer Cloud** | MI300X droplet the swarm runs on ($2/h) | The only compute used |
-| **Vercel** | Hosts the demo console ([aionvis.vercel.app](https://aionvis.vercel.app)) | Frontend only; runs on the in-browser mock until you attach a node |
+| **Vercel** | Hosts the demo console ([aionvis.com](https://aionvis.com)) | Frontend only; runs on the in-browser mock until you attach a node |
 | **sslip.io** | Zero-signup wildcard DNS: `129-212-179-0.sslip.io` → the droplet IP | Gives Caddy a hostname so Let's Encrypt can issue a cert; no account, stores nothing |
 | **Caddy + Let's Encrypt** | TLS proxy on the droplet (REST + WebSockets) | Required: the HTTPS console cannot call plain `http://`/`ws://` (mixed content) |
 | **Hugging Face** | Model weights, downloaded on first use | `facebook/sam3` is gated — request access on its model page and `huggingface-cli login`; check each model page for license acceptance |
