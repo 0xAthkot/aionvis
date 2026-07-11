@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo } from "react";
+import { use, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Boxes, CheckCircle2, Database, OctagonX } from "lucide-react";
@@ -13,6 +13,14 @@ import { StageTracker } from "@/components/runs/stage-tracker";
 import { VramCard } from "@/components/runs/vram-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -47,9 +55,11 @@ export default function RunDetailPage({
     queryFn: () => api<LogEvent[]>(endpoints.runs.logs(id)),
   });
 
+  const [confirmCancel, setConfirmCancel] = useState(false);
   const cancel = useMutation({
     mutationFn: () => apiPost<PipelineRun>(endpoints.runs.cancel(id), {}),
     onSuccess: () => {
+      setConfirmCancel(false);
       queryClient.invalidateQueries({ queryKey: ["run", id] });
       queryClient.invalidateQueries({ queryKey: ["runs"] });
       toast.success("Run cancelled");
@@ -122,15 +132,47 @@ export default function RunDetailPage({
             </Tooltip>
           </div>
           {cancellable && (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={cancel.isPending}
-              onClick={() => cancel.mutate()}
-            >
-              <OctagonX className="size-3.5" />
-              Cancel run
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={cancel.isPending}
+                onClick={() => setConfirmCancel(true)}
+              >
+                <OctagonX className="size-3.5" />
+                Cancel run
+              </Button>
+              <Dialog open={confirmCancel} onOpenChange={setConfirmCancel}>
+                <DialogContent className="sm:max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle>Cancel “{run.name}”?</DialogTitle>
+                    <DialogDescription>
+                      The pipeline stops where it is: no model will be
+                      trained, and {run.progress.pct.toFixed(0)}% of the work
+                      done so far is discarded. The GPU is released
+                      immediately. This cannot be resumed.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setConfirmCancel(false)}
+                      disabled={cancel.isPending}
+                    >
+                      Keep running
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      disabled={cancel.isPending}
+                      onClick={() => cancel.mutate()}
+                    >
+                      <OctagonX className="size-3.5" />
+                      {cancel.isPending ? "Cancelling…" : "Cancel run"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </>
           )}
         </div>
         <StageTracker
