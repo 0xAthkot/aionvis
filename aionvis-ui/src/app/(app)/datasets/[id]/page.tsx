@@ -322,7 +322,7 @@ export default function DatasetDetailPage({
         open={!!selected}
         onOpenChange={(open) => !open && setSelectedId(null)}
       >
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
           {selected && (
             <>
               <DialogHeader>
@@ -337,6 +337,9 @@ export default function DatasetDetailPage({
                 image={selected}
                 classes={dataset.classes}
                 showLabels
+                // Shrink-wrap so the whole card (verdict + buttons) fits the
+                // viewport; %-positioned boxes stay aligned at any size.
+                className="mx-auto w-fit [&>img]:max-h-[55dvh] [&>img]:w-auto [&>img]:max-w-full"
               />
               {selected.critique && (
                 <div
