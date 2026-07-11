@@ -57,13 +57,13 @@ Recommended `.env` on the MI300X (192 GB VRAM — no offload, bigger models):
 PUBLIC_BASE_URL=http://<node-ip>:8000
 VISION_BACKEND=sam3                 # gated facebook/sam3 — run `huggingface-cli login`
 SDXL_MODEL=stabilityai/stable-diffusion-xl-base-1.0
-MAX_IMAGES_PER_RUN=500
-MAX_EPOCHS=100
+MAX_IMAGES_PER_RUN=100000
+MAX_EPOCHS=1000
 MAX_BATCH_SIZE=96
 MAX_TRAIN_IMAGE_SIZE=1024
 KEEP_MODELS_WARM=true               # swarm stays resident in the 192 GB
 PIPELINE_MODE=streaming             # synthesis/vision/critic overlap (needs keep-warm)
-GPU_SLOTS=2                         # two runs share the card concurrently
+GPU_SLOTS=4                         # four runs share the card concurrently
 AUTO_BATCH=true                     # training sizes its batch to free VRAM
 ```
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Flag, Sparkles } from "lucide-react";
+import { Flag, Images, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { LaunchSummary } from "@/components/foundry/launch-summary";
 import { SimpleFoundry } from "@/components/foundry/simple-foundry";
@@ -25,6 +25,11 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { api, apiPost } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import { useUiModeStore } from "@/lib/stores/ui-mode";
@@ -40,6 +45,7 @@ import type {
   ExpandPromptRequest,
   ExpandPromptResponse,
   FoundryFeedback,
+  PreviewImagesResponse,
   Project,
   TrainingConfig,
   TrainingTask,
@@ -165,7 +171,9 @@ export default function FoundryPage() {
     !!projectId &&
     name.trim().length > 2 &&
     targetClasses.length > 0 &&
-    useCase.trim().length > 15;
+    useCase.trim().length > 15 &&
+    imageCount >= 1 &&
+    training.epochs >= 1;
 
   // Slider tweaks are one flick to redo; typed text is the progress worth
   // guarding when a mode switch would unmount the wizard.
@@ -179,6 +187,17 @@ export default function FoundryPage() {
   const expansion = useMutation({
     mutationFn: (body: ExpandPromptRequest) =>
       apiPost<ExpandPromptResponse>(endpoints.foundry.expandPrompt(), body),
+  });
+
+  const paint = useMutation({
+    mutationFn: () =>
+      apiPost<PreviewImagesResponse>(endpoints.foundry.previewImages(), {
+        useCase,
+        targetClasses,
+        randomization,
+        generator,
+        count: 3,
+      }),
   });
 
   const { data: feedback } = useQuery({
@@ -431,6 +450,72 @@ export default function FoundryPage() {
                   </p>
                 )}
               </div>
+
+              <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Images className="size-4 text-primary" />
+                    <p className="text-sm font-medium">
+                      See what the swarm will paint
+                    </p>
+                    <Badge variant="outline" className="uppercase">
+                      {generator}
+                    </Badge>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={useCase.trim().length < 16 || paint.isPending}
+                    onClick={() => paint.mutate()}
+                  >
+                    {paint.isPending ? "Painting…" : "Paint 3 samples"}
+                  </Button>
+                </div>
+                {paint.isPending ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    {Array.from({ length: 3 }, (_, i) => (
+                      <Skeleton key={i} className="aspect-square w-full rounded-md" />
+                    ))}
+                  </div>
+                ) : paint.isError ? (
+                  <p className="text-xs text-destructive">{paint.error.message}</p>
+                ) : paint.data ? (
+                  <>
+                    <div className="grid grid-cols-3 gap-2">
+                      {paint.data.images.map((img) => (
+                        <Tooltip key={img.url}>
+                          <TooltipTrigger asChild>
+                            {/* Data URIs (mock) / remote-node files — next/image
+                                adds nothing here. */}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={img.url}
+                              alt={img.scenario ?? img.fileName}
+                              className="aspect-square w-full rounded-md border object-cover"
+                            />
+                          </TooltipTrigger>
+                          {img.scenario && (
+                            <TooltipContent className="max-w-72">
+                              {img.scenario}
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Painted by {paint.data.model} — the full run creates{" "}
+                      {imageCount.toLocaleString()} like these, then labels
+                      and verifies them.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Synthesis dry-run: three sample images with the selected
+                    generator, before you commit the full run.
+                  </p>
+                )}
+              </div>
             </div>
           </section>
 
@@ -472,20 +557,26 @@ export default function FoundryPage() {
               </div>
               <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <Label htmlFor="image-count">Images to generate</Label>
-                    <span className="text-sm text-muted-foreground">
-                      {imageCount.toLocaleString()}
-                    </span>
-                  </div>
-                  <Slider
+                  <Label htmlFor="image-count">Images to generate</Label>
+                  <Input
                     id="image-count"
-                    value={[imageCount]}
-                    onValueChange={([v]) => setImageCount(v)}
-                    min={100}
-                    max={1000}
-                    step={50}
+                    type="number"
+                    min={1}
+                    max={100000}
+                    value={imageCount || ""}
+                    onChange={(e) => {
+                      const v = Math.round(Number(e.target.value));
+                      setImageCount(
+                        Number.isFinite(v) ? Math.min(100000, Math.max(0, v)) : 0,
+                      );
+                    }}
+                    onBlur={() => {
+                      if (imageCount < 1) setImageCount(500);
+                    }}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Up to 100,000 per run.
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between">
@@ -572,20 +663,28 @@ export default function FoundryPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <div className="flex justify-between">
-                  <Label htmlFor="epochs">Epochs</Label>
-                  <span className="text-sm text-muted-foreground">
-                    {training.epochs}
-                  </span>
-                </div>
-                <Slider
+                <Label htmlFor="epochs">Epochs</Label>
+                <Input
                   id="epochs"
-                  value={[training.epochs]}
-                  onValueChange={([v]) => setTraining({ ...training, epochs: v })}
-                  min={10}
-                  max={150}
-                  step={5}
+                  type="number"
+                  min={1}
+                  max={1000}
+                  value={training.epochs || ""}
+                  onChange={(e) => {
+                    const v = Math.round(Number(e.target.value));
+                    setTraining({
+                      ...training,
+                      epochs: Number.isFinite(v)
+                        ? Math.min(1000, Math.max(0, v))
+                        : 0,
+                    });
+                  }}
+                  onBlur={() => {
+                    if (training.epochs < 1)
+                      setTraining({ ...training, epochs: 60 });
+                  }}
                 />
+                <p className="text-xs text-muted-foreground">Up to 1,000.</p>
               </div>
               <div className="space-y-2">
                 <Label>Image size</Label>

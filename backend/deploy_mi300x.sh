@@ -68,8 +68,8 @@ FLUX_MODEL=black-forest-labs/FLUX.2-klein-4B
 # Gemma 4 MoE (Apache-2.0): near-31B quality, 4B active params — serve with
 # vLLM at --gpu-memory-utilization 0.50 (see the echo at the end).
 LLM_MODEL=google/gemma-4-26B-A4B-it
-MAX_IMAGES_PER_RUN=500
-MAX_EPOCHS=100
+MAX_IMAGES_PER_RUN=100000
+MAX_EPOCHS=1000
 # 192 GB: feed the card and keep every stage model resident.
 MAX_BATCH_SIZE=96
 MAX_TRAIN_IMAGE_SIZE=1024

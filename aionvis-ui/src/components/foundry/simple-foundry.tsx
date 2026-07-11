@@ -48,9 +48,10 @@ import { cn } from "@/lib/utils";
 
 /** Everything the Pro wizard exposes as knobs, chosen for the user. */
 const SIZES = [
-  { id: "small", label: "Small", images: 12, epochs: 30 },
-  { id: "medium", label: "Medium", images: 24, epochs: 45 },
-  { id: "large", label: "Large", images: 48, epochs: 60 },
+  { id: "test", label: "Test", images: 50, epochs: 30 },
+  { id: "small", label: "Small", images: 250, epochs: 45 },
+  { id: "medium", label: "Medium", images: 1000, epochs: 60 },
+  { id: "large", label: "Large", images: 5000, epochs: 100 },
 ] as const;
 type SizeId = (typeof SIZES)[number]["id"];
 
@@ -252,7 +253,7 @@ export function SimpleFoundry() {
                 build.
               </HelpTip>
             </Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {SIZES.map((s) => (
                 <button
                   key={s.id}
@@ -267,7 +268,7 @@ export function SimpleFoundry() {
                 >
                   <p className="text-sm font-medium">{s.label}</p>
                   <p className="text-xs text-muted-foreground">
-                    {s.images} images · {s.epochs} epochs
+                    {s.images.toLocaleString("en-US")} images · {s.epochs} epochs
                   </p>
                 </button>
               ))}
@@ -529,7 +530,8 @@ export function SimpleFoundry() {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Painted by {paint.data.model} — the full build creates{" "}
-                  {sizeCfg.images} like these, then labels and verifies them.
+                  {sizeCfg.images.toLocaleString("en-US")} like these, then
+                  labels and verifies them.
                 </p>
               </>
             ) : (
