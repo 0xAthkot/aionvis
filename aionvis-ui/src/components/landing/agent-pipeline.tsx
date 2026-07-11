@@ -21,7 +21,7 @@ interface AgentSpec {
   icon: LucideIcon;
   name: string;
   tech: string;
-  /** Hover tooltip on the tech line — e.g. the full architecture list. */
+  /** Hover tooltip on the tech line - e.g. the full architecture list. */
   techTip?: string[];
   blurb: string;
   status: string;
@@ -46,7 +46,7 @@ const AGENTS: AgentSpec[] = [
     icon: Eye,
     name: "Vision Agent",
     tech: "SAM 3 · open vocabulary",
-    blurb: "Segments and labels every object — any noun works, no fixed classes.",
+    blurb: "Segments and labels every object - any noun works, no fixed classes.",
     status: "Segmenting objects…",
   },
   {
@@ -61,9 +61,9 @@ const AGENTS: AgentSpec[] = [
     name: "MLOps Agent",
     tech: "22 architectures · PyTorch on ROCm",
     techTip: [
-      "YOLOv10 / YOLO11 / YOLO26 — n·s·m·l·x each",
-      "RT-DETR — L / X",
-      "RF-DETR — nano · small · medium · base · large",
+      "YOLOv10 / YOLO11 / YOLO26 - n·s·m·l·x each",
+      "RT-DETR - L / X",
+      "RF-DETR - nano · small · medium · base · large",
       "Exports: .pt · ONNX · TorchScript · OpenVINO",
     ],
     blurb: "Trains, streams live metrics, writes its own model card, exports weights.",
@@ -109,7 +109,7 @@ function AgentCard({
               {agent.tech}
             </p>
           </TooltipTrigger>
-          {/* Base TooltipContent is inline-flex — one block child keeps
+          {/* Base TooltipContent is inline-flex - one block child keeps
               the lines stacked instead of flowing into columns. */}
           <TooltipContent className="max-w-72">
             <div className="space-y-1">
@@ -154,7 +154,7 @@ function FlowEdge({ className }: { className?: string }) {
   );
 }
 
-/** Mode A — today's linear chain: one agent active at a time. */
+/** Mode A - today's linear chain: one agent active at a time. */
 function SequentialPipeline() {
   const [active, setActive] = useState(0);
 
@@ -189,7 +189,7 @@ function SequentialPipeline() {
 }
 
 /**
- * Mode B — the MI300X pitch: after the Prompt Agent hands off, Synthesis,
+ * Mode B - the MI300X pitch: after the Prompt Agent hands off, Synthesis,
  * Vision and Critic work as concurrent peers (bounded streams between
  * them), joining into the trainer only once every label is verified.
  */
@@ -230,16 +230,16 @@ function ParallelPipeline() {
         </div>
       </div>
       <p className="text-center font-mono text-xs text-primary/90">
-        192 GB HBM3 holds the entire swarm resident — Gemma 4, FLUX.2,
-        SAM 3 — at once.
+        192 GB HBM3 holds the entire swarm resident - Gemma 4, FLUX.2,
+        SAM 3 - at once.
       </p>
     </div>
   );
 }
 
 const MODES = [
-  { id: "sequential" as const, label: "Any GPU — agents take turns" },
-  { id: "parallel" as const, label: "One MI300X — the swarm works in parallel" },
+  { id: "sequential" as const, label: "Any GPU - agents take turns" },
+  { id: "parallel" as const, label: "One MI300X - the swarm works in parallel" },
 ];
 
 export function AgentPipeline() {
@@ -249,7 +249,7 @@ export function AgentPipeline() {
   const [height, setHeight] = useState<number | undefined>(undefined);
 
   // The wrapper animates to the ACTIVE mode's height (the inactive mode is
-  // absolutely positioned, so it contributes none) — no dead space below
+  // absolutely positioned, so it contributes none) - no dead space below
   // the shorter mode, and the resize glides instead of snapping.
   useEffect(() => {
     const el = mode === "sequential" ? seqRef.current : parRef.current;
@@ -286,7 +286,7 @@ export function AgentPipeline() {
         ))}
       </div>
       {/* Both modes stay mounted and cross-fade while the wrapper's height
-          glides to the active mode's — the inactive mode sits absolute, so
+          glides to the active mode's - the inactive mode sits absolute, so
           the shorter mode leaves no dead space below. */}
       <div
         className="relative overflow-hidden transition-[height] duration-300 motion-reduce:transition-none"

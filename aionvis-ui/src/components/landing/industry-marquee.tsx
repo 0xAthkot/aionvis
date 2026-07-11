@@ -47,9 +47,9 @@ const INDUSTRIES: {
     icon: Factory,
     name: "AI in Manufacturing",
     blurb:
-      "Defect, weld and PPE detectors trained from a sentence — quality control models without a single hand-drawn box.",
+      "Defect, weld and PPE detectors trained from a sentence - quality control models without a single hand-drawn box.",
     image: "/industries/manufacturing.jpg",
-    // ds_0017/img_0010.jpg — bottling-line run (run_0025)
+    // ds_0017/img_0010.jpg - bottling-line run (run_0025)
     boxes: [
       { label: "bottle", color: "#d97706", cx: 0.3945, cy: 0.7839, w: 0.0664, h: 0.1636, chip: true }, // conf 0.934
       { label: "bottle", color: "#d97706", cx: 0.3599, cy: 0.8661, w: 0.0732, h: 0.1593 }, // conf 0.934
@@ -65,7 +65,7 @@ const INDUSTRIES: {
     blurb:
       "Detect panels, parts and assembly states on the line, and retrain in minutes when the product changes.",
     image: "/industries/automotive.jpg",
-    // ds_0014/img_0008.jpg — assembly-line run (run_0023)
+    // ds_0014/img_0008.jpg - assembly-line run (run_0023)
     boxes: [
       { label: "car body", color: "#d97706", cx: 0.6885, cy: 0.5849, w: 0.623, h: 0.7136, chip: true }, // conf 0.922
       { label: "wheel", color: "#0284c7", cx: 0.4502, cy: 0.6197, w: 0.0715, h: 0.1511, chip: true }, // conf 0.54
@@ -79,7 +79,7 @@ const INDUSTRIES: {
     blurb:
       "Crop, livestock and machinery detection for fields where nobody wants to hand-label ten thousand aerial photos.",
     image: "/industries/agriculture.jpg",
-    // ds_0008/img_0005.jpg — farm run (run_0015)
+    // ds_0008/img_0005.jpg - farm run (run_0015)
     boxes: [
       { label: "hay bale", color: "#0284c7", cx: 0.0783, cy: 0.9448, w: 0.1566, h: 0.4375, chip: true }, // conf 0.912
       { label: "hay bale", color: "#0284c7", cx: 0.187, cy: 0.8721, w: 0.3338, h: 0.4473 }, // conf 0.859
@@ -93,9 +93,9 @@ const INDUSTRIES: {
     icon: Bot,
     name: "AI in Robotics",
     blurb:
-      "Give a robot eyes for new objects overnight — synthetic scenes cover bins, grips and clutter before the robot ever sees them.",
+      "Give a robot eyes for new objects overnight - synthetic scenes cover bins, grips and clutter before the robot ever sees them.",
     image: "/industries/robotics.jpg",
-    // ds_0012/img_0010.jpg — cluttered-aisle run (run_0016)
+    // ds_0012/img_0010.jpg - cluttered-aisle run (run_0016)
     boxes: [
       { label: "box", color: "#d97706", cx: 0.627, cy: 0.2615, w: 0.0906, h: 0.1115, chip: true }, // conf 0.941
       { label: "box", color: "#d97706", cx: 0.5109, cy: 0.2365, w: 0.1383, h: 0.132 }, // conf 0.941
@@ -118,9 +118,9 @@ const INDUSTRIES: {
     icon: Warehouse,
     name: "AI in Logistics",
     blurb:
-      "Forklifts, pallets and safety vests from one sentence — the exact domain the live demo trains end to end.",
+      "Forklifts, pallets and safety vests from one sentence - the exact domain the live demo trains end to end.",
     image: "/industries/logistics.jpg",
-    // ds_0009/img_0007.jpg — warehouse-safety run (run_0017)
+    // ds_0009/img_0007.jpg - warehouse-safety run (run_0017)
     boxes: [
       { label: "forklift", color: "#d97706", cx: 0.6117, cy: 0.4825, w: 0.3398, h: 0.5964, chip: true }, // conf 0.964
       { label: "pallet", color: "#0284c7", cx: 0.1947, cy: 0.5177, w: 0.1493, h: 0.0708, chip: true }, // conf 0.927
@@ -135,9 +135,9 @@ const INDUSTRIES: {
     icon: ShoppingCart,
     name: "AI in Retail",
     blurb:
-      "Shelf gaps, planogram drift and queue counts — describe the shelf, get the detector.",
+      "Shelf gaps, planogram drift and queue counts - describe the shelf, get the detector.",
     image: "/industries/retail.jpg",
-    // ds_0011/img_0002.jpg — supermarket-aisle run (run_0018)
+    // ds_0011/img_0002.jpg - supermarket-aisle run (run_0018)
     boxes: [
       { label: "cart", color: "#d97706", cx: 0.6793, cy: 0.8052, w: 0.2352, h: 0.4396, chip: true }, // conf 0.972
       { label: "cart", color: "#d97706", cx: 0.3345, cy: 0.8047, w: 0.1959, h: 0.426 }, // conf 0.967
@@ -158,9 +158,9 @@ const INDUSTRIES: {
     icon: Radar,
     name: "AI in Defense",
     blurb:
-      "Aerial, maritime and perimeter detection where real imagery is scarce or classified — synthetic scenes fill the gap.",
+      "Aerial, maritime and perimeter detection where real imagery is scarce or classified - synthetic scenes fill the gap.",
     image: "/industries/defense.jpg",
-    // ds_0016/img_0003.jpg — perimeter-drone run (run_0024)
+    // ds_0016/img_0003.jpg - perimeter-drone run (run_0024)
     boxes: [
       { label: "drone", color: "#d97706", cx: 0.516, cy: 0.5143, w: 0.4297, h: 0.1995, chip: true }, // conf 0.965
     ],
@@ -175,7 +175,7 @@ function IndustryRow({ ariaHidden = false }: { ariaHidden?: boolean }) {
           key={name}
           className="w-72 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-card/40"
         >
-          {/* overflow-hidden: stored boxes can extend past the 4:3 crop —
+          {/* overflow-hidden: stored boxes can extend past the 4:3 crop -
               clip them at the image edge instead of bleeding into the text */}
           <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden border-b border-white/5 bg-gradient-to-br from-muted/40 to-muted/10">
             {image ? (
@@ -244,12 +244,12 @@ function IndustryRow({ ariaHidden = false }: { ariaHidden?: boolean }) {
   );
 }
 
-/** One marquee loop takes this long when idle — matches the old CSS pace. */
+/** One marquee loop takes this long when idle - matches the old CSS pace. */
 const LOOP_SECONDS = 45;
 
 /**
  * Infinite marquee, draggable. The track holds two identical rows, and a
- * rAF loop advances a pixel offset wrapped modulo one row's width — the
+ * rAF loop advances a pixel offset wrapped modulo one row's width - the
  * same seamless -50% trick as the old CSS animation, but interactive:
  * hovering pauses, dragging scrubs (pointer events, so touch works too).
  */

@@ -5,7 +5,6 @@ import {
   Activity,
   ArrowRight,
   Check,
-  ChevronDown,
   Cloud,
   Cpu,
   Download,
@@ -22,6 +21,7 @@ import {
 } from "lucide-react";
 import { AgentPipeline } from "@/components/landing/agent-pipeline";
 import { ContactDialog } from "@/components/landing/contact-dialog";
+import { FaqItem } from "@/components/landing/faq-item";
 import { HeroVisual } from "@/components/landing/hero-visual";
 import { IndustryMarquee } from "@/components/landing/industry-marquee";
 import { LandingNav } from "@/components/landing/landing-nav";
@@ -58,7 +58,7 @@ const FEATURES = [
   {
     icon: Target,
     title: "Inference playground",
-    body: "Drop a photo on any trained model and watch it detect — live latency, device badge, boxes drawn on your image. Every model proves itself before you ship it.",
+    body: "Drop a photo on any trained model and watch it detect - live latency, device badge, boxes drawn on your image. Every model proves itself before you ship it.",
   },
   {
     icon: Flag,
@@ -83,7 +83,7 @@ const FEATURES = [
   {
     icon: FileText,
     title: "Autonomous model cards",
-    body: "After training, the MLOps Agent writes an honest model card — intended use, data provenance, metrics, limitations — for every artifact. Unedited, self-critical.",
+    body: "After training, the MLOps Agent writes an honest model card - intended use, data provenance, metrics, limitations - for every artifact. Unedited, self-critical.",
   },
   {
     icon: Upload,
@@ -93,7 +93,7 @@ const FEATURES = [
   {
     icon: Download,
     title: "Export anywhere",
-    body: "Datasets leave as YOLO, COCO, Pascal VOC or CSV; weights as .pt, ONNX, TorchScript or OpenVINO. Boxes, masks, rotated boxes or pose — never locked in.",
+    body: "Datasets leave as YOLO, COCO, Pascal VOC or CSV; weights as .pt, ONNX, TorchScript or OpenVINO. Boxes, masks, rotated boxes or pose - never locked in.",
   },
 ];
 
@@ -104,7 +104,7 @@ const COMPARE_ROWS: { label: string; cells: [Cell, Cell, Cell] }[] = [
     cells: [
       { text: "Human annotators", bad: true },
       { text: "Humans + SAM assist", bad: true },
-      { text: "Nobody — agents label & verify", good: true },
+      { text: "Nobody - agents label & verify", good: true },
     ],
   },
   {
@@ -158,19 +158,19 @@ function CellIcon({ cell }: { cell: Cell }) {
 const FAQS = [
   {
     q: "If no human draws a single box, who checks the labels?",
-    a: "Every label passes a two-stage Critic: a pure-geometry check that re-derives each box from its mask and rejects poor fits, and a Gemma VLM spot-check that confirms crops actually show the claimed class. Labels that fail are regenerated or dropped — and a run whose data doesn't survive scrutiny fails honestly instead of shipping a bad model.",
+    a: "Every label passes a two-stage Critic: a pure-geometry check that re-derives each box from its mask and rejects poor fits, and a Gemma VLM spot-check that confirms crops actually show the claimed class. Labels that fail are regenerated or dropped - and a run whose data doesn't survive scrutiny fails honestly instead of shipping a bad model.",
   },
   {
     q: "Can I use my own images instead of synthetic ones?",
-    a: "Yes — upload a zip of your own imagery and the swarm takes it from there: labeling, verification, and training, no annotation required. Flag a missed detection in the playground and the next run generates scenarios targeting exactly that failure.",
+    a: "Yes - upload a zip of your own imagery and the swarm takes it from there: labeling, verification, and training, no annotation required. Flag a missed detection in the playground and the next run generates scenarios targeting exactly that failure.",
   },
   {
     q: "What formats can I export?",
-    a: "Datasets export as YOLO, COCO (with segmentation), Pascal VOC, and CSV — parity with what Label Studio offers. Trained models ship as .pt, ONNX, TorchScript, and OpenVINO, ready for deployment.",
+    a: "Datasets export as YOLO, COCO (with segmentation), Pascal VOC, and CSV - parity with what Label Studio offers. Trained models ship as .pt, ONNX, TorchScript, and OpenVINO, ready for deployment.",
   },
   {
     q: "Can I run it on my own hardware?",
-    a: "The whole stack self-hosts with one docker compose up — CUDA or ROCm — and the LLM is any OpenAI-compatible endpoint you point it at; vLLM serving Gemma keeps everything on your own silicon. Nothing leaves your network.",
+    a: "The whole stack self-hosts with one docker compose up - CUDA or ROCm - and the LLM is any OpenAI-compatible endpoint you point it at; vLLM serving Gemma keeps everything on your own silicon. Nothing leaves your network.",
   },
   {
     q: "How long does a run take, and what will it cost?",
@@ -178,11 +178,11 @@ const FAQS = [
   },
   {
     q: "What is image annotation?",
-    a: "Labeling images — boxes, masks, keypoints — so a model can learn what to look for. It's traditionally the slowest and most expensive step in computer vision, and it's the step aionVIS removes entirely: the agents draw and verify every label themselves.",
+    a: "Labeling images - boxes, masks, keypoints - so a model can learn what to look for. It's traditionally the slowest and most expensive step in computer vision, and it's the step aionVIS removes entirely: the agents draw and verify every label themselves.",
   },
   {
     q: "What is model training?",
-    a: "Showing a model thousands of labeled examples until it can find those objects in images it has never seen. The MLOps Agent handles it end to end — architecture selection to exported weights — with live epoch metrics streaming to Mission Control.",
+    a: "Showing a model thousands of labeled examples until it can find those objects in images it has never seen. The MLOps Agent handles it end to end - architecture selection to exported weights - with live epoch metrics streaming to Mission Control.",
   },
 ];
 
@@ -192,7 +192,7 @@ const PLANS = [
     price: "Free",
     tagline: "Self-hosted, open pipeline",
     features: [
-      "docker compose up — full stack locally",
+      "docker compose up - full stack locally",
       "Bring your own GPU (CUDA or ROCm)",
       "Bring your own OpenAI-compatible LLM (vLLM)",
       "YOLO / COCO / VOC / CSV / ONNX export",
@@ -222,7 +222,7 @@ const PLANS = [
     features: [
       "On-prem or dedicated MI300X nodes",
       "SSO / SAML, isolated tenancy",
-      "Self-hosted LLM (vLLM) — zero external calls",
+      "Self-hosted LLM (vLLM) - zero external calls",
       "Support SLAs",
     ],
     cta: "Talk to us",
@@ -283,7 +283,7 @@ export default function LandingPage() {
               </h1>
               <p className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg">
                 aionVIS is an autonomous agent swarm that turns one plain-English
-                sentence into a trained, deployable detection model — generating,
+                sentence into a trained, deployable detection model - generating,
                 labeling and QA-ing its own training data. Zero human annotation.
               </p>
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -300,7 +300,7 @@ export default function LandingPage() {
             <div className="mx-auto mt-14 max-w-3xl">
               <HeroVisual />
               <p className="mt-4 text-center text-xs text-muted-foreground">
-                Real output — these images were generated by the swarm and the
+                Real output - these images were generated by the swarm and the
                 boxes are its own Critic-verified labels.
               </p>
             </div>
@@ -328,7 +328,7 @@ export default function LandingPage() {
               </h2>
               <p className="mt-4 text-muted-foreground">
                 Annotation tools help humans label faster. We removed the humans.
-                Each agent hands verified work to the next — and the Critic sends
+                Each agent hands verified work to the next - and the Critic sends
                 bad labels back.
               </p>
               <p className="mt-3 font-medium">
@@ -338,7 +338,7 @@ export default function LandingPage() {
             </div>
             <AgentPipeline />
             <p className="mt-8 text-center text-sm text-muted-foreground">
-              Every stage streams live to Mission Control — agent reasoning, critic
+              Every stage streams live to Mission Control - agent reasoning, critic
               verdicts, VRAM orchestration, training curves.
             </p>
           </div>
@@ -352,7 +352,7 @@ export default function LandingPage() {
                 A complete data-to-model factory
               </h2>
               <p className="mt-4 text-muted-foreground">
-                Not an annotation tool with AI sprinkled on top — an end-to-end
+                Not an annotation tool with AI sprinkled on top - an end-to-end
                 MLOps control plane where the data, the labels and the models all
                 build themselves.
               </p>
@@ -433,7 +433,7 @@ export default function LandingPage() {
               </table>
             </div>
             <p className="mt-4 text-center text-xs text-muted-foreground">
-              Synthetic data is easy to generate and hard to trust — the
+              Synthetic data is easy to generate and hard to trust - the
               self-correcting Critic is the trust layer.
             </p>
           </div>
@@ -448,8 +448,8 @@ export default function LandingPage() {
                   Born on AMD
                 </h2>
                 <p className="mt-4 text-muted-foreground">
-                  The whole swarm — diffusion, segmentation, training, and
-                  optionally the LLM itself — fits resident in one MI300X&apos;s
+                  The whole swarm - diffusion, segmentation, training, and
+                  optionally the LLM itself - fits resident in one MI300X&apos;s
                   192&nbsp;GB of VRAM. No model juggling, no multi-node
                   orchestration: one box is a complete data-to-model factory.
                 </p>
@@ -457,7 +457,7 @@ export default function LandingPage() {
                   <li className="flex gap-3">
                     <Check className="mt-0.5 size-4 shrink-0 text-primary" />
                     <span>
-                      <span className="font-medium">AMD MI300X</span> — PyTorch on
+                      <span className="font-medium">AMD MI300X</span> - PyTorch on
                       ROCm end to end, live <span className="font-mono text-xs">amd-smi</span> telemetry,
                       explicit VRAM orchestration between stages.
                     </span>
@@ -465,7 +465,7 @@ export default function LandingPage() {
                   <li className="flex gap-3">
                     <Check className="mt-0.5 size-4 shrink-0 text-primary" />
                     <span>
-                      <span className="font-medium">Gemma via vLLM</span> — served
+                      <span className="font-medium">Gemma via vLLM</span> - served
                       on the same MI300X: expands prompts, writes model cards, and
                       semantically verifies labels as a VLM critic. Zero external
                       API calls, zero per-token cost.
@@ -474,7 +474,7 @@ export default function LandingPage() {
                   <li className="flex gap-3">
                     <Check className="mt-0.5 size-4 shrink-0 text-primary" />
                     <span>
-                      <span className="font-medium">Endpoint-agnostic</span> — the
+                      <span className="font-medium">Endpoint-agnostic</span> - the
                       swarm speaks the OpenAI chat protocol, so any compatible
                       endpoint drops in with one env var.
                     </span>
@@ -486,7 +486,7 @@ export default function LandingPage() {
                   Self-host it
                 </h2>
                 <p className="mt-4 text-muted-foreground">
-                  The entire stack runs on your machine with your own keys —
+                  The entire stack runs on your machine with your own keys -
                   two commands, no accounts, nothing leaves your network.
                 </p>
                 <div className="mt-6 overflow-hidden rounded-xl border border-white/10 bg-zinc-950/90 shadow-xl">
@@ -522,7 +522,7 @@ docker compose up --build
                 Priced like infrastructure, not labor
               </h2>
               <p className="mt-4 text-muted-foreground">
-                Human labeling scales with boxes. We scale with GPU-minutes — and
+                Human labeling scales with boxes. We scale with GPU-minutes - and
                 every run shows you its quote before you launch it.
               </p>
             </div>
@@ -579,11 +579,11 @@ docker compose up --build
                 One swarm, every industry
               </h2>
               <p className="mt-4 text-muted-foreground">
-                From factory floors to farm fields — if you can describe it,
+                From factory floors to farm fields - if you can describe it,
                 the swarm can detect it. Every image below is real aionVIS
                 output: generated on the MI300X from that industry&apos;s
                 use-case sentence, with its real swarm-verified detection
-                boxes — no stock photos, no hand-drawn labels.
+                boxes - no stock photos, no hand-drawn labels.
               </p>
             </div>
           </div>
@@ -600,18 +600,7 @@ docker compose up --build
             </div>
             <div className="space-y-3">
               {FAQS.map((f) => (
-                <details
-                  key={f.q}
-                  className="group rounded-xl border border-white/10 bg-card/40 px-5"
-                >
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-sm font-medium [&::-webkit-details-marker]:hidden">
-                    {f.q}
-                    <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
-                  </summary>
-                  <p className="pb-5 text-sm leading-relaxed text-muted-foreground">
-                    {f.a}
-                  </p>
-                </details>
+                <FaqItem key={f.q} q={f.q} a={f.a} />
               ))}
             </div>
           </div>
@@ -640,7 +629,7 @@ docker compose up --build
               </h2>
               <p className="mt-4 text-muted-foreground">
                 aionVIS runs on <em className="pr-0.5">your</em>{" "}
-                compute. Your node&apos;s API key is your login — nothing
+                compute. Your node&apos;s API key is your login - nothing
                 else to sign up for.
               </p>
             </div>
@@ -651,7 +640,7 @@ docker compose up --build
                   <p className="text-sm font-semibold">1 · Create a node</p>
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                  Spin up a GPU droplet — e.g. an MI300X on the AMD Developer
+                  Spin up a GPU droplet - e.g. an MI300X on the AMD Developer
                   Cloud. Any box that runs the open-source backend works.
                 </p>
               </div>
@@ -686,7 +675,7 @@ docker compose up --build
               <Link href="/login" className="text-foreground underline underline-offset-4">
                 demo
               </Link>{" "}
-              runs the full console on an in-browser simulation — no account, no GPU.
+              runs the full console on an in-browser simulation - no account, no GPU.
             </p>
           </div>
         </section>
@@ -704,7 +693,7 @@ docker compose up --build
                   Your next model is one sentence away
                 </h2>
                 <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-                  Describe what you need to detect. The swarm handles the rest —
+                  Describe what you need to detect. The swarm handles the rest -
                   and shows you every step.
                 </p>
                 <Button asChild size="lg" className="mt-8">

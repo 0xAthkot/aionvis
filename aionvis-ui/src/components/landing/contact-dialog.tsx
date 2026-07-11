@@ -21,7 +21,7 @@ const CONTACT = "aionvisofficial@gmail.com";
 /**
  * "Talk to us" → an animated dialog (shadcn fade/zoom) that composes a
  * message. The site is static, so submit opens the visitor's mail client
- * pre-filled to our address — and the address itself is always visible.
+ * pre-filled to our address - and the address itself is always visible.
  */
 export function ContactDialog({ cta }: { cta: string }) {
   const [open, setOpen] = useState(false);
@@ -35,7 +35,7 @@ export function ContactDialog({ cta }: { cta: string }) {
       `aionVIS inquiry${name.trim() ? ` from ${name.trim()}` : ""}`,
     );
     const body = encodeURIComponent(
-      `${message.trim()}\n\n— ${name.trim() || "Anonymous"}${
+      `${message.trim()}\n\n- ${name.trim() || "Anonymous"}${
         email.trim() ? ` (${email.trim()})` : ""
       }`,
     );
@@ -57,9 +57,9 @@ export function ContactDialog({ cta }: { cta: string }) {
         <DialogHeader>
           <DialogTitle>Talk to us</DialogTitle>
           <DialogDescription>
-            aionVIS is a young startup — paid plans aren&apos;t available
-            yet. If you&apos;re interested in where this project is going —
-            as an early user, partner or contributor — we&apos;d genuinely
+            aionVIS is a young startup - paid plans aren&apos;t available
+            yet. If you&apos;re interested in where this project is going -
+            as an early user, partner or contributor - we&apos;d genuinely
             love to hear from you.
           </DialogDescription>
         </DialogHeader>

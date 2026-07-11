@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
  * synthetic images appear → verified boxes draw on → training → model ready.
  * Each loop plays the next scenario. Every tile is a REAL FLUX.2-klein
  * output from a real MI300X pipeline run (public/landing/*.jpg) with its
- * REAL SAM 3 + Critic-verified boxes — normalized cx/cy/w/h straight from
+ * REAL SAM 3 + Critic-verified boxes - normalized cx/cy/w/h straight from
  * the dataset records (ds_0004 / ds_0005 / ds_0006, 2026-07-10).
  */
 // Display rule: every stored box with confidence >= 0.50 is drawn (the
@@ -38,7 +38,7 @@ type Scenario = {
 
 const SCENARIOS: Scenario[] = [
   {
-    // ds_0004 · run_0007 — the 500-image flagship (FLUX.2-klein + SAM 3)
+    // ds_0004 · run_0007 - the 500-image flagship (FLUX.2-klein + SAM 3)
     prompt: "our warehouse safety cameras need to spot forklifts, pallets and workers",
     done: "model_0004 ready · mAP50 0.76 · exported .pt / ONNX",
     tiles: [
@@ -75,7 +75,7 @@ const SCENARIOS: Scenario[] = [
     ],
   },
   {
-    // ds_0005 · run_0008 — farm-aerial landing refresh
+    // ds_0005 · run_0008 - farm-aerial landing refresh
     prompt: "my farm drone needs to spot tractors and hay bales across the fields",
     done: "model_0005 ready · FLUX.2 + SAM 3 · zero human labels",
     tiles: [
@@ -112,7 +112,7 @@ const SCENARIOS: Scenario[] = [
     ],
   },
   {
-    // ds_0006 · run_0010 — street-camera landing refresh
+    // ds_0006 · run_0010 - street-camera landing refresh
     prompt: "our street cameras need to detect delivery vans and cyclists",
     done: "model_0006 ready · trained on 100% synthetic data",
     tiles: [
@@ -196,9 +196,9 @@ export function HeroVisual() {
     : training
       ? `Training yolo26m · epoch ${Math.max(1, Math.round(progress * 60))}/60`
       : t >= VERIFY_AT
-        ? "Verifying every label — geometry + Gemma 4 VLM"
+        ? "Verifying every label - geometry + Gemma 4 VLM"
         : t >= BOX_AT[0]
-          ? "Segmenting objects — open vocabulary (SAM 3)"
+          ? "Segmenting objects - open vocabulary (SAM 3)"
           : t >= TILE_AT[0]
             ? "Rendering scenarios (FLUX.2)"
             : expanded
@@ -226,7 +226,7 @@ export function HeroVisual() {
           </span>
         </div>
 
-        {/* agent strip — who is working right now */}
+        {/* agent strip - who is working right now */}
         <div className="flex items-center justify-center">
           {AGENTS.map((a, i) => {
             const isActive = !done && i === activeAgent;
