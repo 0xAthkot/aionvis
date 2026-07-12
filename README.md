@@ -24,22 +24,22 @@
 
 Every image, every label and every model in this repo was produced on a single
 **AMD Instinct MI300X** (192 GB HBM3, ROCm 7.2.4) on the **AMD Developer Cloud**.
-The LLM is self-hosted on the same card — no third-party AI API.
+The LLM is self-hosted on the same card, with no third-party AI API.
 [How the MI300X is used →](#amd-resource-usage)
 
 **Proof from the live node:** 500 synthetic images → trained detector at **mAP50
 0.764** in **~38 min** for **~$1.25** of MI300X time, with zero human labels.
 
-**▶ [aionvis.com](https://aionvis.com)** — point the console at a live MI300X node
+**▶ [aionvis.com](https://aionvis.com)**: point the console at a live MI300X node
 (endpoint URL + API key) and it drives the real swarm: live ROCm telemetry, real
 runs, real training. No node handy? **"Explore with simulated data"** opens the
-same console on an in-browser simulation — every screen, no account, no GPU.
+same console on an in-browser simulation: every screen, no account, no GPU.
 
 aionVIS is an autonomous agent swarm that generates its own training data,
 labels it, verifies its own labels, and trains deployable object-detection
-models — natively on AMD hardware. Built for the **AMD Developer Hackathon
+models, natively on AMD hardware. Built for the **AMD Developer Hackathon
 ACT II (Unicorn Track)**, and entered in the **Best Use of Gemma Models**
-challenge: Gemma 4 is the swarm's brain — it designs the scenes, spot-checks
+challenge: Gemma 4 is the swarm's brain. It designs the scenes, spot-checks
 every label as a VLM, and writes each model's card.
 
 | Agent | Model | Runs on |
@@ -53,7 +53,7 @@ every label as a VLM, and writes each model's card.
 **\* The three starred agents run at the same time.** On a single MI300X the swarm
 is a **parallel pipeline**: synthesis, vision and critic overlap as
 producer/consumer streams with every model resident in the 192 GB of VRAM at
-once — no load/unload churn. Training joins once the streams drain.
+once, with no load/unload churn. Training joins once the streams drain.
 
 ## What the swarm produces
 
@@ -61,7 +61,7 @@ once — no load/unload churn. Training joins once the streams drain.
 
 *The console, attached to a live MI300X node: the five agents, the training
 log streaming epoch by epoch, real VRAM telemetry (128 GB of the swarm held
-resident), and the images the Synthesis Agent minted for this run — 5,000 of
+resident), and the images the Synthesis Agent minted for this run: 5,000 of
 them, from the sentence "I need to detect hotwheels cars (toy cars) in my
 house".*
 
@@ -71,7 +71,7 @@ house".*
 
 *Two of the 500 FLUX.2-generated images from the flagship run: auto-labeled by
 SAM 3, every box verified by the Critic Agent (geometry + Gemma 4 VLM). No
-human drew or reviewed a single label — 22,718 were accepted this way, 42,214
+human drew or reviewed a single label. 22,718 were accepted this way, 42,214
 rejected.*
 
 ## Measured on one AMD Instinct MI300X
@@ -88,12 +88,12 @@ label in either.
 | One sentence → deployable model | **~38 min** | **~44 min** of training |
 | GPU cost at the $2/h Developer Cloud rate | **~$1.25** | **~$1.47** |
 
-The warehouse dataset is the hard one — dense aisles, ~45 instances per image.
+The warehouse dataset is the hard one: dense aisles, ~45 instances per image.
 The Hot Wheels model was then shown a **real phone photo of a real toy car it
 had never seen** and found it at 99% confidence: synthetic training, real-world
 inference.
 
-## Setup — three ways in, easiest first
+## Setup: three ways in, easiest first
 
 ### 1 · Zero install (recommended first look)
 
@@ -101,25 +101,25 @@ Open **[aionvis.com](https://aionvis.com)** → *Launch console* → **"Demo
 without AMD Developer Cloud"**. The console runs on an in-browser mock (MSW):
 every screen, wizard, dataset view and a full simulated run work with no
 backend and no GPU. If you have a live aionVIS node, attach it at runtime:
-**Hardware → Connect AMD Developer Cloud → paste URL + API key** — all REST
+**Hardware → Connect AMD Developer Cloud → paste URL + API key**. All REST
 and WebSocket traffic switches to the real node instantly.
 
-### 2 · Run the console locally — two commands, no GPU, no config
+### 2 · Run the console locally: two commands, no GPU, no config
 
 ```bash
 cd aionvis-ui
 npm install && npm run dev     # → http://localhost:3000
 ```
 
-Node 22+. Mock mode is the **default** (no `.env` needed) — same experience
+Node 22+. Mock mode is the **default** (no `.env` needed), the same experience
 as option 1, served locally. Verified on a clean Windows machine.
 
-### 3 · The real thing — full swarm on an AMD MI300X
+### 3 · The real thing: full swarm on an AMD MI300X
 
-**→ Step-by-step guide: [`docs/HOSTING_GUIDE.md`](docs/HOSTING_GUIDE.md)** —
-droplet creation, one-shot install, Hugging Face gating and TLS via sslip.io,
-with the traps we hit live called out. Short version, in `tmux` (closing your
-SSH session otherwise kills the backend):
+**→ Step-by-step guide: [`docs/HOSTING_GUIDE.md`](docs/HOSTING_GUIDE.md)**
+covers droplet creation, one-shot install, Hugging Face gating and TLS via
+sslip.io, with the traps we hit live called out. Short version, in `tmux`
+(closing your SSH session otherwise kills the backend):
 
 ```bash
 # on the node (AMD Developer Cloud MI300X, ROCm):
@@ -129,28 +129,28 @@ bash backend/deploy_mi300x.sh     # ROCm torch stack + SAM 3 sidecar + a tuned
                                   # prints the endpoint URL and the exact vLLM
                                   # container command for pane 2
 
-# pane 1 — the backend
+# pane 1: the backend
 cd backend && source .venv/bin/activate
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 
-# pane 2 — Gemma 4 on vLLM: paste the `docker run` the script printed, verbatim
-#          (optional: while it's down the Prompt Agent uses its deterministic
-#           template designer and the semantic critic is skipped — runs still
-#           complete end to end)
+# pane 2: Gemma 4 on vLLM. Paste the `docker run` the script printed, verbatim.
+#         (Optional: while it's down the Prompt Agent uses its deterministic
+#          template designer and the semantic critic is skipped; runs still
+#          complete end to end.)
 
-# pane 3 — preflight every endpoint, the LLM and live inference
+# pane 3: preflight every endpoint, the LLM and live inference
 cd backend && .venv/bin/python smoke_test.py
 ```
 
-**SAM 3's checkpoint is gated on Hugging Face** — request access, or just pick
+**SAM 3's checkpoint is gated on Hugging Face.** Request access, or just pick
 **YOLOE** as the labeler in the wizard (it's a per-run choice, and the no-account
 path). A `sam3` run on a node without the checkpoint is rejected with the reason;
 aionVIS never substitutes a model behind your back.
 
-Then attach any console — option 1 or 2, mock mode is fine: **Hardware →
+Then attach any console (option 1 or 2, mock mode is fine): **Hardware →
 Connect AMD Developer Cloud → paste the URL + key**. The *hosted* console can
 only call an HTTPS node (browser mixed-content rule), so give the droplet TLS
-first: sslip.io + Caddy, 5 minutes — [guide, step 6](docs/HOSTING_GUIDE.md).
+first: sslip.io + Caddy, 5 minutes, [guide, step 6](docs/HOSTING_GUIDE.md).
 
 ### Alternative · Docker (CPU-only reference stack)
 
@@ -159,7 +159,7 @@ docker compose up --build
 # UI → http://localhost:3000   API → http://localhost:8000/docs
 ```
 
-Defaults are CPU-only so it runs anywhere — slow diffusion, but everything is
+Defaults are CPU-only so it runs anywhere: slow diffusion, but everything is
 real. Optional LLM: point `LLM_BASE_URL` in `.env` at any OpenAI-compatible
 endpoint; without one the swarm degrades gracefully to deterministic
 fallbacks (runs still complete).
@@ -172,13 +172,13 @@ pipeline.
 
 | AMD resource | How aionVIS uses it |
 |---|---|
-| **AMD Instinct MI300X** — AMD Developer Cloud droplet ($2/h) | The only compute in the project: synthesis, labeling, verification and training all run here |
+| **AMD Instinct MI300X** (AMD Developer Cloud droplet, $2/h) | The only compute in the project: synthesis, labeling, verification and training all run here |
 | **ROCm 7.2.4 + PyTorch-on-ROCm** | FLUX.2 / SDXL diffusion, SAM 3 segmentation, YOLO / RT-DETR / RF-DETR training |
-| **vLLM ROCm container** (`vllm/vllm-openai-rocm:v0.23.0`) | Serves **Gemma 4 26B-A4B-IT** (MoE, 4B active) at `--gpu-memory-utilization 0.50` — scene design, the semantic critic and model cards |
-| **192 GB HBM3** | Holds the *entire* agent swarm resident at once — **125 GB measured warm** |
+| **vLLM ROCm container** (`vllm/vllm-openai-rocm:v0.23.0`) | Serves **Gemma 4 26B-A4B-IT** (MoE, 4B active) at `--gpu-memory-utilization 0.50` for scene design, the semantic critic and model cards |
+| **192 GB HBM3** | Holds the *entire* agent swarm resident at once, **125 GB measured warm** |
 
 **The MI300X-specific capability the project is built around:** 192 GB lets the
-whole swarm stay resident — Gemma 4 (~96 GB) + FLUX.2 (~13 GB) + SAM 3/YOLOE
+whole swarm stay resident. Gemma 4 (~96 GB) + FLUX.2 (~13 GB) + SAM 3/YOLOE
 (~8 GB), measured at **125 GB warm**, leaving ~67 GB free for training.
 Streaming mode overlaps synthesis, vision and critic on the one card
 (`PIPELINE_MODE=streaming`, `GPU_SLOTS=4`, `AUTO_BATCH=true`); an 80 GB card
@@ -193,19 +193,19 @@ we dropped the hosted API and moved Gemma 4 **on-card**: 192 GB of HBM3 is
 enough to serve the LLM under vLLM *and* keep FLUX.2, SAM 3 and the trainer
 resident beside it, so the semantic critic became a local call instead of a
 per-image network round trip to a third party. The Fireworks integration was
-removed on 2026-07-08 — today no part of the swarm leaves the AMD card.
+removed on 2026-07-08; today no part of the swarm leaves the AMD card.
 
 ## Market & business model
 
 Labeling is a multi-billion-dollar industry that exists only because models
 can't feed themselves. At scale a box costs **$0.03–$0.10** to draw, so a
-modest 100k-image dataset runs **$50k+** with QA — and you pay again every
+modest 100k-image dataset runs **$50k+** with QA, and you pay again every
 time the camera angle or the product changes. The flagship run above cost
 **$1.25** and nobody drew a box.
 
 Pricing follows the cost: usage-based per GPU-minute (every run is metered
 and quoted in the wizard before launch) plus a per-seat platform fee. A
-500-image run is minutes of MI300X time — sellable at $5–15 with healthy
+500-image run is minutes of MI300X time, sellable at $5–15 with healthy
 margin. One engine serves eight vision markets, each in the billions:
 logistics ($22B), manufacturing ($20B), automotive ($19B), retail ($18B),
 agriculture ($18B), aviation ($12B), defense ($9.3B), robotics ($4.4B).
@@ -217,7 +217,7 @@ agriculture ($18B), aviation ($12B), defense ($9.3B), robotics ($4.4B).
 | Synthetic-data studios | artists build scenes | rendered | artists |
 | **aionVIS** | **generated from a sentence** | **self-verified by agents** | **no** |
 
-Synthetic data is easy to generate and hard to trust — the self-correcting
+Synthetic data is easy to generate and hard to trust; the self-correcting
 Critic is the moat: we ship the trust layer. Roadmap: seed raise → paid
 design-partner pilots → commercial launch. Full pitch: [`PITCH.md`](PITCH.md).
 
@@ -240,20 +240,20 @@ The API surface is **contract-first**:
 every endpoint; [`aionvis-ui/src/lib/api/types.ts`](aionvis-ui/src/lib/api/types.ts)
 and [`backend/app/schemas.py`](backend/app/schemas.py) are 1:1 mirrors, and the
 UI's in-browser mock ([`aionvis-ui/src/lib/mocks/handlers.ts`](aionvis-ui/src/lib/mocks/handlers.ts))
-implements the same contract — which is why the console runs identically with
+implements the same contract, which is why the console runs identically with
 or without a backend.
 
 | Part | What it is |
 |---|---|
-| [`aionvis-ui/`](aionvis-ui/README.md) | Next.js 16 console — wizard, live Mission Control, dataset analytics, model registry + comparison, inference playground |
+| [`aionvis-ui/`](aionvis-ui/README.md) | Next.js 16 console: wizard, live Mission Control, dataset analytics, model registry + comparison, inference playground |
 | [`backend/`](backend/README.md) | FastAPI + the agent swarm |
 
 Nothing here is mocked on the backend: every number in the results table came
 off the MI300X droplet. Check it yourself with
 [`backend/smoke_test.py`](backend/smoke_test.py) (preflights every endpoint,
 the LLM and live inference) and the 32 pytest cases in
-[`backend/tests/`](backend/tests) — auth, streaming orchestration, mask
-geometry, prompt agent, generator/labeler selection.
+[`backend/tests/`](backend/tests), covering auth, streaming orchestration, mask
+geometry, prompt agent, and generator/labeler selection.
 
 ## External services
 
@@ -265,17 +265,17 @@ All models are open-weight and self-hosted; the only services involved:
 | **Vercel** | Hosts the demo console ([aionvis.com](https://aionvis.com)) | Frontend only; runs on the in-browser mock until you attach a node |
 | **sslip.io** | Zero-signup wildcard DNS: `129-212-179-0.sslip.io` → the droplet IP | Gives Caddy a hostname so Let's Encrypt can issue a cert; no account, stores nothing |
 | **Caddy + Let's Encrypt** | TLS proxy on the droplet (REST + WebSockets) | Required: the HTTPS console cannot call plain `http://`/`ws://` (mixed content) |
-| **Hugging Face** | Model weights, downloaded on first use | `facebook/sam3` is gated — request access on its model page and `huggingface-cli login`; check each model page for license acceptance |
-| **GitHub** | This repo | — |
+| **Hugging Face** | Model weights, downloaded on first use | `facebook/sam3` is gated: request access on its model page and `huggingface-cli login`; check each model page for license acceptance |
+| **GitHub** | This repo | n/a |
 
 **No third-party LLM/API services.** The language model is Gemma 4 served by
 vLLM on the same MI300X; there are no OpenAI, Anthropic or Fireworks keys
 anywhere in the stack today. (An early prototype did reach Gemma via Fireworks
-AI; that integration was removed on 2026-07-08 when inference moved on-card —
-see [Why we moved off a hosted LLM API](#why-we-moved-off-a-hosted-llm-api).) The backend's own API is protected by a self-minted
+AI; that integration was removed on 2026-07-08 when inference moved on-card.
+See [Why we moved off a hosted LLM API](#why-we-moved-off-a-hosted-llm-api).) The backend's own API is protected by a self-minted
 `AA_API_KEY` (Bearer / X-API-Key / WebSocket `?token=`).
 
-## Model lineup — every weight is open
+## Model lineup: every weight is open
 
 | Stage | Model | License |
 |---|---|---|
@@ -284,7 +284,7 @@ see [Why we moved off a hosted LLM API](#why-we-moved-off-a-hosted-llm-api).) Th
 | Auto-labeling | facebook/sam3 (or YOLOE) | SAM License / AGPL-3.0 |
 | Trainable detectors | YOLOv10/11/26 · RT-DETR · RF-DETR | AGPL-3.0 · Apache-2.0 (RF-DETR) |
 
-Model choices are the user's and are honored verbatim — a node that can't
+Model choices are the user's and are honored verbatim. A node that can't
 run the selected generator or labeler **rejects the run with setup steps**
 instead of silently substituting. 22 trainable architectures across 5 task
 types (detect · segment · OBB · pose · classify); exports to .pt, ONNX,
@@ -293,10 +293,10 @@ TorchScript, OpenVINO and YOLO/COCO/VOC/CSV datasets.
 ### Isolated model runtimes (sidecars)
 
 Two model families need `transformers>=5`, which conflicts with the pinned
-SDXL stack — each runs in its own venv, and the backend talks to a worker
+SDXL stack, so each runs in its own venv and the backend talks to a worker
 process over a line protocol. `deploy_mi300x.sh` builds the SAM 3 sidecar for
 you; RF-DETR is opt-in. Selecting either without its venv doesn't fail
-silently — the run is rejected at launch with exactly these commands:
+silently: the run is rejected at launch with exactly these commands:
 
 ```bash
 cd backend
@@ -305,7 +305,7 @@ python -m venv .venv-rfdetr
 .venv-rfdetr/bin/pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
 .venv-rfdetr/bin/pip install "rfdetr[train]" onnx onnxsim
 
-# SAM 3 auto-labeling (checkpoint is gated on Hugging Face — request access)
+# SAM 3 auto-labeling (checkpoint is gated on Hugging Face, request access)
 python -m venv .venv-sam3
 .venv-sam3/bin/pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
 .venv-sam3/bin/pip install "transformers>=5.5" accelerate pillow numpy scipy
@@ -316,5 +316,5 @@ Windows: `Scripts\pip`.)
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Third-party models and libraries keep their
+MIT. See [LICENSE](LICENSE). Third-party models and libraries keep their
 own licenses (table above).
