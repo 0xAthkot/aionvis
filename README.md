@@ -7,6 +7,16 @@
 </p>
 
 <p align="center">
+  <img src="docs/img/hero-swarm.png" alt="One sentence describing a warehouse safety use case, the five agents running, verified forklift/pallet/worker labels on synthetic images, and yolo26m training at epoch 34/60" width="900">
+</p>
+
+<p align="center">
+  <em>The whole product in one frame: a user types what the model is <strong>for</strong>, the swarm
+  designs the scenes, generates them, labels them, verifies its own labels — and trains
+  the detector. Boxes above are real, stored labels from the 500-image flagship run.</em>
+</p>
+
+<p align="center">
   <a href="https://aionvis.com">Live demo</a> ·
   <a href="https://aionvis.com/idea.pdf">Pitch deck</a> ·
   <a href="docs/HOSTING_GUIDE.md">Run it on your own MI300X</a>
