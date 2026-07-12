@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>One sentence in → deployable detection model out. Zero human labeling.</strong>
+  <strong>One sentence in, deployable detection model out. Zero human labeling.</strong>
 </p>
 
 <p align="center">
