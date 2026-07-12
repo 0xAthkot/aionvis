@@ -1,35 +1,29 @@
-# aionVIS
+<p align="center">
+  <img src="docs/img/aionvis-logo.png" alt="aionVIS" width="340">
+</p>
 
-**One sentence in → deployable detection model out. Zero human labeling.**
+<p align="center">
+  <strong>One sentence in → deployable detection model out. Zero human labeling.</strong>
+</p>
 
-## Built and trained entirely on AMD compute
+<p align="center">
+  <a href="https://aionvis.com">Live demo</a> ·
+  <a href="https://aionvis.com/idea.pdf">Pitch deck</a> ·
+  <a href="docs/HOSTING_GUIDE.md">Run it on your own MI300X</a>
+</p>
 
-**Every image, every label and every model in this repo was produced on a single
-AMD Instinct MI300X** (192 GB HBM3, ROCm 7.2.4) rented on the **AMD Developer
-Cloud**. There is no NVIDIA hardware anywhere in the pipeline and no third-party
-AI API — the LLM is self-hosted on the same AMD card.
-
-| AMD resource | How aionVIS uses it |
-|---|---|
-| **AMD Instinct MI300X** — AMD Developer Cloud droplet ($2/h) | The only compute in the project: synthesis, labeling, verification and training all run here |
-| **ROCm 7.2.4 + PyTorch-on-ROCm** | FLUX.2 / SDXL diffusion, SAM 3 segmentation, YOLO / RT-DETR / RF-DETR training |
-| **vLLM ROCm container** (`vllm/vllm-openai-rocm:v0.23.0`) | Serves Gemma 4 26B for scene design and the VLM critic |
-| **192 GB HBM3** | Holds the *entire* agent swarm resident at once — **125 GB measured warm**. An 80 GB card cannot co-reside this stack; this is the MI300X-specific capability the project is built around |
+Every image, every label and every model in this repo was produced on a single
+**AMD Instinct MI300X** (192 GB HBM3, ROCm 7.2.4) on the **AMD Developer Cloud**.
+The LLM is self-hosted on the same card — no third-party AI API.
+[How the MI300X is used →](#amd-resource-usage)
 
 **Proof from the live node:** 500 synthetic images → trained detector at **mAP50
-0.764** in **~38 min** for **~$1.25** of MI300X time, with zero human labels. The
-console screenshot [below](#what-the-swarm-produces) is live MI300X VRAM and ROCm
-telemetry off that node. [Full breakdown](#amd-resource-usage) · [run it on your
-own MI300X](docs/HOSTING_GUIDE.md)
+0.764** in **~38 min** for **~$1.25** of MI300X time, with zero human labels.
 
-**▶ Live demo: [aionvis.com](https://aionvis.com)** — *Launch console*. Point it
-at a live MI300X node (endpoint URL + API key) and the console drives the real
-swarm: live ROCm telemetry, real runs, real training. No node handy? **"Explore
-with simulated data"** opens the same console on an in-browser simulation — every
-screen, no account, no GPU.
-
-[Pitch deck](https://aionvis.com/idea.pdf) · [Run it on your own
-MI300X](docs/HOSTING_GUIDE.md) · [Demo walkthrough](aionvis-ui/DEMO.md)
+**▶ [aionvis.com](https://aionvis.com)** — point the console at a live MI300X node
+(endpoint URL + API key) and it drives the real swarm: live ROCm telemetry, real
+runs, real training. No node handy? **"Explore with simulated data"** opens the
+same console on an in-browser simulation — every screen, no account, no GPU.
 
 aionVIS is an autonomous agent swarm that generates its own training data,
 labels it, verifies its own labels, and trains deployable object-detection
@@ -38,17 +32,18 @@ ACT II (Unicorn Track)**, and entered in the **Best Use of Gemma Models**
 challenge: Gemma 4 is the swarm's brain — it designs the scenes, spot-checks
 every label as a VLM, and writes each model's card.
 
-```
-Prompt Agent (Gemma 4 26B-A4B MoE · vLLM on MI300X)
-   └─> Synthesis Agent (FLUX.2-klein / SDXL · diffusers on ROCm)
-         └─> Vision Agent (SAM 3 concept segmentation / YOLOE zero-shot)
-               └─> Critic Agent (geometric self-check + Gemma 4 VLM semantic spot-check)
-                     └─> MLOps Agent (YOLO / RT-DETR / RF-DETR training · PyTorch on ROCm)
-```
+| Agent | Model | Runs on |
+|---|---|---|
+| **Prompt** | Gemma 4 26B-A4B MoE | vLLM on MI300X |
+| **Synthesis** ⟶ | FLUX.2-klein / SDXL | diffusers on ROCm |
+| **Vision** ⟶ | SAM 3 concept segmentation / YOLOE zero-shot | PyTorch on ROCm |
+| **Critic** ⟶ | geometric self-check + Gemma 4 VLM spot-check | vLLM on MI300X |
+| **MLOps** | YOLO / RT-DETR / RF-DETR training | PyTorch on ROCm |
 
-On a single MI300X the swarm runs as a **parallel pipeline**: synthesis,
-vision and critic overlap as producer/consumer streams with every model
-resident in the 192 GB of VRAM at once — no load/unload churn.
+**⟶ The three marked agents run at the same time.** On a single MI300X the swarm
+is a **parallel pipeline**: synthesis, vision and critic overlap as
+producer/consumer streams with every model resident in the 192 GB of VRAM at
+once — no load/unload churn. Training joins once the streams drain.
 
 ## What the swarm produces
 
@@ -161,22 +156,24 @@ fallbacks (runs still complete).
 
 ## AMD resource usage
 
-Everything above was built, measured and trained on AMD:
+Everything in this repo was built, measured and trained on AMD. No third-party
+LLM APIs (no OpenAI/Fireworks keys), no other accelerator anywhere in the
+pipeline.
 
-- **AMD Developer Cloud MI300X droplet** (192 GB HBM3, ROCm 7.2.4) — all
-  training, inference and the flagship run. No NVIDIA hardware anywhere in
-  the pipeline; no third-party LLM APIs (no OpenAI/Fireworks keys).
-- **PyTorch on ROCm** — SDXL/FLUX.2 diffusion, SAM 3 segmentation, and
-  YOLO / RT-DETR / RF-DETR training.
-- **vLLM ROCm container** (`vllm/vllm-openai-rocm:v0.23.0`) serving
-  **Gemma 4 26B-A4B-IT** (MoE, 4B active) at `--gpu-memory-utilization 0.50`
-  for scene design, the semantic critic and model cards.
-- **The MI300X-unique part:** 192 GB lets the *whole* swarm stay resident —
-  Gemma 4 (~96 GB) + FLUX.2 (~13 GB) + SAM 3/YOLOE (~8 GB) measured at
-  **125 GB warm**, with ~67 GB free for training. Streaming mode overlaps
-  synthesis/vision/critic on one card (`PIPELINE_MODE=streaming`,
-  `GPU_SLOTS=4`, `AUTO_BATCH=true`); an 80 GB card cannot co-reside this
-  stack. Live VRAM telemetry is on the console's Hardware page.
+| AMD resource | How aionVIS uses it |
+|---|---|
+| **AMD Instinct MI300X** — AMD Developer Cloud droplet ($2/h) | The only compute in the project: synthesis, labeling, verification and training all run here |
+| **ROCm 7.2.4 + PyTorch-on-ROCm** | FLUX.2 / SDXL diffusion, SAM 3 segmentation, YOLO / RT-DETR / RF-DETR training |
+| **vLLM ROCm container** (`vllm/vllm-openai-rocm:v0.23.0`) | Serves **Gemma 4 26B-A4B-IT** (MoE, 4B active) at `--gpu-memory-utilization 0.50` — scene design, the semantic critic and model cards |
+| **192 GB HBM3** | Holds the *entire* agent swarm resident at once — **125 GB measured warm** |
+
+**The MI300X-specific capability the project is built around:** 192 GB lets the
+whole swarm stay resident — Gemma 4 (~96 GB) + FLUX.2 (~13 GB) + SAM 3/YOLOE
+(~8 GB), measured at **125 GB warm**, leaving ~67 GB free for training.
+Streaming mode overlaps synthesis, vision and critic on the one card
+(`PIPELINE_MODE=streaming`, `GPU_SLOTS=4`, `AUTO_BATCH=true`); an 80 GB card
+cannot co-reside this stack. Live VRAM telemetry is on the console's Hardware
+page.
 
 ### Why we moved off a hosted LLM API
 
@@ -304,7 +301,8 @@ python -m venv .venv-sam3
 .venv-sam3/bin/pip install "transformers>=5.5" accelerate pillow numpy scipy
 ```
 
-(NVIDIA: swap the index for `cu126`; Windows: `Scripts\pip`.)
+(Other GPUs: swap the ROCm index for the matching PyTorch build, e.g. `cu126`;
+Windows: `Scripts\pip`.)
 
 ## License
 

@@ -27,7 +27,7 @@ to drive the real swarm on an AMD MI300X.
 
 ## Try the demo flow
 
-See [DEMO.md](DEMO.md) for the 90-second script. Short version: enter the
+Enter the
 console → **Foundry** → pick a project, say what the model is *for* (the use
 case, not a diffusion prompt), preview the scenes the Gemma 4 Prompt Agent
 designs → **Launch autonomous run** → watch Mission Control stream the

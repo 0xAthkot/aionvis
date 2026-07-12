@@ -46,9 +46,9 @@ doesn't just label data; it learns from its models' mistakes.
 
 **On other GPUs our agents take turns. On one MI300X they work at the same
 time.** The warm swarm measures **125 GB** on the live node — Gemma 4 26B MoE
-via vLLM, FLUX.2-klein, SAM 3 — leaving ~67 GB for training. No NVIDIA card
-holds that; even an H100's 80 GB forces the load→use→flush choreography we
-run in sequential mode. One MI300X's **192 GB of HBM3 holds the entire swarm
+via vLLM, FLUX.2-klein, SAM 3 — leaving ~67 GB for training. No 80 GB card
+holds that; an H100 forces the load→use→flush choreography we run in
+sequential mode. One MI300X's **192 GB of HBM3 holds the entire swarm
 resident**, so the pipeline switches to streaming mode
 (`PIPELINE_MODE=streaming`): synthesis, vision and critic overlap as
 producer/consumer streams on one device, four runs share the card
