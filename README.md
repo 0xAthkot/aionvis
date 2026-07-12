@@ -33,6 +33,14 @@
 [Model lineup](#model-lineup-every-weight-is-open) ·
 [License](#license)
 
+aionVIS is an autonomous agent swarm for **computer vision**. It generates its
+own training data, labels it, verifies its own labels, and trains deployable
+**object-detection** models, natively on AMD hardware.
+Built for the **AMD Developer Hackathon ACT II (Unicorn Track)**, and entered
+in the **Best Use of Gemma Models** challenge: Gemma 4 is the swarm's brain.
+It designs the scenes, spot-checks every label as a VLM, and writes each
+model's card.
+
 Every image, every label and every model in this repo was produced on a single
 **AMD Instinct MI300X** (192 GB HBM3, ROCm 7.2.4) on the **AMD Developer Cloud**.
 The LLM is self-hosted on the same card, with no third-party AI API.
@@ -45,13 +53,6 @@ The LLM is self-hosted on the same card, with no third-party AI API.
 (endpoint URL + API key) and it drives the real swarm: live ROCm telemetry, real
 runs, real training. No node handy? **"Explore with simulated data"** opens the
 same console on an in-browser simulation: every screen, no account, no GPU.
-
-aionVIS is an autonomous agent swarm that generates its own training data,
-labels it, verifies its own labels, and trains deployable object-detection
-models, natively on AMD hardware. Built for the **AMD Developer Hackathon
-ACT II (Unicorn Track)**, and entered in the **Best Use of Gemma Models**
-challenge: Gemma 4 is the swarm's brain. It designs the scenes, spot-checks
-every label as a VLM, and writes each model's card.
 
 | Agent | Model | Runs on |
 |---|---|---|
@@ -127,40 +128,36 @@ as option 1, served locally. Verified on a clean Windows machine.
 ### 3 · The real thing: full swarm on an AMD MI300X
 
 **→ Step-by-step guide: [`docs/HOSTING_GUIDE.md`](docs/HOSTING_GUIDE.md)**
-covers droplet creation, one-shot install, Hugging Face gating and TLS via
-sslip.io, with the traps we hit live called out. Short version, in `tmux`
-(closing your SSH session otherwise kills the backend):
+covers droplet creation, Hugging Face gating and TLS, with the traps we hit
+live called out. Short version, in `tmux` (closing your SSH session otherwise
+kills the backend):
 
 ```bash
 # on the node (AMD Developer Cloud MI300X, ROCm):
 git clone https://github.com/0xAthkot/aionvis && cd aionvis
-bash backend/deploy_mi300x.sh     # ROCm torch stack + SAM 3 sidecar + a tuned
-                                  # streaming .env; mints your API key and
-                                  # prints the endpoint URL and the exact vLLM
-                                  # container command for pane 2
+bash backend/deploy_mi300x.sh   # ROCm torch + SAM 3 sidecar + streaming .env;
+                                # mints your API key, prints the vLLM command
 
 # pane 1: the backend
 cd backend && source .venv/bin/activate
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 
-# pane 2: Gemma 4 on vLLM. Paste the `docker run` the script printed, verbatim.
-#         (Optional: while it's down the Prompt Agent uses its deterministic
-#          template designer and the semantic critic is skipped; runs still
-#          complete end to end.)
-
+# pane 2: paste the vLLM `docker run` the script printed (serves Gemma 4)
 # pane 3: preflight every endpoint, the LLM and live inference
 cd backend && .venv/bin/python smoke_test.py
 ```
-
-**SAM 3's checkpoint is gated on Hugging Face.** Request access, or just pick
-**YOLOE** as the labeler in the wizard (it's a per-run choice, and the no-account
-path). A `sam3` run on a node without the checkpoint is rejected with the reason;
-aionVIS never substitutes a model behind your back.
 
 Then attach any console (option 1 or 2, mock mode is fine): **Hardware →
 Connect AMD Developer Cloud → paste the URL + key**. The *hosted* console can
 only call an HTTPS node (browser mixed-content rule), so give the droplet TLS
 first: sslip.io + Caddy, 5 minutes, [guide, step 6](docs/HOSTING_GUIDE.md).
+
+**SAM 3's checkpoint is gated on Hugging Face.** Request access, or pick
+**YOLOE** as the labeler in the wizard (a per-run choice, and the no-account
+path). A `sam3` run on a node without it is rejected with the reason; aionVIS
+never substitutes a model behind your back. Without vLLM the Prompt Agent falls
+back to its deterministic template designer and the semantic critic is skipped;
+runs still complete end to end.
 
 ### Alternative · Docker (CPU-only reference stack)
 
@@ -280,10 +277,10 @@ All models are open-weight and self-hosted; the only services involved:
 
 **No third-party LLM/API services.** The language model is Gemma 4 served by
 vLLM on the same MI300X; there are no OpenAI, Anthropic or Fireworks keys
-anywhere in the stack today. (An early prototype did reach Gemma via Fireworks
-AI; that integration was removed on 2026-07-08 when inference moved on-card.
-See [Why we moved off a hosted LLM API](#why-we-moved-off-a-hosted-llm-api).) The backend's own API is protected by a self-minted
-`AA_API_KEY` (Bearer / X-API-Key / WebSocket `?token=`).
+anywhere in the stack
+([why we moved off a hosted API](#why-we-moved-off-a-hosted-llm-api)). The
+backend's own API is protected by a self-minted `AA_API_KEY`
+(Bearer / X-API-Key / WebSocket `?token=`).
 
 ## Model lineup: every weight is open
 
@@ -300,29 +297,10 @@ instead of silently substituting. 22 trainable architectures across 5 task
 types (detect · segment · OBB · pose · classify); exports to .pt, ONNX,
 TorchScript, OpenVINO and YOLO/COCO/VOC/CSV datasets.
 
-### Isolated model runtimes (sidecars)
-
-Two model families need `transformers>=5`, which conflicts with the pinned
-SDXL stack, so each runs in its own venv and the backend talks to a worker
-process over a line protocol. `deploy_mi300x.sh` builds the SAM 3 sidecar for
-you; RF-DETR is opt-in. Selecting either without its venv doesn't fail
-silently: the run is rejected at launch with exactly these commands:
-
-```bash
-cd backend
-# RF-DETR training/inference
-python -m venv .venv-rfdetr
-.venv-rfdetr/bin/pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
-.venv-rfdetr/bin/pip install "rfdetr[train]" onnx onnxsim
-
-# SAM 3 auto-labeling (checkpoint is gated on Hugging Face, request access)
-python -m venv .venv-sam3
-.venv-sam3/bin/pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
-.venv-sam3/bin/pip install "transformers>=5.5" accelerate pillow numpy scipy
-```
-
-(Other GPUs: swap the ROCm index for the matching PyTorch build, e.g. `cu126`;
-Windows: `Scripts\pip`.)
+SAM 3 and RF-DETR need `transformers>=5`, which conflicts with the pinned SDXL
+stack, so each runs in an isolated venv behind a worker process.
+`deploy_mi300x.sh` builds the SAM 3 sidecar for you; RF-DETR is opt-in. Setup
+commands: [`backend/README.md`](backend/README.md#isolated-model-runtimes-sidecars).
 
 ## License
 

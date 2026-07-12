@@ -91,6 +91,30 @@ Telemetry automatically switches to `amd-smi` and the hardware page shows
 the real MI300X (VRAM, hotspot temp, socket power). The node is detected as
 `amd-developer-cloud` when the GPU name contains "MI300".
 
+## Isolated model runtimes (sidecars)
+
+SAM 3 and RF-DETR need `transformers>=5`, which breaks the pinned SDXL stack.
+Each runs in its own venv, and the backend talks to a worker process over a
+line protocol. `deploy_mi300x.sh` builds the SAM 3 sidecar for you; RF-DETR is
+opt-in. Selecting either without its venv doesn't fail silently: the run is
+rejected at launch with exactly these commands.
+
+```bash
+cd backend
+# RF-DETR training/inference
+python -m venv .venv-rfdetr
+.venv-rfdetr/bin/pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
+.venv-rfdetr/bin/pip install "rfdetr[train]" onnx onnxsim
+
+# SAM 3 auto-labeling (checkpoint is gated on Hugging Face, request access)
+python -m venv .venv-sam3
+.venv-sam3/bin/pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
+.venv-sam3/bin/pip install "transformers>=5.5" accelerate pillow numpy scipy
+```
+
+(Other GPUs: swap the ROCm index for the matching PyTorch build, e.g. `cu126`;
+Windows: `Scripts\pip`.)
+
 ## Layout
 
 ```
