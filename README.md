@@ -45,12 +45,12 @@ every label as a VLM, and writes each model's card.
 | Agent | Model | Runs on |
 |---|---|---|
 | **Prompt** | Gemma 4 26B-A4B MoE | vLLM on MI300X |
-| **Synthesis** ⟶ | FLUX.2-klein / SDXL | diffusers on ROCm |
-| **Vision** ⟶ | SAM 3 concept segmentation / YOLOE zero-shot | PyTorch on ROCm |
-| **Critic** ⟶ | geometric self-check + Gemma 4 VLM spot-check | vLLM on MI300X |
+| **Synthesis** \* | FLUX.2-klein / SDXL | diffusers on ROCm |
+| **Vision** \* | SAM 3 concept segmentation / YOLOE zero-shot | PyTorch on ROCm |
+| **Critic** \* | geometric self-check + Gemma 4 VLM spot-check | vLLM on MI300X |
 | **MLOps** | YOLO / RT-DETR / RF-DETR training | PyTorch on ROCm |
 
-**⟶ The three marked agents run at the same time.** On a single MI300X the swarm
+**\* The three starred agents run at the same time.** On a single MI300X the swarm
 is a **parallel pipeline**: synthesis, vision and critic overlap as
 producer/consumer streams with every model resident in the 192 GB of VRAM at
 once — no load/unload churn. Training joins once the streams drain.
