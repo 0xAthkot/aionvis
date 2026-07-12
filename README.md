@@ -22,6 +22,17 @@
   <a href="docs/HOSTING_GUIDE.md">Run it on your own MI300X</a>
 </p>
 
+**Contents** ·
+[What the swarm produces](#what-the-swarm-produces) ·
+[Measured on one MI300X](#measured-on-one-amd-instinct-mi300x) ·
+[Setup](#setup-three-ways-in-easiest-first) ·
+[AMD resource usage](#amd-resource-usage) ·
+[Market & business model](#market--business-model) ·
+[Main code path](#main-code-path) ·
+[External services](#external-services) ·
+[Model lineup](#model-lineup-every-weight-is-open) ·
+[License](#license)
+
 Every image, every label and every model in this repo was produced on a single
 **AMD Instinct MI300X** (192 GB HBM3, ROCm 7.2.4) on the **AMD Developer Cloud**.
 The LLM is self-hosted on the same card, with no third-party AI API.
@@ -54,17 +65,6 @@ every label as a VLM, and writes each model's card.
 is a **parallel pipeline**: synthesis, vision and critic overlap as
 producer/consumer streams with every model resident in the 192 GB of VRAM at
 once, with no load/unload churn. Training joins once the streams drain.
-
-**Contents** ·
-[What the swarm produces](#what-the-swarm-produces) ·
-[Measured on one MI300X](#measured-on-one-amd-instinct-mi300x) ·
-[Setup](#setup-three-ways-in-easiest-first) ·
-[AMD resource usage](#amd-resource-usage) ·
-[Market & business model](#market--business-model) ·
-[Main code path](#main-code-path) ·
-[External services](#external-services) ·
-[Model lineup](#model-lineup-every-weight-is-open) ·
-[License](#license)
 
 ## What the swarm produces
 
