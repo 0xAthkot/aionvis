@@ -49,16 +49,24 @@ SAM 3, every box verified by the Critic Agent (geometry + Gemma 4 VLM). No
 human drew or reviewed a single label — 22,718 were accepted this way, 42,214
 rejected.*
 
-## Measured on one AMD Instinct MI300X (2026-07-10)
+## Measured on one AMD Instinct MI300X
 
-| | |
-|---|---|
-| 500 images generated → SAM 3-labeled → critic-verified | **7.5 minutes** (streaming, stages overlapped) |
-| Verified instances (from ~65k SAM 3 candidates) | **22,718** |
-| yolo26m, 60 epochs @ 1024 px | **30 minutes** |
-| Result (dense warehouse dataset, ~45 instances/img) | **mAP50 0.764 · mAP50-95 0.611** |
-| Total, one sentence → deployable model | **~38 minutes, 0 human labels** |
-| GPU cost at the AMD Developer Cloud $2/h rate | **~$1.25** |
+Two runs off the live node. No human drew, reviewed or corrected a single
+label in either.
+
+| | Warehouse safety | Hot Wheels (toy cars) |
+|---|---|---|
+| Synthetic images | 500 | 5,000 |
+| Labels the Critic kept / threw out | 22,718 / 42,214 | 6,027 / 3,273 |
+| Detector | yolo26m, 60 epochs @ 1024 px | yolo26n, 40 epochs |
+| Accuracy | **mAP50 0.764** · mAP50-95 0.611 | **mAP50 0.960** · mAP50-95 0.946 |
+| One sentence → deployable model | **~38 min** | **~44 min** of training |
+| GPU cost at the $2/h Developer Cloud rate | **~$1.25** | **~$1.47** |
+
+The warehouse dataset is the hard one — dense aisles, ~45 instances per image.
+The Hot Wheels model was then shown a **real phone photo of a real toy car it
+had never seen** and found it at 99% confidence: synthetic training, real-world
+inference.
 
 ## Setup — three ways in, easiest first
 
