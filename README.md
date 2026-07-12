@@ -55,15 +55,25 @@ is a **parallel pipeline**: synthesis, vision and critic overlap as
 producer/consumer streams with every model resident in the 192 GB of VRAM at
 once, with no load/unload churn. Training joins once the streams drain.
 
+**Contents** ·
+[What the swarm produces](#what-the-swarm-produces) ·
+[Measured on one MI300X](#measured-on-one-amd-instinct-mi300x) ·
+[Setup](#setup-three-ways-in-easiest-first) ·
+[AMD resource usage](#amd-resource-usage) ·
+[Market & business model](#market--business-model) ·
+[Main code path](#main-code-path) ·
+[External services](#external-services) ·
+[Model lineup](#model-lineup-every-weight-is-open) ·
+[License](#license)
+
 ## What the swarm produces
 
 ![Mission Control during a run on the MI300X](docs/img/console-mission-control.png)
 
-*The console, attached to a live MI300X node: the five agents, the training
-log streaming epoch by epoch, real VRAM telemetry (128 GB of the swarm held
-resident), and the images the Synthesis Agent minted for this run: 5,000 of
-them, from the sentence "I need to detect hotwheels cars (toy cars) in my
-house".*
+*The console on a live MI300X node: five agents, the training log streaming
+epoch by epoch, live VRAM telemetry, and the 5,000 images the swarm generated
+for this run. All from one sentence: "I need to detect hotwheels cars (toy
+cars) in my house".*
 
 | | |
 |---|---|
