@@ -62,10 +62,6 @@ rejected.*
 
 ## Setup — three ways in, easiest first
 
-> **Want to run the whole thing on your own AMD droplet?** That's option 3 —
-> the complete walkthrough is **[docs/HOSTING_GUIDE.md](docs/HOSTING_GUIDE.md)**
-> (~30–45 min, ~$2/h, every trap we hit written down).
-
 ### 1 · Zero install (recommended first look)
 
 Open **[aionvis.com](https://aionvis.com)** → *Launch console* → **"Demo
@@ -239,10 +235,10 @@ TorchScript, OpenVINO and YOLO/COCO/VOC/CSV datasets.
 ### Isolated model runtimes (sidecars)
 
 Two model families need `transformers>=5`, which conflicts with the pinned
-SDXL stack — each runs in its own venv and the backend talks to a worker
-process over a line protocol (`deploy_mi300x.sh` sets both up for you).
-Runs that select them without the venv are rejected at launch with these
-exact instructions:
+SDXL stack — each runs in its own venv, and the backend talks to a worker
+process over a line protocol. `deploy_mi300x.sh` builds the SAM 3 sidecar for
+you; RF-DETR is opt-in. Selecting either without its venv doesn't fail
+silently — the run is rejected at launch with exactly these commands:
 
 ```bash
 cd backend
@@ -258,9 +254,6 @@ python -m venv .venv-sam3
 ```
 
 (NVIDIA: swap the index for `cu126`; Windows: `Scripts\pip`.)
-
-Demo walkthrough: [`aionvis-ui/DEMO.md`](aionvis-ui/DEMO.md) · Pitch:
-[`PITCH.md`](PITCH.md)
 
 ## License
 
