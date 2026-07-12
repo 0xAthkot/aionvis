@@ -7,13 +7,13 @@
 </p>
 
 <p align="center">
-  <img src="docs/img/hero-swarm.png" alt="One sentence describing a warehouse safety use case, the five agents running, verified forklift/pallet/worker labels on synthetic images, and yolo26m training at epoch 34/60" width="900">
+  <img src="docs/img/hero-swarm.png" alt="One sentence describing a warehouse safety use case, the five agents running, verified forklift/pallet/worker labels on synthetic images, and yolo26m training at epoch 34/60" width="887">
 </p>
 
 <p align="center">
   <em>The whole product in one frame: a user types what the model is <strong>for</strong>, the swarm
-  designs the scenes, generates them, labels them, verifies its own labels — and trains
-  the detector. Boxes above are real, stored labels from the 500-image flagship run.</em>
+  designs the scenes, generates them, labels them, verifies its own labels, and trains
+  the detector.</em>
 </p>
 
 <p align="center">
