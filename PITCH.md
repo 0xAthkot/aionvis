@@ -28,8 +28,10 @@ aionVIS is an autonomous agent swarm that feeds them:
    accepted crops semantically — geometry proves the box fits, the VLM
    proves it's actually a forklift. The swarm QAs itself; typical runs
    reject 2–3× more candidate labels than they accept.
-5. **MLOps Agent** trains YOLOv10 on the accepted data, streams live metrics,
-   writes its own model card, and exports deployable `.pt`/ONNX weights.
+5. **MLOps Agent** trains the detector on the accepted data — 22 architectures
+   (YOLOv10/11/26, RT-DETR, RF-DETR) across 5 task types — streams live
+   metrics, writes its own model card, and exports deployable `.pt`/ONNX
+   weights.
 
 The customer never draws a box. For teams with existing imagery, the same
 swarm labels uploaded archives (BYOD path) — that's the Scale AI workflow
@@ -43,15 +45,14 @@ doesn't just label data; it learns from its models' mistakes.
 ## Why now, why AMD
 
 **On other GPUs our agents take turns. On one MI300X they work at the same
-time.** The swarm's working set is ~110–115 GB (measured live) — Gemma 4
-26B MoE via vLLM, FLUX.2-klein, SAM 3, plus training headroom. No NVIDIA
-card holds that;
-even an H100's 80 GB forces the load→use→flush choreography we run in
-sequential mode. One MI300X's **192 GB of HBM3 holds the entire swarm
+time.** The warm swarm measures **125 GB** on the live node — Gemma 4 26B MoE
+via vLLM, FLUX.2-klein, SAM 3 — leaving ~67 GB for training. No NVIDIA card
+holds that; even an H100's 80 GB forces the load→use→flush choreography we
+run in sequential mode. One MI300X's **192 GB of HBM3 holds the entire swarm
 resident**, so the pipeline switches to streaming mode
 (`PIPELINE_MODE=streaming`): synthesis, vision and critic overlap as
-producer/consumer streams on one device, two runs share the card
-(`GPU_SLOTS=2`), and training sizes its batch to the VRAM actually free.
+producer/consumer streams on one device, four runs share the card
+(`GPU_SLOTS=4`), and training sizes its batch to the VRAM actually free.
 Our orchestrator schedules the GPU explicitly either way (run queue, live
 VRAM telemetry via `amd-smi`), so a single MI300X serves a whole team.
 That's the unit economics: one GPU-hour of MI300X replaces roughly a
@@ -76,9 +77,20 @@ at $5–15 with healthy margin against Developer Cloud pricing.
 The self-correcting Critic is the moat: synthetic data is easy to generate
 and hard to trust. We ship the trust layer.
 
-## Status
+## Status — deployed, measured, live
 
-Fully functional end to end (this repo): real diffusion, real segmentation,
-real Critic verdicts, real YOLOv10 training with live telemetry, inference
-playground to prove every model, multi-tenant control plane. Runs today on
-a single consumer GPU; designed for, and deploying to, AMD MI300X.
+Running on an AMD Developer Cloud **MI300X today**, not "designed for" one:
+real diffusion, real open-vocab segmentation, real Critic verdicts, real
+training with live telemetry, an inference playground to prove every model,
+and a multi-tenant control plane. Two runs off that node:
+
+| | Warehouse safety | Hot Wheels (toy cars) |
+|---|---|---|
+| Images (synthetic, zero human labels) | 500 | 5,000 |
+| Verified labels | 22,718 accepted / 42,214 rejected | 6,027 accepted / 3,273 rejected |
+| Model | yolo26m, 60 epochs | yolo26n, 40 epochs |
+| Accuracy | mAP50 **0.764** · mAP50-95 0.611 | mAP50 **0.960** · mAP50-95 0.946 |
+| Wall clock · GPU cost | ~38 min · **~$1.25** | ~44 min training · **~$1.47** |
+
+The console is public at [aionvis.com](https://aionvis.com) — click through
+the simulated swarm, or attach your own MI300X node with a URL and an API key.
