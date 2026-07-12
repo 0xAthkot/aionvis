@@ -19,9 +19,9 @@ npm install
 npm run dev        # http://localhost:3000
 ```
 
-Mock mode is the default. On the login page take **"Demo without AMD Developer
-Cloud"** — no account, no GPU — or sign in with a node's endpoint URL + API key
-to drive the real swarm.
+Mock mode is the default. On the login page take **"Explore with simulated
+data"** — no account, no GPU — or sign in with a node's endpoint URL + API key
+to drive the real swarm on an AMD MI300X.
 
 `npm run build` / `npm run lint` must stay clean.
 

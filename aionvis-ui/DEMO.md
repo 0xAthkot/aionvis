@@ -2,7 +2,7 @@
 
 Golden path for judges. The login page is the fork in the road:
 
-- **"Demo without AMD Developer Cloud"** (the big button): no backend,
+- **"Explore with simulated data"** (the big button): no backend,
   ~90 s simulated pipeline in the browser, reset anytime with a hard
   refresh (state is per-tab). Safest with no GPU — and it's what any
   anonymous visitor gets.

@@ -114,7 +114,7 @@ export default function LoginPage() {
 
         <Button size="lg" className="w-full" onClick={enterDemo}>
           <Sparkles className="size-4" />
-          Demo without AMD Developer Cloud
+          Explore with simulated data
         </Button>
         <p className="-mt-3 text-center text-xs text-muted-foreground">
           Full console on an in-browser simulation — every screen, live runs

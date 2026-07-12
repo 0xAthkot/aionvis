@@ -2,11 +2,31 @@
 
 **One sentence in → deployable detection model out. Zero human labeling.**
 
-**▶ Live demo, no setup: [aionvis.com](https://aionvis.com)** — *Launch
-console* → **"Demo without AMD Developer Cloud"**. No account, no GPU: every
-screen works in the browser, including a simulated end-to-end run in Mission
-Control. Have a node? Sign in with its endpoint URL + API key instead and the
-same console drives the real swarm.
+## Built and trained entirely on AMD compute
+
+**Every image, every label and every model in this repo was produced on a single
+AMD Instinct MI300X** (192 GB HBM3, ROCm 7.2.4) rented on the **AMD Developer
+Cloud**. There is no NVIDIA hardware anywhere in the pipeline and no third-party
+AI API — the LLM is self-hosted on the same AMD card.
+
+| AMD resource | How aionVIS uses it |
+|---|---|
+| **AMD Instinct MI300X** — AMD Developer Cloud droplet ($2/h) | The only compute in the project: synthesis, labeling, verification and training all run here |
+| **ROCm 7.2.4 + PyTorch-on-ROCm** | FLUX.2 / SDXL diffusion, SAM 3 segmentation, YOLO / RT-DETR / RF-DETR training |
+| **vLLM ROCm container** (`vllm/vllm-openai-rocm:v0.23.0`) | Serves Gemma 4 26B for scene design and the VLM critic |
+| **192 GB HBM3** | Holds the *entire* agent swarm resident at once — **125 GB measured warm**. An 80 GB card cannot co-reside this stack; this is the MI300X-specific capability the project is built around |
+
+**Proof from the live node:** 500 synthetic images → trained detector at **mAP50
+0.764** in **~38 min** for **~$1.25** of MI300X time, with zero human labels. The
+console screenshot [below](#what-the-swarm-produces) is live MI300X VRAM and ROCm
+telemetry off that node. [Full breakdown](#amd-resource-usage) · [run it on your
+own MI300X](docs/HOSTING_GUIDE.md)
+
+**▶ Live demo: [aionvis.com](https://aionvis.com)** — *Launch console*. Point it
+at a live MI300X node (endpoint URL + API key) and the console drives the real
+swarm: live ROCm telemetry, real runs, real training. No node handy? **"Explore
+with simulated data"** opens the same console on an in-browser simulation — every
+screen, no account, no GPU.
 
 [Pitch deck](https://aionvis.com/idea.pdf) · [Run it on your own
 MI300X](docs/HOSTING_GUIDE.md) · [Demo walkthrough](aionvis-ui/DEMO.md)
@@ -158,6 +178,16 @@ Everything above was built, measured and trained on AMD:
   `GPU_SLOTS=4`, `AUTO_BATCH=true`); an 80 GB card cannot co-reside this
   stack. Live VRAM telemetry is on the console's Hardware page.
 
+### Why we moved off a hosted LLM API
+
+The first prototype reached Gemma through **Fireworks AI**, because we had no
+GPU large enough to serve a 26B model ourselves. Once the MI300X was available
+we dropped the hosted API and moved Gemma 4 **on-card**: 192 GB of HBM3 is
+enough to serve the LLM under vLLM *and* keep FLUX.2, SAM 3 and the trainer
+resident beside it, so the semantic critic became a local call instead of a
+per-image network round trip to a third party. The Fireworks integration was
+removed on 2026-07-08 — today no part of the swarm leaves the AMD card.
+
 ## Market & business model
 
 Labeling is a multi-billion-dollar industry that exists only because models
@@ -233,7 +263,9 @@ All models are open-weight and self-hosted; the only services involved:
 
 **No third-party LLM/API services.** The language model is Gemma 4 served by
 vLLM on the same MI300X; there are no OpenAI, Anthropic or Fireworks keys
-anywhere in the stack. The backend's own API is protected by a self-minted
+anywhere in the stack today. (An early prototype did reach Gemma via Fireworks
+AI; that integration was removed on 2026-07-08 when inference moved on-card —
+see [Why we moved off a hosted LLM API](#why-we-moved-off-a-hosted-llm-api).) The backend's own API is protected by a self-minted
 `AA_API_KEY` (Bearer / X-API-Key / WebSocket `?token=`).
 
 ## Model lineup — every weight is open
