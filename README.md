@@ -9,7 +9,7 @@ simulated end-to-end run in Mission Control.
 aionVIS is an autonomous agent swarm that generates its own training data,
 labels it, verifies its own labels, and trains deployable object-detection
 models — natively on AMD hardware. Built for the **AMD Developer Hackathon
-ACT II (Unicorn Track)** with Claude Fable 5 in 5 days.
+ACT II (Unicorn Track)**.
 
 ```
 Prompt Agent (Gemma 4 26B-A4B MoE · vLLM on MI300X)
