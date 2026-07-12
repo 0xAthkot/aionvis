@@ -491,7 +491,7 @@ async def preview_images(body: PreviewImagesRequest) -> PreviewImagesResponse:
     if body.generator == "flux":
         ok, why = flux_supported()
         if not ok:
-            raise HTTPException(409, f"FLUX.1-schnell cannot run here — {why}")
+            raise HTTPException(409, f"FLUX cannot run here — {why}")
 
     count = max(1, min(body.count or 3, 4))
     scenarios = await prompt_agent.expand_async(

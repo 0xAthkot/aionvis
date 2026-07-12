@@ -85,28 +85,39 @@ as option 1, served locally. Verified on a clean Windows machine.
 
 **→ Step-by-step guide: [`docs/HOSTING_GUIDE.md`](docs/HOSTING_GUIDE.md)** —
 droplet creation, one-shot install, Hugging Face gating and TLS via sslip.io,
-with the traps we hit live called out. Short version:
+with the traps we hit live called out. Short version, in `tmux` (closing your
+SSH session otherwise kills the backend):
 
 ```bash
 # on the node (AMD Developer Cloud MI300X, ROCm):
 git clone https://github.com/0xAthkot/aionvis && cd aionvis
-bash backend/deploy_mi300x.sh          # one-shot: ROCm torch stack, SAM 3
-                                       # sidecar, streaming .env profile; mints
-                                       # your API key and prints the endpoint +
-                                       # the vLLM/Gemma container command
+bash backend/deploy_mi300x.sh     # ROCm torch stack + SAM 3 sidecar + a tuned
+                                  # streaming .env; mints your API key and
+                                  # prints the endpoint URL and the exact vLLM
+                                  # container command for pane 2
 
+# pane 1 — the backend
 cd backend && source .venv/bin/activate
-uvicorn app.main:app --host 0.0.0.0 --port 8000   # leave running (use tmux)
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 
-# in a second shell — preflight every endpoint, the LLM and inference:
+# pane 2 — Gemma 4 on vLLM: paste the `docker run` the script printed, verbatim
+#          (optional: while it's down the Prompt Agent uses its deterministic
+#           template designer and the semantic critic is skipped — runs still
+#           complete end to end)
+
+# pane 3 — preflight every endpoint, the LLM and live inference
 cd backend && .venv/bin/python smoke_test.py
 ```
 
-Then attach any console (option 1 or 2) to the node at runtime as above.
-The deploy script's printed output is self-contained — endpoint URL, API
-key, and the exact vLLM container command. To attach the **hosted** console
-the node needs TLS (mixed content): sslip.io + Caddy, 5 minutes —
-[guide, step 6](docs/HOSTING_GUIDE.md).
+**SAM 3's checkpoint is gated on Hugging Face** — request access, or just pick
+**YOLOE** as the labeler in the wizard (it's a per-run choice, and the no-account
+path). A `sam3` run on a node without the checkpoint is rejected with the reason;
+aionVIS never substitutes a model behind your back.
+
+Then attach any console — option 1 or 2, mock mode is fine: **Hardware →
+Connect AMD Developer Cloud → paste the URL + key**. The *hosted* console can
+only call an HTTPS node (browser mixed-content rule), so give the droplet TLS
+first: sslip.io + Caddy, 5 minutes — [guide, step 6](docs/HOSTING_GUIDE.md).
 
 ### Alternative · Docker (CPU-only reference stack)
 

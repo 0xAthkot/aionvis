@@ -90,5 +90,5 @@ def test_pick_model_never_substitutes(monkeypatch):
         createdBy="m", createdAt="2026-07-08T00:00:00Z",
     ))
     ctx = RunContext(run)
-    with pytest.raises(RuntimeError, match="FLUX.1-schnell cannot run"):
+    with pytest.raises(RuntimeError, match="FLUX cannot run"):
         synth_mod.synthesis_agent._pick_model(ctx)

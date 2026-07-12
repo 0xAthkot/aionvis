@@ -94,7 +94,7 @@ export const hardwareNodes: HardwareNode[] = [
     provider: "amd-developer-cloud",
     // 192 GB holds the whole swarm resident (KEEP_MODELS_WARM) — this is
     // what makes PIPELINE_MODE=streaming possible on one card.
-    residentModels: ["Gemma 3 27B (vLLM)", "FLUX.1-schnell", "SAM 3"],
+    residentModels: ["Gemma 4 26B MoE (vLLM)", "FLUX.2-klein", "SAM 3"],
   },
 ];
 

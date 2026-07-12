@@ -4,9 +4,10 @@ Two generators, the USER's choice per run (SyntheticSourceConfig.generator),
 honored verbatim — never silently substituted:
   sdxl — SDXL-Turbo by default (fits the 8 GB dev card in fp16); the
          MI300X profile sets SDXL_MODEL=stabilityai/stable-diffusion-xl-base-1.0
-  flux — FLUX.1-schnell (bf16, 4-step, Apache-2.0). Needs FLUX_MIN_VRAM_GB;
-         nodes below that (or CPU) REJECT flux runs at creation (see
-         routers.create_run + flux_supported) instead of falling back.
+  flux — FLUX_MODEL (bf16, few-step, Apache-2.0; FLUX.2-klein on the MI300X
+         profile). Needs FLUX_MIN_VRAM_GB; nodes below that (or CPU) REJECT
+         flux runs at creation (see routers.create_run + flux_supported)
+         instead of falling back.
 
 Pipelines load per stage and are torn down afterwards (deliberate VRAM
 orchestration) unless KEEP_MODELS_WARM=true, where they stay cached.
@@ -50,7 +51,7 @@ _load_lock = threading.Lock()
 
 
 def flux_supported() -> tuple[bool, str]:
-    """Can this node run FLUX.1-schnell? (eligible, reason-if-not).
+    """Can this node run FLUX? (eligible, reason-if-not).
     Checked BEFORE any checkpoint download; run creation rejects
     ineligible flux runs so the user's generator choice is never
     silently swapped."""
@@ -73,7 +74,7 @@ class SynthesisAgent:
         if not ok:
             # create_run validates this; failing loudly here is the last
             # line of defense — never substitute the user's choice.
-            raise RuntimeError(f"FLUX.1-schnell cannot run — {why}")
+            raise RuntimeError(f"FLUX cannot run — {why}")
         return settings.flux_model, True
 
     def _load_pipe(self, log: Callable[[str], None], model_id: str,
@@ -148,7 +149,7 @@ class SynthesisAgent:
         if generator == "flux":
             ok, why = flux_supported()
             if not ok:
-                raise RuntimeError(f"FLUX.1-schnell cannot run — {why}")
+                raise RuntimeError(f"FLUX cannot run — {why}")
             model_id, is_flux = settings.flux_model, True
         else:
             model_id, is_flux = settings.sdxl_model, False

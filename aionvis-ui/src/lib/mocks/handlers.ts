@@ -485,7 +485,7 @@ export const handlers = [
       })),
       model:
         body.generator === "flux"
-          ? "FLUX.1-schnell (simulated)"
+          ? "FLUX.2-klein (simulated)"
           : "stabilityai/sdxl-turbo (simulated)",
     };
     return HttpResponse.json(response);

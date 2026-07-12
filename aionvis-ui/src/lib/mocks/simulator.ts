@@ -323,12 +323,12 @@ export class RunSimulator {
       case "overlap": {
         const synthetic = this.run.path === "synthetic";
         this.log("stage", undefined, "━━ PARALLEL SWARM — synthesis · vision · critic streaming concurrently on one MI300X ━━");
-        this.log("info", undefined, "Entire swarm resident in 192 GB HBM3 — Gemma 3 27B, FLUX, SAM 3 — no load→use→flush choreography");
+        this.log("info", undefined, "Entire swarm resident in 192 GB HBM3 — Gemma 4 26B MoE, FLUX.2-klein, SAM 3 — no load→use→flush choreography");
         if (synthetic) {
           this.setAgent("prompt", "done");
           if (!this.overlap.synthDone)
             this.setAgent("synthesis", "working",
-              `Generating ${total} images (${this.generator() === "flux" ? "FLUX.1-schnell" : "SDXL"}) → streaming to Vision`);
+              `Generating ${total} images (${this.generator() === "flux" ? "FLUX.2-klein" : "SDXL"}) → streaming to Vision`);
         }
         if (!this.overlap.visionDone)
           this.setAgent("vision", "working", "Segmenting the image stream (SAM 3)");
@@ -348,10 +348,10 @@ export class RunSimulator {
         this.log("stage", undefined, "━━ STAGE: SYNTHESIS — Synthesis Agent taking over ━━");
         this.setAgent("prompt", "done");
         this.setAgent("synthesis", "working",
-          `Generating ${total} images (${flux ? "FLUX.1-schnell bf16" : "SDXL fp16"})`);
+          `Generating ${total} images (${flux ? "FLUX.2-klein bf16" : "SDXL fp16"})`);
         setGpuLoad(flux ? 68 : 52, 96, 3.4, "img_per_s");
         this.log("info", "synthesis", flux
-          ? "Loading FLUX.1-schnell transformer + VAE (23.8 GB bf16) onto MI300X"
+          ? "Loading FLUX.2-klein transformer + VAE (13.4 GB bf16) onto MI300X"
           : "Loading SDXL UNet + VAE (6.9 GB fp16) onto MI300X");
         break;
       }

@@ -541,7 +541,7 @@ export interface HardwareNode {
   provider: "amd-developer-cloud" | "on-prem";
   /**
    * Models currently held resident in VRAM (KEEP_MODELS_WARM), e.g.
-   * ["Gemma 3 27B (vLLM)", "FLUX.1-schnell", "SAM 3"]. Absent/empty on
+   * ["Gemma 4 26B MoE (vLLM)", "FLUX.2-klein", "SAM 3"]. Absent/empty on
    * sequential nodes that load-and-flush per stage.
    */
   residentModels?: string[];

@@ -25,20 +25,22 @@ class Settings(BaseSettings):
     aa_api_key: str = ""
 
     # --- Prompt Agent (any OpenAI-compatible chat endpoint) ---
-    # Default: Gemma via vLLM on the same box (the MI300X profile:
-    # `vllm serve google/gemma-3-27b-it --port 8001`). The key is optional —
-    # vLLM ignores it. If the endpoint is unreachable the Prompt Agent
-    # degrades to its deterministic template expander.
+    # Default: Gemma via vLLM on the same box — the model deploy_mi300x.sh
+    # serves (`--model google/gemma-4-26B-A4B-it --port 8001`); keep the two in
+    # step or vLLM 404s the request. The key is optional — vLLM ignores it. If
+    # the endpoint is unreachable the Prompt Agent degrades to its
+    # deterministic template expander.
     llm_api_key: str = ""
     llm_base_url: str = "http://localhost:8001/v1"
-    llm_model: str = "google/gemma-3-27b-it"
+    llm_model: str = "google/gemma-4-26B-A4B-it"
     # Shown as the agent's provider in the UI; defaults by base_url.
     llm_provider_label: str = ""
 
     # --- Synthesis Agent ---
-    # sdxl -> stabilityai/sdxl-turbo (fits 8 GB); flux -> FLUX.1-schnell (MI300X)
+    # sdxl -> stabilityai/sdxl-turbo (fits 8 GB); flux -> FLUX.2-klein (MI300X,
+    # what deploy_mi300x.sh writes: Apache-2.0, ungated, ~13 GB)
     sdxl_model: str = "stabilityai/sdxl-turbo"
-    flux_model: str = "black-forest-labs/FLUX.1-schnell"
+    flux_model: str = "black-forest-labs/FLUX.2-klein-4B"
     synthesis_image_size: int = 640
     # FLUX runs need this much VRAM; below it (or on CPU) a "flux" run is
     # REJECTED at creation (before downloading the 24 GB checkpoint) — the
@@ -61,7 +63,7 @@ class Settings(BaseSettings):
     critic_iou_accept: float = 0.55
     # Second stage: a VLM spot-checks accepted crops semantically via the
     # same OpenAI-compatible endpoint. Cost-capped per run. Empty model =
-    # reuse llm_model (Gemma 3 is vision-capable, so one server does both);
+    # reuse llm_model (Gemma 4 is vision-capable, so one server does both);
     # set it only to route the critic to a different vision model.
     semantic_critic: bool = True
     semantic_critic_model: str = ""
