@@ -2,14 +2,21 @@
 
 **One sentence in → deployable detection model out. Zero human labeling.**
 
-**▶ Live demo, no setup: [aionvis.com](https://aionvis.com)** — sign in
-with any credentials (demo auth). Everything works in the browser, including a
-simulated end-to-end run in Mission Control.
+**▶ Live demo, no setup: [aionvis.com](https://aionvis.com)** — *Launch
+console* → **"Demo without AMD Developer Cloud"**. No account, no GPU: every
+screen works in the browser, including a simulated end-to-end run in Mission
+Control. Have a node? Sign in with its endpoint URL + API key instead and the
+same console drives the real swarm.
+
+[Pitch deck](https://aionvis.com/idea.pdf) · [Run it on your own
+MI300X](docs/HOSTING_GUIDE.md) · [Demo walkthrough](aionvis-ui/DEMO.md)
 
 aionVIS is an autonomous agent swarm that generates its own training data,
 labels it, verifies its own labels, and trains deployable object-detection
 models — natively on AMD hardware. Built for the **AMD Developer Hackathon
-ACT II (Unicorn Track)**.
+ACT II (Unicorn Track)**, and entered in the **Best Use of Gemma Models**
+challenge: Gemma 4 is the swarm's brain — it designs the scenes, spot-checks
+every label as a VLM, and writes each model's card.
 
 ```
 Prompt Agent (Gemma 4 26B-A4B MoE · vLLM on MI300X)
@@ -24,6 +31,14 @@ vision and critic overlap as producer/consumer streams with every model
 resident in the 192 GB of VRAM at once — no load/unload churn.
 
 ## What the swarm produces
+
+![Mission Control during a run on the MI300X](docs/img/console-mission-control.png)
+
+*The console, attached to a live MI300X node: the five agents, the training
+log streaming epoch by epoch, real VRAM telemetry (128 GB of the swarm held
+resident), and the images the Synthesis Agent minted for this run — 5,000 of
+them, from the sentence "I need to detect hotwheels cars (toy cars) in my
+house".*
 
 | | |
 |---|---|
@@ -53,8 +68,8 @@ rejected.*
 
 ### 1 · Zero install (recommended first look)
 
-Open **[aionvis.com](https://aionvis.com)** → *Launch console* →
-sign in with any credentials. The console runs on an in-browser mock (MSW):
+Open **[aionvis.com](https://aionvis.com)** → *Launch console* → **"Demo
+without AMD Developer Cloud"**. The console runs on an in-browser mock (MSW):
 every screen, wizard, dataset view and a full simulated run work with no
 backend and no GPU. If you have a live aionVIS node, attach it at runtime:
 **Hardware → Connect AMD Developer Cloud → paste URL + API key** — all REST
@@ -128,6 +143,32 @@ Everything above was built, measured and trained on AMD:
   `GPU_SLOTS=4`, `AUTO_BATCH=true`); an 80 GB card cannot co-reside this
   stack. Live VRAM telemetry is on the console's Hardware page.
 
+## Market & business model
+
+Labeling is a multi-billion-dollar industry that exists only because models
+can't feed themselves. At scale a box costs **$0.03–$0.10** to draw, so a
+modest 100k-image dataset runs **$50k+** with QA — and you pay again every
+time the camera angle or the product changes. The flagship run above cost
+**$1.25** and nobody drew a box.
+
+Pricing follows the cost: usage-based per GPU-minute (every run is metered
+and quoted in the wizard before launch) plus a per-seat platform fee. A
+500-image run is minutes of MI300X time — sellable at $5–15 with healthy
+margin. One engine serves eight vision markets, each in the billions:
+logistics ($22B), manufacturing ($20B), automotive ($19B), retail ($18B),
+agriculture ($18B), aviation ($12B), defense ($9.3B), robotics ($4.4B).
+
+| | Data source | Labels | Human in the loop |
+|---|---|---|---|
+| Scale AI · Labelbox | yours | humans | always |
+| Roboflow · Ultralytics | yours | AI-assisted | yes |
+| Synthetic-data studios | artists build scenes | rendered | artists |
+| **aionVIS** | **generated from a sentence** | **self-verified by agents** | **no** |
+
+Synthetic data is easy to generate and hard to trust — the self-correcting
+Critic is the moat: we ship the trust layer. Roadmap: seed raise → paid
+design-partner pilots → commercial launch. Full pitch: [`PITCH.md`](PITCH.md).
+
 ## Main code path
 
 Follow one run through the system:
@@ -154,6 +195,13 @@ or without a backend.
 |---|---|
 | [`aionvis-ui/`](aionvis-ui/README.md) | Next.js 16 console — wizard, live Mission Control, dataset analytics, model registry + comparison, inference playground |
 | [`backend/`](backend/README.md) | FastAPI + the agent swarm |
+
+Nothing here is mocked on the backend: every number in the results table came
+off the MI300X droplet. Check it yourself with
+[`backend/smoke_test.py`](backend/smoke_test.py) (preflights every endpoint,
+the LLM and live inference) and the 32 pytest cases in
+[`backend/tests/`](backend/tests) — auth, streaming orchestration, mask
+geometry, prompt agent, generator/labeler selection.
 
 ## External services
 
