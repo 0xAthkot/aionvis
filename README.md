@@ -99,6 +99,9 @@ label in either.
 | One sentence → deployable model | **~38 min** | **~44 min** of training |
 | GPU cost at the $2/h Developer Cloud rate | **~$1.25** | **~$1.47** |
 
+The warehouse figures are end to end. The Hot Wheels figures are training only:
+that run held the GPU for 72 min start to finish, or ~$2.41 at $2/h.
+
 The warehouse dataset is the hard one: dense aisles, ~45 instances per image.
 The Hot Wheels model was then shown a **real phone photo of a real toy car it
 had never seen** and found it at 99% confidence: synthetic training, real-world
