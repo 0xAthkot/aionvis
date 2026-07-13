@@ -96,6 +96,8 @@ label in either.
 | Labels the Critic kept / threw out | 22,718 / 42,214 | 6,027 / 3,273 |
 | Detector | yolo26m, 60 epochs @ 1024 px | yolo26n, 40 epochs |
 | Accuracy | **mAP50 0.764** · mAP50-95 0.611 | **mAP50 0.960** · mAP50-95 0.946 |
+| One sentence → deployable model | **~38 min** | **~44 min** of training |
+| GPU cost at the $2/h Developer Cloud rate | **~$1.25** | **~$1.47** |
 
 The warehouse dataset is the hard one: dense aisles, ~45 instances per image.
 The Hot Wheels model was then shown a **real phone photo of a real toy car it
