@@ -96,8 +96,6 @@ label in either.
 | Labels the Critic kept / threw out | 22,718 / 42,214 | 6,027 / 3,273 |
 | Detector | yolo26m, 60 epochs @ 1024 px | yolo26n, 40 epochs |
 | Accuracy | **mAP50 0.764** · mAP50-95 0.611 | **mAP50 0.960** · mAP50-95 0.946 |
-| One sentence → deployable model | **~38 min** | **~44 min** of training |
-| GPU cost at the $2/h Developer Cloud rate | **~$1.25** | **~$1.47** |
 
 The warehouse dataset is the hard one: dense aisles, ~45 instances per image.
 The Hot Wheels model was then shown a **real phone photo of a real toy car it
@@ -270,7 +268,7 @@ All models are open-weight and self-hosted; the only services involved:
 |---|---|---|
 | **AMD Developer Cloud** | MI300X droplet the swarm runs on ($2/h) | The only compute used |
 | **Vercel** | Hosts the demo console ([aionvis.com](https://aionvis.com)) | Frontend only; runs on the in-browser mock until you attach a node |
-| **sslip.io** | Zero-signup wildcard DNS: `129-212-179-0.sslip.io` → the droplet IP | Gives Caddy a hostname so Let's Encrypt can issue a cert; no account, stores nothing |
+| **sslip.io** | Zero-signup wildcard DNS: `<your-droplet-ip-dashed>.sslip.io` → the droplet IP | Gives Caddy a hostname so Let's Encrypt can issue a cert; no account, stores nothing |
 | **Caddy + Let's Encrypt** | TLS proxy on the droplet (REST + WebSockets) | Required: the HTTPS console cannot call plain `http://`/`ws://` (mixed content) |
 | **Hugging Face** | Model weights, downloaded on first use | `facebook/sam3` is gated: request access on its model page and `huggingface-cli login`; check each model page for license acceptance |
 | **GitHub** | This repo | n/a |
