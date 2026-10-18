@@ -158,6 +158,9 @@ const COMPARE_ROWS: { label: string; cells: [Cell, Cell, Cell] }[] = [
   },
 ];
 
+/** Column names for the first two cells of each row (the third is aionVIS). */
+const COMPARE_OTHERS = ["Manual platforms", "AI-assisted tools"] as const;
+
 function CellIcon({ cell }: { cell: Cell }) {
   if (cell.good) return <Check className="size-3.5 shrink-0 text-emerald-400" />;
   if (cell.bad) return <X className="size-3.5 shrink-0 text-muted-foreground/60" />;
@@ -224,7 +227,9 @@ export default function LandingPage() {
                 <span className="hidden lg:inline">GitHub</span>
               </a>
             </Button>
-            <Button asChild variant="ghost" size="sm">
+            {/* Same destination as "Launch console"; dropped on phones so the
+                header fits a 320 px screen. */}
+            <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
               <Link href="/login">Sign in</Link>
             </Button>
             <Button asChild size="sm">
@@ -364,7 +369,34 @@ export default function LandingPage() {
                 that feeds itself makes the human 0× necessary.
               </p>
             </div>
-            <div className="overflow-x-auto rounded-xl border">
+            {/* Phones: one card per row, aionVIS first. The 720 px table
+                would hide the aionVIS column off-screen. */}
+            <div className="space-y-3 sm:hidden">
+              {COMPARE_ROWS.map((row) => (
+                <div key={row.label} className="rounded-xl border bg-card/40 p-4">
+                  <p className="text-sm font-medium">{row.label}</p>
+                  <p className="mt-2.5 flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-sm">
+                    <CellIcon cell={row.cells[2]} />
+                    <span>
+                      <span className="font-semibold">aionVIS:</span>{" "}
+                      {row.cells[2].text}
+                    </span>
+                  </p>
+                  <ul className="mt-2.5 space-y-1.5 px-3 text-xs text-muted-foreground">
+                    {COMPARE_OTHERS.map((name, i) => (
+                      <li key={name} className="flex items-center gap-2">
+                        <CellIcon cell={row.cells[i]} />
+                        <span>
+                          <span className="text-foreground/70">{name}:</span>{" "}
+                          {row.cells[i].text}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            <div className="hidden overflow-x-auto rounded-xl border sm:block">
               <table className="w-full min-w-[720px] border-collapse text-sm">
                 <thead>
                   <tr className="border-b bg-card/60 text-left">
@@ -587,13 +619,17 @@ docker compose up --build
                 </p>
               </div>
             </div>
+            {/* The sentence sits in one span: as bare flex children its
+                pieces became three side-by-side columns on phones. */}
             <p className="mt-6 flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
-              <Sparkles className="size-3.5 text-primary" />
-              No node yet? The{" "}
-              <Link href="/login" className="text-foreground underline underline-offset-4">
-                demo
-              </Link>{" "}
-              runs the full console on an in-browser simulation - no account, no GPU.
+              <Sparkles className="size-3.5 shrink-0 text-primary" />
+              <span>
+                No node yet? The{" "}
+                <Link href="/login" className="text-foreground underline underline-offset-4">
+                  demo
+                </Link>{" "}
+                runs the full console on an in-browser simulation - no account, no GPU.
+              </span>
             </p>
           </div>
         </section>
@@ -646,7 +682,7 @@ docker compose up --build
               href={REPO_URL}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
+              className="flex items-center gap-1.5 py-1 text-muted-foreground transition-colors hover:text-foreground"
             >
               <GithubMark className="size-3.5" />
               Source on GitHub
@@ -655,7 +691,7 @@ docker compose up --build
               href="https://www.aionvis.com/idea.pdf"
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
+              className="flex items-center gap-1.5 py-1 text-muted-foreground transition-colors hover:text-foreground"
             >
               <FileText className="size-3.5" />
               Idea

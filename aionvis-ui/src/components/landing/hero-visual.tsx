@@ -271,7 +271,9 @@ export function HeroVisual() {
                     />
                   )}
                   <span className="hidden sm:inline">{a.name} Agent</span>
-                  <span className="sm:hidden">{a.name}</span>
+                  {/* Phones name only the working agent; five names don't
+                      fit a 320-375 px screen. */}
+                  {isActive && <span className="sm:hidden">{a.name}</span>}
                   {isActive && (
                     <span className="size-1.5 animate-pulse rounded-full bg-primary" />
                   )}
