@@ -21,7 +21,6 @@ import {
   X,
 } from "lucide-react";
 import { AgentPipeline } from "@/components/landing/agent-pipeline";
-import { ContactDialog } from "@/components/landing/contact-dialog";
 import { FaqItem } from "@/components/landing/faq-item";
 import { HeroVisual } from "@/components/landing/hero-visual";
 import { IndustryMarquee } from "@/components/landing/industry-marquee";
@@ -42,7 +41,6 @@ const NAV_LINKS = [
   { href: "#features", label: "Features" },
   { href: "#compare", label: "Compare" },
   { href: "#platform", label: "Self-host" },
-  { href: "#pricing", label: "Pricing" },
   { href: "#industries", label: "Industries" },
   { href: "#faq", label: "FAQ" },
   { href: "#get-started", label: "Get started" },
@@ -184,51 +182,6 @@ const FAQS = [
   {
     q: "What is model training?",
     a: "Showing a model thousands of labeled examples until it can find those objects in images it has never seen. The MLOps Agent handles it end to end - architecture selection to exported weights - with live epoch metrics streaming to Mission Control.",
-  },
-];
-
-const PLANS = [
-  {
-    name: "Developer",
-    price: "Free",
-    tagline: "Self-hosted, open pipeline",
-    features: [
-      "docker compose up - full stack locally",
-      "Bring your own GPU (CUDA or ROCm)",
-      "Bring your own OpenAI-compatible LLM (vLLM)",
-      "YOLO / COCO / VOC / CSV / ONNX export",
-    ],
-    cta: "Run it locally",
-    href: "#platform",
-    highlight: false,
-  },
-  {
-    name: "Team",
-    price: "Per GPU-minute",
-    tagline: "Managed MI300X capacity",
-    features: [
-      "Every run quoted before launch",
-      "Shared projects, run queue, registry",
-      "Active-learning feedback across the team",
-      "A 500-image training run ≈ the price of lunch",
-    ],
-    cta: "Launch the console",
-    href: "/login",
-    highlight: true,
-  },
-  {
-    name: "Enterprise",
-    price: "Custom",
-    tagline: "Your data never leaves",
-    features: [
-      "On-prem or dedicated MI300X nodes",
-      "SSO / SAML, isolated tenancy",
-      "Self-hosted LLM (vLLM) - zero external calls",
-      "Support SLAs",
-    ],
-    cta: "Talk to us",
-    href: "contact",
-    highlight: false,
   },
 ];
 
@@ -443,10 +396,10 @@ export default function LandingPage() {
         {/* ---- Platform ---- */}
         <section id="platform" className="scroll-mt-20 border-t border-white/5 bg-card/20 py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="grid items-start gap-12 lg:grid-cols-2">
+            <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-2">
               <div>
                 <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                  Born on AMD
+                  Tested on AMD
                 </h2>
                 <p className="mt-4 text-muted-foreground">
                   The whole swarm - diffusion, segmentation, training, and
@@ -515,65 +468,8 @@ docker compose up --build
           </div>
         </section>
 
-        {/* ---- Pricing ---- */}
-        <section id="pricing" className="scroll-mt-20 py-24">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="mx-auto mb-12 max-w-2xl text-center">
-              <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                Priced like infrastructure, not labor
-              </h2>
-              <p className="mt-4 text-muted-foreground">
-                Human labeling scales with boxes. We scale with GPU-minutes - and
-                every run shows you its quote before you launch it.
-              </p>
-            </div>
-            <div className="grid gap-4 lg:grid-cols-3">
-              {PLANS.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={
-                    // flex-col so the CTA pins to the bottom edge on every
-                    // card, however tall its feature list runs.
-                    plan.highlight
-                      ? "relative flex flex-col rounded-xl border border-primary/50 bg-card p-6 shadow-[0_0_40px_-12px] shadow-primary/30"
-                      : "flex flex-col rounded-xl border bg-card p-6"
-                  }
-                >
-                  {plan.highlight && (
-                    <Badge className="absolute -top-2.5 left-6">Most popular</Badge>
-                  )}
-                  <p className="text-sm font-medium text-muted-foreground">{plan.name}</p>
-                  <p className="mt-2 text-2xl font-semibold tracking-tight">{plan.price}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{plan.tagline}</p>
-                  <ul className="mt-5 space-y-2.5 text-sm">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex gap-2.5">
-                        <Check className="mt-0.5 size-4 shrink-0 text-primary" />
-                        <span className="text-muted-foreground">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-auto">
-                    {plan.href === "contact" ? (
-                      <ContactDialog cta={plan.cta} />
-                    ) : (
-                      <Button
-                        asChild
-                        className="mt-6 w-full"
-                        variant={plan.highlight ? "default" : "outline"}
-                      >
-                        <Link href={plan.href}>{plan.cta}</Link>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* ---- Industries marquee ---- */}
-        <section id="industries" className="scroll-mt-20 border-t border-white/5 py-24">
+        <section id="industries" className="scroll-mt-20 py-24">
           <div className="mx-auto mb-12 max-w-6xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
