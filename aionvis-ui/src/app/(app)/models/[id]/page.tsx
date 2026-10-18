@@ -163,8 +163,8 @@ export default function ModelDetailPage({
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                Managed endpoints are on the roadmap. Try the inference
-                playground below for live predictions
+                Not built yet. Download the weights to serve them yourself,
+                or try the inference playground below for live predictions
               </TooltipContent>
             </Tooltip>
           </div>

@@ -3,7 +3,7 @@
 Two kinds of credential authenticate against a protected node:
   - the node's root AA_API_KEY (backend/.env, minted by deploy_mi300x.sh);
   - any per-person key minted via POST /settings/api-keys ("aa_live_…"),
-    individually revocable via DELETE — hand each teammate/judge their own
+    individually revocable via DELETE — hand each teammate their own
     instead of sharing the root key.
 Auth is active whenever AA_API_KEY is non-empty; an empty root key leaves
 the node open for same-machine dev (minted keys are then moot).

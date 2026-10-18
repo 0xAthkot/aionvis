@@ -1,7 +1,7 @@
-"""Demo-morning preflight: verify every critical endpoint is alive.
+"""Preflight: verify every critical endpoint is alive.
 
-Read-only by design — it creates no runs, feedback or datasets, so it is
-safe to fire minutes before going on stage. The one LLM call it makes
+Read-only by design: it creates no runs, feedback or datasets, so it is
+safe to run against a node that is in use. The one LLM call it makes
 (expand-prompt) hits the Prompt Agent's cache/fallback path and costs at
 most a fraction of a cent.
 
@@ -144,9 +144,9 @@ def main() -> int:
 
     print()
     if failures:
-        print(f"{failures} check(s) FAILED. Do not go on stage yet.")
+        print(f"{failures} check(s) FAILED. Fix these before using the node.")
     else:
-        print("All checks passed. Break a leg.")
+        print("All checks passed.")
     return 1 if failures else 0
 
 

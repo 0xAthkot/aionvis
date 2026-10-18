@@ -89,10 +89,10 @@ export function ConnectNodeCard() {
       <CardContent className="space-y-4">
         {awaitingCredentials && (
           <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-            Ready for your AMD key. When the MI300X credentials arrive: run{" "}
+            No node yet? Run{" "}
             <code className="font-mono text-xs">backend/deploy_mi300x.sh</code>{" "}
-            on the node (it prints the endpoint URL and API key to paste
-            here), then hit Connect.
+            on a GPU server. It prints the endpoint URL and API key to paste
+            here, then hit Connect.
           </p>
         )}
         <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto]">

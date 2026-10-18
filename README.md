@@ -46,7 +46,7 @@ Every image, every label and every model in this repo was produced on a single
 The LLM is self-hosted on the same card, with no third-party AI API.
 [How the MI300X is used →](#amd-resource-usage)
 
-**Proof from the live node:** 500 synthetic images → trained detector at **mAP50
+**Measured on an MI300X:** 500 synthetic images → trained detector at **mAP50
 0.764** in **~38 min** for **~$1.25** of MI300X time, with zero human labels.
 
 **▶ [aionvis.com](https://aionvis.com)**: point the console at a live MI300X node
@@ -87,7 +87,7 @@ rejected.*
 
 ## Measured on one AMD Instinct MI300X
 
-Two runs off the live node. No human drew, reviewed or corrected a single
+Two runs on an MI300X node. No human drew, reviewed or corrected a single
 label in either.
 
 | | Warehouse safety | Hot Wheels (toy cars) |

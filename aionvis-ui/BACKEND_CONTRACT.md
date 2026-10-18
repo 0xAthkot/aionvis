@@ -39,7 +39,7 @@ NEXT_PUBLIC_WS_BASE_URL=ws://localhost:8000
   Besides the root `AA_API_KEY`, any per-person key minted via
   `POST /settings/api-keys` (`aa_live_…`, secret returned once)
   authenticates both REST and WS; `DELETE /settings/api-keys/{id}`
-  revokes it immediately — hand each teammate/judge their own key
+  revokes it immediately — hand each teammate their own key
   instead of sharing the root.
   The UI stores the endpoint + key at runtime (Hardware page → "Connect
   AMD Developer Cloud") and attaches them to every request — no env flip
