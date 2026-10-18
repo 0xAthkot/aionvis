@@ -9,6 +9,26 @@ echo "== GPU check =="
 amd-smi static --asic 2>/dev/null | head -5 || rocm-smi --showproductname || {
     echo "No AMD GPU visible — is this an MI300X instance?"; exit 1; }
 
+echo "== System fixes (AMD Developer Cloud ROCm 7.14 image, 2026-08) =="
+# The image ships without the venv module, so `python3 -m venv` dies.
+if ! python3 -c 'import ensurepip' 2>/dev/null; then
+    pyver=$(python3 -c 'import sys; print(f"{sys.version_info[0]}.{sys.version_info[1]}")')
+    apt-get update -qq
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "python${pyver}-venv"
+fi
+# Without amdgpu.ids torch names the card "AMD Radeon Graphics".
+if [ ! -e /opt/amdgpu/share/libdrm/amdgpu.ids ]; then
+    ids=$(find /opt/rocm* -name amdgpu.ids 2>/dev/null | head -1 || true)
+    if [ -n "${ids}" ]; then
+        mkdir -p /opt/amdgpu/share/libdrm && ln -sf "${ids}" /opt/amdgpu/share/libdrm/amdgpu.ids
+    fi
+fi
+# The stock image runs a demo Jupyter container ("rocm") on port 8000.
+if command -v docker >/dev/null && docker ps --format '{{.Names}}' | grep -qx rocm; then
+    echo "!! A container named 'rocm' holds port 8000. Free it before starting the backend:"
+    echo "   docker update --restart=no rocm && docker rm -f rocm"
+fi
+
 echo "== Python env =="
 python3 -m venv .venv
 source .venv/bin/activate
