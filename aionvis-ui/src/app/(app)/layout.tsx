@@ -42,7 +42,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="relative">
+      {/* min-w-0: without it the inset never shrinks below the topbar's
+          widest content (the untruncated demo banner) and the whole console
+          scrolls sideways on laptop-width screens. */}
+      <SidebarInset className="relative min-w-0">
         {/* Aurora accent: one soft primary glow bleeding from the top edge —
             depth without clutter (Linear/Vercel dark-console pattern). */}
         <div
