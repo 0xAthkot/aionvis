@@ -74,7 +74,7 @@ class SynthesisAgent:
         if not ok:
             # create_run validates this; failing loudly here is the last
             # line of defense — never substitute the user's choice.
-            raise RuntimeError(f"FLUX cannot run — {why}")
+            raise RuntimeError(f"FLUX cannot run: {why}")
         return settings.flux_model, True
 
     def _load_pipe(self, log: Callable[[str], None], model_id: str,
@@ -149,7 +149,7 @@ class SynthesisAgent:
         if generator == "flux":
             ok, why = flux_supported()
             if not ok:
-                raise RuntimeError(f"FLUX cannot run — {why}")
+                raise RuntimeError(f"FLUX cannot run: {why}")
             model_id, is_flux = settings.flux_model, True
         else:
             model_id, is_flux = settings.sdxl_model, False
@@ -222,7 +222,7 @@ class SynthesisAgent:
             rate = (i + 1) / (time.monotonic() - started)
             telemetry.throughput = Throughput(kind="img_per_s", value=round(rate, 2))
             ctx.log("info",
-                    f"[{i + 1}/{count}] {dt:.1f}s — \"{prompt[:88]}…\"",
+                    f"[{i + 1}/{count}] {dt:.1f}s · \"{prompt[:88]}…\"",
                     agent="synthesis")
             on_progress(i + 1)
             if on_image is not None:

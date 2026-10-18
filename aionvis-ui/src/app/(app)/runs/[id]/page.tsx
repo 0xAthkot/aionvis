@@ -127,7 +127,7 @@ export default function RunDetailPage({
               <TooltipContent className="max-w-64">
                 {run.pipelineMode === "streaming"
                   ? "192 GB of HBM3 holds every agent model in VRAM at once, so synthesis, vision and critic work in parallel on one MI300X. Training joins once every label is verified."
-                  : "This GPU can't hold every agent model at once, so the agents take turns owning it — each stage loads, works, and releases VRAM for the next."}
+                  : "This GPU can't hold every agent model at once, so the agents take turns owning it: each stage loads, works, and releases VRAM for the next."}
               </TooltipContent>
             </Tooltip>
           </div>
@@ -191,7 +191,7 @@ export default function RunDetailPage({
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3">
             <div className="flex items-center gap-2 text-sm text-emerald-400">
               <CheckCircle2 className="size-4" />
-              Model trained and registered — dataset frozen and versioned.
+              Model trained and registered. Dataset frozen and versioned.
             </div>
             <div className="flex gap-2">
               {run.datasetId && (
@@ -237,7 +237,7 @@ export default function RunDetailPage({
               className="h-80"
               emptyMessage={
                 run.status === "queued"
-                  ? "Run is queued — agents haven't produced output yet."
+                  ? "Run is queued. Agents haven't produced output yet."
                   : "No log history for this run."
               }
             />

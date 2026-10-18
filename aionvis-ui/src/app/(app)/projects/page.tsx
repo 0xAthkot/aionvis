@@ -193,12 +193,12 @@ export default function ProjectsPage() {
             Projects
             <HelpTip>
               One row per goal you&apos;re building models for. Each shows
-              everything the project produced — runs, datasets, trained
-              models — with search and filters across all of it.
+              everything the project produced (runs, datasets, trained
+              models) with search and filters across all of it.
             </HelpTip>
           </span>
         }
-        description="Every project and what it has produced — search by name, class, architecture or output type."
+        description="Every project and what it has produced. Search by name, class, architecture or output type."
         actions={<NewProjectDialog />}
       />
 
@@ -244,13 +244,13 @@ export default function ProjectsPage() {
         <div className="flex min-h-64 flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed">
           <FolderKanban className="size-8 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
-            No projects yet — create one here or in the Foundry.
+            No projects yet. Create one here or in the Foundry.
           </p>
         </div>
       ) : visible.length === 0 ? (
         <div className="flex min-h-40 flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed">
           <p className="text-sm text-muted-foreground">
-            Nothing matches — loosen the filters or try part of a project,
+            Nothing matches. Loosen the filters or try part of a project,
             class or architecture name.
           </p>
         </div>

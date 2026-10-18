@@ -73,7 +73,7 @@ export function NewProjectDialog({
         <DialogHeader>
           <DialogTitle>New project</DialogTitle>
           <DialogDescription>
-            Name it and list what its models should detect — that&apos;s all a
+            Name it and list what its models should detect. That&apos;s all a
             project needs.
           </DialogDescription>
         </DialogHeader>
@@ -92,7 +92,7 @@ export function NewProjectDialog({
             <Label htmlFor="np-classes">Objects to detect</Label>
             <TagInput id="np-classes" value={classes} onChange={setClasses} />
             <p className="text-xs text-muted-foreground">
-              Type an object and press Enter — e.g. “forklift”, “pallet”,
+              Type an object and press Enter, e.g. “forklift”, “pallet”,
               “worker”. Any noun works; there is no fixed list.
             </p>
           </div>

@@ -120,7 +120,7 @@ class VisionAgent:
             session.close()
             telemetry.throughput = None
         total = sum(len(r.detections) for r in results)
-        ctx.log("info", f"Segmentation done — {total} candidate instances "
+        ctx.log("info", f"Segmentation done: {total} candidate instances "
                         f"across {len(results)} images", agent="vision")
         flush_vram(ctx)
         return results

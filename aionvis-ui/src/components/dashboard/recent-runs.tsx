@@ -17,7 +17,7 @@ function caption(run: PipelineRun, simple: boolean): string {
   if (!simple) {
     return `${run.path === "synthetic" ? "Synthetic Foundry" : "BYOD"} · stage: ${run.stage.replace(/_/g, " ")}`;
   }
-  if (run.status === "failed") return "Something went wrong — open to see why";
+  if (run.status === "failed") return "Something went wrong. Open to see why";
   return `${SIMPLE_PATH[run.path]} · ${SIMPLE_STAGE[run.stage]}`;
 }
 

@@ -148,7 +148,7 @@ def delete_project(project_id: str) -> None:
     active = [r.id for r in doomed if r.status in ("queued", "running", "paused")]
     if active:
         raise HTTPException(
-            409, f"Project has active runs ({', '.join(active)}) — cancel "
+            409, f"Project has active runs ({', '.join(active)}). Cancel "
                  "them before deleting.")
 
     surviving = [r for r in store.runs.values() if r.project_id != project_id]
@@ -223,7 +223,7 @@ def create_run(body: CreateRunRequest) -> PipelineRun:
             and not body.training.architecture.startswith(("yolo11", "yolo26"))):
         raise HTTPException(
             400, f"{body.training.task} needs a YOLO11 or YOLO26 architecture "
-                 "— YOLOv10, RT-DETR and RF-DETR ship detection heads only")
+                 "(YOLOv10, RT-DETR and RF-DETR ship detection heads only)")
     if body.training.architecture.startswith("rf-detr"):
         from .agents.rfdetr_bridge import SETUP_HINT, available
 
@@ -426,7 +426,7 @@ def delete_run(run_id: str) -> None:
     if run is None:
         raise _not_found("Run", run_id)
     if run.status in ("queued", "running", "paused"):
-        raise HTTPException(409, "Run is active — cancel it before deleting.")
+        raise HTTPException(409, "Run is active. Cancel it before deleting.")
 
     surviving = [r for r in store.runs.values() if r.id != run_id]
     keep_ds = {r.dataset_id for r in surviving if r.dataset_id}
@@ -491,7 +491,7 @@ async def preview_images(body: PreviewImagesRequest) -> PreviewImagesResponse:
     if body.generator == "flux":
         ok, why = flux_supported()
         if not ok:
-            raise HTTPException(409, f"FLUX cannot run here — {why}")
+            raise HTTPException(409, f"FLUX cannot run here: {why}")
 
     count = max(1, min(body.count or 3, 4))
     scenarios = await prompt_agent.expand_async(

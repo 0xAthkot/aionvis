@@ -143,7 +143,7 @@ export const handlers = [
     if (doomed.some((r) => ["queued", "running", "paused"].includes(r.status)))
       return HttpResponse.json(
         { status: 409, code: "project_busy",
-          message: "Project has active runs — cancel them first." },
+          message: "Project has active runs. Cancel them first." },
         { status: 409 },
       );
     const surviving = db.runs.filter((r) => r.projectId !== params.id);
@@ -202,7 +202,7 @@ export const handlers = [
     if (["queued", "running", "paused"].includes(run.status))
       return HttpResponse.json(
         { status: 409, code: "run_active",
-          message: "Run is active — cancel it before deleting." },
+          message: "Run is active. Cancel it before deleting." },
         { status: 409 },
       );
     const surviving = db.runs.filter((r) => r.id !== run.id);
@@ -340,7 +340,7 @@ export const handlers = [
     const previews: RunPreviewImage[] = Array.from({ length: count }, (_, i) => ({
       fileName: `img_${String(i).padStart(4, "0")}.jpg`,
       url: placeholderImage(i + 7, `foundry ${i}`, 320, 320),
-      scenario: `Photorealistic scene of ${scene}${view ? `, ${view}` : ""} — variation ${i + 1}`,
+      scenario: `Photorealistic scene of ${scene}${view ? `, ${view}` : ""}, variation ${i + 1}`,
     }));
     return HttpResponse.json(previews);
   }),
@@ -481,7 +481,7 @@ export const handlers = [
       images: Array.from({ length: count }, (_, i) => ({
         fileName: `preview_${String(i).padStart(2, "0")}.jpg`,
         url: placeholderImage(i + 31, `preview ${i + 1}`, 640, 640),
-        scenario: `Photorealistic scene of ${scene}${view ? `, ${view}` : ""} — sample ${i + 1}`,
+        scenario: `Photorealistic scene of ${scene}${view ? `, ${view}` : ""}, sample ${i + 1}`,
       })),
       model:
         body.generator === "flux"

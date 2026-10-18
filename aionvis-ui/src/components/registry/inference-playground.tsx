@@ -147,7 +147,7 @@ export function InferencePlayground({ model }: { model: ModelArtifact }) {
           <div className="space-y-1.5">
             <CardTitle>Inference playground</CardTitle>
             <CardDescription>
-              Run any image through these weights — live, no deployment step
+              Run any image through these weights live, with no deployment step
             </CardDescription>
           </div>
           {preview && (
@@ -252,7 +252,7 @@ export function InferencePlayground({ model }: { model: ModelArtifact }) {
               (flagged ? (
                 <p className="text-xs text-muted-foreground">
                   <Flag className="mr-1 inline size-3" />
-                  Flagged — the next run in this project will target this case.
+                  Flagged. The next run in this project will target this case.
                 </p>
               ) : (
                 <form

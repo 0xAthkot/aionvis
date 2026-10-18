@@ -132,12 +132,12 @@ def spot_check(ctx: RunContext, reviewed: list[ReviewedImage],
             if verdict is False:
                 to_remove.setdefault(id(img), []).append(bi)
                 ctx.log("critic",
-                        f"SEMANTIC REJECT {img.path.name} — VLM says crop is "
+                        f"SEMANTIC REJECT {img.path.name}: VLM says crop is "
                         f"not a {cls}; label removed", agent="critic")
             else:
                 note = "" if verdict else " (no verdict; kept)"
                 ctx.log("critic",
-                        f"SEMANTIC PASS {img.path.name} — {cls} confirmed{note}",
+                        f"SEMANTIC PASS {img.path.name}: {cls} confirmed{note}",
                         agent="critic")
 
     progress = ctx.run.progress
@@ -157,7 +157,7 @@ def spot_check(ctx: RunContext, reviewed: list[ReviewedImage],
     if checked:
         rejected = sum(len(v) for v in to_remove.values())
         ctx.log("info",
-                f"Semantic spot-check done — {checked} crops verified, "
+                f"Semantic spot-check done: {checked} crops verified, "
                 f"{rejected} label(s) removed", agent="critic")
         ctx.publish_progress()
 

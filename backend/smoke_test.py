@@ -98,7 +98,7 @@ def main() -> int:
     def _analytics():
         labeled = [d for d in get("/datasets")["items"] if d.get("labeledCount")]
         if not labeled:
-            return "skipped — no labeled dataset yet"
+            return "skipped: no labeled dataset yet"
         a = get(f"/datasets/{labeled[0]['id']}/analytics")
         assert len(a["heatmap"]) == a["heatmapSize"] ** 2, "bad heatmap shape"
         return (f"{labeled[0]['id']}: {len(a['classDistribution'])} classes, "
@@ -128,7 +128,7 @@ def main() -> int:
     def _predict():
         ready = [m for m in models if m.get("status") in (None, "ready")]
         if not ready:
-            return "skipped — no trained model yet"
+            return "skipped: no trained model yet"
         from PIL import Image  # deferred: PIL is in the backend venv
         buf = io.BytesIO()
         Image.new("RGB", (64, 64), (200, 160, 40)).save(buf, format="PNG")
@@ -144,7 +144,7 @@ def main() -> int:
 
     print()
     if failures:
-        print(f"{failures} check(s) FAILED — do not go on stage yet.")
+        print(f"{failures} check(s) FAILED. Do not go on stage yet.")
     else:
         print("All checks passed. Break a leg.")
     return 1 if failures else 0

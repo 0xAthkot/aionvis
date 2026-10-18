@@ -38,8 +38,8 @@ export default function RunsPage() {
           <span className="flex items-center gap-2">
             Runs
             <HelpTip>
-              A run is one complete model build — from designing scenes to
-              training — carried out by the agent swarm. Open one to watch it
+              A run is one complete model build, from designing scenes to
+              training, carried out by the agent swarm. Open one to watch it
               work.
             </HelpTip>
           </span>
@@ -81,8 +81,8 @@ export default function RunsPage() {
         <div className="flex min-h-64 flex-1 flex-col items-center justify-center gap-4 rounded-xl border border-dashed">
           <p className="text-sm text-muted-foreground">
             {simple
-              ? "Nothing yet — build your first model."
-              : "No runs yet — launch one from the Synthetic Foundry or a dataset."}
+              ? "Nothing yet. Build your first model."
+              : "No runs yet. Launch one from the Synthetic Foundry or a dataset."}
           </p>
           <Button asChild>
             <Link href="/foundry">

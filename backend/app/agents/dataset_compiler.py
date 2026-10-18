@@ -224,7 +224,7 @@ def _write_cls_crops(ctx: RunContext, pairs: list[tuple[ReviewedImage, str]],
             for f in list(train_cls.iterdir())[:4]:
                 shutil.copy2(f, val_cls / f.name)
     ctx.log("info",
-            "Classification crops cut from verified boxes — "
+            "Classification crops cut from verified boxes: "
             + ", ".join(f"{n}: {c}" for n, c in sorted(counts.items())),
             agent="mlops")
 
@@ -234,7 +234,7 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
     run = ctx.run
     usable = [r for r in reviewed if r.accepted]
     if not usable:
-        raise RuntimeError("Critic rejected every image — nothing to train on. "
+        raise RuntimeError("Critic rejected every image. Nothing to train on. "
                            "Try a more concrete prompt or lower critic thresholds.")
     task = run.training.task
 
@@ -331,7 +331,7 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
 
     if task == "pose" and pose_matched == 0:
         raise RuntimeError(
-            "Pose task: the keypoint teacher matched no instances — pose needs "
+            "Pose task: the keypoint teacher matched no instances. Pose needs "
             "person-like target classes (worker, pedestrian, …). Use detect or "
             "segment for this scene instead."
         )
@@ -362,7 +362,7 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
     store.save()
 
     ctx.log("info",
-            f"Dataset {dataset.id} compiled — {len(usable)} labeled images "
+            f"Dataset {dataset.id} compiled: {len(usable)} labeled images "
             f"({len(usable) - n_val} train / {n_val} val), "
             f"{sum(instance_counts.values())} instances, {dataset.size_mb} MB",
             agent="mlops")

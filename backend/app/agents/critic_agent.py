@@ -89,7 +89,7 @@ class CriticAgent:
             if det.confidence < settings.critic_min_confidence:
                 dropped += 1
                 ctx.log("critic",
-                        f"REJECT {ann.path.name} class={det.class_id} — "
+                        f"REJECT {ann.path.name} class={det.class_id}: "
                         f"confidence {det.confidence:.2f} below "
                         f"{settings.critic_min_confidence:.2f}",
                         agent="critic")
@@ -97,13 +97,13 @@ class CriticAgent:
             if area < settings.critic_min_box_area or area > 0.98:
                 dropped += 1
                 ctx.log("critic",
-                        f"REJECT {ann.path.name} class={det.class_id} — "
+                        f"REJECT {ann.path.name} class={det.class_id}: "
                         f"degenerate area {area:.4f}", agent="critic")
                 continue
             if aspect > 20 or aspect < 0.05:
                 dropped += 1
                 ctx.log("critic",
-                        f"REJECT {ann.path.name} class={det.class_id} — "
+                        f"REJECT {ann.path.name} class={det.class_id}: "
                         f"implausible aspect ratio {aspect:.1f}", agent="critic")
                 continue
 
@@ -112,7 +112,7 @@ class CriticAgent:
                 regenerated += 1
                 cx, cy, w, h = _to_yolo(tight)
                 ctx.log("critic",
-                        f"REJECT {ann.path.name} class={det.class_id} — "
+                        f"REJECT {ann.path.name} class={det.class_id}: "
                         f"IoU {iou:.2f} < {settings.critic_iou_accept:.2f}; "
                         "regenerating box from mask contour", agent="critic")
             else:
@@ -139,7 +139,7 @@ class CriticAgent:
         if not accepted:
             reason = ("No detections survived geometric review"
                       if ann.detections else "Vision Agent found no target instances")
-            ctx.log("critic", f"REJECT {ann.path.name} — {reason}", agent="critic")
+            ctx.log("critic", f"REJECT {ann.path.name}: {reason}", agent="critic")
         elif regenerated:
             reason = f"{regenerated} box(es) re-derived from mask contours"
         ctx.publish_progress()
@@ -172,7 +172,7 @@ class CriticAgent:
         progress = ctx.run.progress
         kept = sum(r.accepted for r in reviewed)
         ctx.log("info",
-                f"Critic review done — {kept}/{len(reviewed)} images usable, "
+                f"Critic review done: {kept}/{len(reviewed)} images usable, "
                 f"{progress.masks_accepted} boxes accepted, "
                 f"{progress.masks_rejected} rejected/regenerated", agent="critic")
 

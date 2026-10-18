@@ -87,10 +87,10 @@ const NODE_STATUS: Record<
   HardwareNode["status"],
   { dot: string; simple: string }
 > = {
-  online: { dot: "bg-emerald-500", simple: "Healthy — ready for a run" },
+  online: { dot: "bg-emerald-500", simple: "Healthy, ready for a run" },
   busy: {
     dot: "bg-primary animate-pulse",
-    simple: "Healthy — working on your run",
+    simple: "Healthy, working on your run",
   },
   offline: { dot: "bg-muted-foreground", simple: "Offline" },
 };
@@ -145,7 +145,7 @@ function TelemetryDetails({
       {node?.residentModels && node.residentModels.length > 0 && (
         <div className="space-y-1.5 border-t border-border/60 pt-4">
           <p className="text-xs text-muted-foreground">
-            Resident swarm — models held in VRAM
+            Resident swarm: models held in VRAM
           </p>
           <div className="flex flex-wrap gap-1.5">
             {node.residentModels.map((m) => (
@@ -175,7 +175,7 @@ export function GpuFleetCard() {
             {simple ? "Your GPU" : "GPU fleet"}
             <HelpTip>
               The graphics card that runs the agents. The bar shows how much
-              of its working memory (VRAM) is in use — details reveals the
+              of its working memory (VRAM) is in use. Details reveals the
               live charts engineers see.
             </HelpTip>
           </h2>

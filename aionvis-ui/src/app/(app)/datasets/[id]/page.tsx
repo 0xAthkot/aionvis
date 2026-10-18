@@ -133,7 +133,7 @@ export default function DatasetDetailPage({
       a.download = `${id}-${format}.zip`;
       a.click();
       toast.success(`${format.toUpperCase()} export ready`, {
-        description: "Training-ready archive — images, labels and metadata.",
+        description: "Training-ready archive: images, labels and metadata.",
       });
     },
     onError: (err) =>
@@ -234,7 +234,7 @@ export default function DatasetDetailPage({
               <h2 className="section-label">Curation</h2>
               <p className="text-sm text-muted-foreground">
                 {imagePage?.total ?? images.length} images · page {page} of{" "}
-                {totalPages} — accept or reject the Critic&apos;s work ·{" "}
+                {totalPages} · accept or reject the Critic&apos;s work ·{" "}
                 {acceptRate}% accepted on this page
               </p>
             </div>

@@ -94,8 +94,8 @@ export function StartRunDialog({ dataset }: { dataset: Dataset }) {
           </DialogTitle>
           <DialogDescription>
             {audit
-              ? `Your archive shipped ${audit.boxCount.toLocaleString()} ${audit.format.toUpperCase()} labels — the Critic audits them (geometry + VLM spot-check), then YOLO trains on the survivors.`
-              : `SAM 3 segments all ${dataset.imageCount.toLocaleString()} images zero-shot, the Critic verifies geometry, then YOLO trains — no manual annotation.`}
+              ? `Your archive shipped ${audit.boxCount.toLocaleString()} ${audit.format.toUpperCase()} labels. The Critic audits them (geometry + VLM spot-check), then YOLO trains on the survivors.`
+              : `SAM 3 segments all ${dataset.imageCount.toLocaleString()} images zero-shot, the Critic verifies geometry, then YOLO trains. No manual annotation.`}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">

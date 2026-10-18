@@ -24,19 +24,19 @@ const STEPS = [
   {
     icon: FolderPlus,
     title: "1 · Create a project",
-    body: "Name it and list the objects to detect — “forklift”, “pallet”, any noun works.",
+    body: "Name it and list the objects to detect: “forklift”, “pallet”, any noun works.",
     href: "/foundry",
   },
   {
     icon: MessageSquareText,
     title: "2 · Say the job",
-    body: "One sentence about the deployment — “my drone needs to detect rotten potatoes”. The agent swarm designs the scenes, creates the photos, labels them and checks its own work.",
+    body: "One sentence about the deployment, like “my drone needs to detect rotten potatoes”. The agent swarm designs the scenes, creates the photos, labels them and checks its own work.",
     href: "/foundry",
   },
   {
     icon: Target,
     title: "3 · Test your model",
-    body: "Minutes later, drop a real photo on the finished model — flag any miss and the next run fixes it.",
+    body: "Minutes later, drop a real photo on the finished model. Flag any miss and the next run fixes it.",
     href: "/models",
   },
 ] as const;
@@ -84,14 +84,14 @@ export default function DashboardPage() {
       ? "Checking on the swarm…"
       : "Loading fleet state…"
     : active
-      ? `${active.name} — ${
+      ? `${active.name}: ${
           simple
             ? SIMPLE_STAGE[active.stage].toLowerCase()
             : active.stage.replace(/_/g, " ")
         } · ${active.progress.pct}%`
       : simple
-        ? "The swarm is idle — say the job and it builds your next model."
-        : "Fleet idle — launch a run to put the swarm to work.";
+        ? "The swarm is idle. Say the job and it builds your next model."
+        : "Fleet idle. Launch a run to put the swarm to work.";
 
   return (
     <main className="stagger-children mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">

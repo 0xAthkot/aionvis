@@ -105,7 +105,7 @@ export function LaunchSummary({
               <span>${estimate.data.estimatedUsd.toFixed(2)}</span>
             </div>
             <p className="text-right text-xs text-muted-foreground">
-              at ${estimate.data.usdPerHour}/h — AMD Developer Cloud droplet
+              at ${estimate.data.usdPerHour}/h on an AMD Developer Cloud droplet
             </p>
           </div>
         )}

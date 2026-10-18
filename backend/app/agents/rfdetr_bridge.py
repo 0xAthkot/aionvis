@@ -105,7 +105,7 @@ def train_rfdetr(ctx: RunContext, dataset: Dataset, workdir: Path,
     out_dir = workdir / "rfdetr_out"
 
     ctx.set_agent("mlops", "waiting_gpu", f"Starting {arch} worker")
-    ctx.log("info", f"Handing off to the isolated RF-DETR runtime — {arch}, "
+    ctx.log("info", f"Handing off to the isolated RF-DETR runtime: {arch}, "
                     f"{epochs} epochs, batch {batch}", agent="mlops")
 
     curves: list[TrainingCurvePoint] = []
@@ -124,7 +124,7 @@ def train_rfdetr(ctx: RunContext, dataset: Dataset, workdir: Path,
             )
             curves.append(point)
             progress.latest_loss = point.box_loss
-            ctx.log("info", f"epoch {epoch}/{epochs} — loss "
+            ctx.log("info", f"epoch {epoch}/{epochs}: loss "
                             f"{point.box_loss:.3f} mAP50 {point.map50:.3f}",
                     agent="mlops")
         else:  # progress-only (parsed from the worker's console tables)
@@ -173,7 +173,7 @@ def train_rfdetr(ctx: RunContext, dataset: Dataset, workdir: Path,
     )
     store.models[model_id] = artifact
     store.save()
-    ctx.log("info", f"Model {model_id} registered — RF-DETR checkpoint "
+    ctx.log("info", f"Model {model_id} registered: RF-DETR checkpoint "
                     f"{artifact.file_size_mb} MB", agent="mlops")
     return artifact
 

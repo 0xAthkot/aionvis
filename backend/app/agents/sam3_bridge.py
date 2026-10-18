@@ -28,7 +28,7 @@ SETUP_HINT = (
     "torchvision --index-url https://download.pytorch.org/whl/rocm6.4 && "
     ".venv-sam3/bin/pip install 'transformers>=5.5' accelerate pillow "
     "numpy scipy  (Windows: .venv-sam3\\Scripts\\pip, cu126 index). "
-    "facebook/sam3 is also MANUALLY GATED on Hugging Face — request access "
+    "facebook/sam3 is also MANUALLY GATED on Hugging Face. Request access "
     "and log the node in first. Pick YOLOE to run on this node as-is."
 )
 

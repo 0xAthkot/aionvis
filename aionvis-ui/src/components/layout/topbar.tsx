@@ -55,7 +55,7 @@ function ModeToggle() {
             title={
               m === "simple"
                 ? "Guided interface with sensible defaults"
-                : "Full control plane — every option, terminal, telemetry"
+                : "Full control plane: every option, terminal, telemetry"
             }
             className={cn(
               "rounded-full px-2.5 py-0.5 text-xs font-medium capitalize transition-all duration-200",
@@ -77,8 +77,8 @@ function ModeToggle() {
             </DialogTitle>
             <DialogDescription>
               {pending === "pro"
-                ? "The full control plane replaces the guided interface — every knob exposed up front."
-                : "The guided interface replaces the full console — same features, plain language, sensible defaults."}{" "}
+                ? "The full control plane replaces the guided interface, with every knob exposed up front."
+                : "The guided interface replaces the full console: same features, plain language, sensible defaults."}{" "}
               You have unsaved input on this page; switching clears it.
               Running jobs are not affected.
             </DialogDescription>

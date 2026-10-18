@@ -134,7 +134,7 @@ function ApiKeysTab() {
       setName("");
       // The full secret is only ever shown once — standard key UX.
       toast.success("API key created", {
-        description: `${key.prefix}${Math.random().toString(36).slice(2, 14)} — copy it now; it won't be shown again.`,
+        description: `Shown once, copy it now: ${key.prefix}${Math.random().toString(36).slice(2, 14)}`,
         duration: 10000,
       });
     },
@@ -153,7 +153,7 @@ function ApiKeysTab() {
       <CardHeader>
         <CardTitle>API keys</CardTitle>
         <CardDescription>
-          Programmatic access for CI pipelines and the headless API — the
+          Programmatic access for CI pipelines and the headless API. The
           platform stays fully API-extensible.
         </CardDescription>
       </CardHeader>
@@ -252,7 +252,7 @@ function IntegrationsTab() {
           </div>
           <CardDescription>
             OpenAI-compatible endpoint serving Gemma 4 for the Prompt and
-            Critic agents — vLLM on the MI300X.
+            Critic agents, via vLLM on the MI300X.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -265,7 +265,7 @@ function IntegrationsTab() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="llm-key">API key (optional — vLLM ignores it)</Label>
+            <Label htmlFor="llm-key">API key (optional, vLLM ignores it)</Label>
             <Input
               id="llm-key"
               type="password"
@@ -280,7 +280,7 @@ function IntegrationsTab() {
             onClick={() => {
               store.save({ llmBaseUrl, llmApiKey });
               toast.success("LLM endpoint settings saved", {
-                description: "Stored locally — handed to the backend at connect time.",
+                description: "Stored locally and handed to the backend at connect time.",
               });
             }}
           >

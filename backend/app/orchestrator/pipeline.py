@@ -118,7 +118,7 @@ class Pipeline:
                 position = len(self._queue_order)
             busy = (f"All {settings.gpu_slots} GPU slots busy"
                     if settings.gpu_slots > 1 else "GPU busy")
-            ctx.log("info", f"{busy} — queued at position {position}. "
+            ctx.log("info", f"{busy}, queued at position {position}. "
                             "The run starts automatically when a slot frees.")
             while not self._gpu_slot.acquire(timeout=1.0):
                 if ctx.cancel_event.is_set():
@@ -154,7 +154,7 @@ class Pipeline:
             run.started_at = now_iso()
             ctx.publish_status()
             store.save()
-            ctx.log("info", f"Autonomous run '{run.name}' accepted — "
+            ctx.log("info", f"Autonomous run '{run.name}' accepted · "
                             f"path: {run.path}, device: {telemetry.GPU.name}")
 
             source_dataset = (store.datasets.get(run.source.dataset_id)
@@ -183,13 +183,13 @@ class Pipeline:
             self._pct(ctx, 1.0)
             run.status = "succeeded"
             run.finished_at = now_iso()
-            ctx.log("info", f"Run complete — dataset {run.dataset_id}, "
+            ctx.log("info", f"Run complete: dataset {run.dataset_id}, "
                             f"model {run.model_id}. Swarm going idle.")
             ctx.publish_status()
         except RunCancelled:
             run.status = "cancelled"
             run.finished_at = now_iso()
-            ctx.log("warn", "Cancellation requested — pipeline stopped, "
+            ctx.log("warn", "Cancellation requested: pipeline stopped, "
                             "VRAM released.")
             ctx.publish_status()
         except Exception as exc:  # noqa: BLE001 — a run must never kill the server
@@ -288,8 +288,8 @@ class Pipeline:
         )
         if not images:
             raise RuntimeError(
-                f"BYOD dataset {dataset.id} has no extracted images — "
-                "upload the archive as multipart (field 'archive')."
+                f"BYOD dataset {dataset.id} has no extracted images. "
+                "Upload the archive as multipart (field 'archive')."
             )
         ctx.run.progress.images_total = len(images)
         ctx.run.progress.images_generated = len(images)
@@ -483,7 +483,7 @@ class Pipeline:
 
         progress.images_annotated = 0
         ctx.log("info",
-                "Parallel swarm engaged — synthesis, vision and critic stream "
+                "Parallel swarm engaged: synthesis, vision and critic stream "
                 "concurrently on the resident models (PIPELINE_MODE=streaming)")
         if synthetic:
             generator_model = (settings.flux_model
@@ -495,7 +495,7 @@ class Pipeline:
         else:
             ctx.set_stage("segmentation",
                           f"{vision_agent.describe(run.vision_backend)} "
-                          f"— streaming into the Critic")
+                          f"→ streaming into the Critic")
 
         workers = [threading.Thread(target=vision_worker,
                                     name=f"vision-{run.id}", daemon=True),
@@ -533,10 +533,10 @@ class Pipeline:
         from ..agents.label_audit import audit_labels
 
         fmt = dataset.imported_labels.format.upper()
-        ctx.set_stage("segmentation", f"{fmt} labels provided — audit mode")
+        ctx.set_stage("segmentation", f"{fmt} labels provided: audit mode")
         ctx.log("info",
                 f"Archive shipped {dataset.imported_labels.box_count} {fmt} "
-                "labels — Vision Agent yields to the Label Audit", agent="vision")
+                "labels. Vision Agent yields to the Label Audit", agent="vision")
         ctx.set_agent("vision", "done")
         self._pct(ctx, 1.0)
 

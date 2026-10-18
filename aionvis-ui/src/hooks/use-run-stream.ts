@@ -56,7 +56,7 @@ export function useRunStream(runId: string, enabled: boolean) {
             queryClient.invalidateQueries({ queryKey: ["datasets"] });
             queryClient.invalidateQueries({ queryKey: ["models"] });
             toast.success("Run complete", {
-              description: "Model trained and registered — see the Model Registry.",
+              description: "Model trained and registered. See the Model Registry.",
             });
           }
           break;

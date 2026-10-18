@@ -27,12 +27,12 @@ export const ARCH_FAMILIES: {
   },
   {
     label: "RT-DETR",
-    hint: "transformer — accurate, slower",
+    hint: "transformer, accurate but slower",
     archs: ["rtdetr-l", "rtdetr-x"],
   },
   {
     label: "RF-DETR",
-    hint: "Roboflow SOTA — first real-time 60+ AP",
+    hint: "Roboflow SOTA, first real-time 60+ AP",
     archs: [
       "rf-detr-nano",
       "rf-detr-small",

@@ -26,12 +26,12 @@ export async function attachNode(
     });
   } catch {
     throw new Error(
-      "Unreachable — check the URL, that the backend is running, and that the port is open.",
+      "Unreachable. Check the URL, that the backend is running, and that the port is open.",
     );
   }
   if (res.status === 401)
     throw new Error(
-      "The node rejected this API key — check AA_API_KEY in its backend/.env.",
+      "The node rejected this API key. Check AA_API_KEY in its backend/.env.",
     );
   if (!res.ok) throw new Error(`The node answered HTTP ${res.status}.`);
   const nodes = (await res.json()) as HardwareNode[];

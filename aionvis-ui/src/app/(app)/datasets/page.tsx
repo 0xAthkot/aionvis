@@ -148,7 +148,7 @@ function DatasetRow({ dataset }: { dataset: Dataset }) {
         </div>
       ) : (
         <p className="text-xs text-muted-foreground">
-          No labels yet — launch a run to let the agents annotate it.
+          No labels yet. Launch a run to let the agents annotate it.
         </p>
       )}
       {/* Plain uploads launch a labeling run; archives that shipped their
@@ -234,7 +234,7 @@ export default function DatasetsPage() {
             </HelpTip>
           </span>
         }
-        description="Path B — bring your own data. Upload proprietary images and the agents label them in place."
+        description="Path B: bring your own data. Upload proprietary images and the agents label them in place."
       />
 
       <UploadDropzone />
@@ -280,8 +280,8 @@ export default function DatasetsPage() {
           <div className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-xl border border-dashed">
             <p className="text-sm text-muted-foreground">
               {searching
-                ? `Nothing matches “${query}” — try part of a dataset, project or class name.`
-                : "No datasets yet — upload a .zip above or run the Synthetic Foundry."}
+                ? `Nothing matches “${query}”. Try part of a dataset, project or class name.`
+                : "No datasets yet. Upload a .zip above or run the Synthetic Foundry."}
             </p>
           </div>
         ) : (

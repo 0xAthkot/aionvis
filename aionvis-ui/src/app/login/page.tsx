@@ -117,7 +117,7 @@ export default function LoginPage() {
           Explore with simulated data
         </Button>
         <p className="-mt-3 text-center text-xs text-muted-foreground">
-          Full console on an in-browser simulation — every screen, live runs
+          Full console on an in-browser simulation: every screen, live runs
           included. No account, no GPU.
         </p>
 

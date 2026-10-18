@@ -22,7 +22,7 @@ export function ClassDistribution({ classes }: { classes: DatasetClass[] }) {
   if (classes.length === 0) {
     return (
       <p className="text-xs text-muted-foreground">
-        No labels yet — the distribution appears once the Critic signs off.
+        No labels yet. The distribution appears once the Critic signs off.
       </p>
     );
   }

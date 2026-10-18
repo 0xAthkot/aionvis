@@ -131,7 +131,7 @@ function OverlapLanes({
     <div className="rounded-lg border border-primary/40 bg-primary/5 px-3 py-2">
       <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-primary">
         <span className="size-1.5 animate-pulse rounded-full bg-primary motion-reduce:animate-none" />
-        Parallel — agents streaming concurrently
+        Parallel: agents streaming concurrently
       </p>
       <div className="flex flex-wrap gap-x-5 gap-y-1.5">
         {lanes.map((lane) => {

@@ -118,7 +118,7 @@ class RunContext:
         run.stage = to
         self._stage_entered_at = time.monotonic()
         self.log("stage", f"── Stage: {to.replace('_', ' ').upper()}"
-                 + (f" — {note}" if note else ""))
+                 + (f" · {note}" if note else ""))
         bus.publish_run_threadsafe(
             run.id, "stage", transition.model_dump(by_alias=True)
         )

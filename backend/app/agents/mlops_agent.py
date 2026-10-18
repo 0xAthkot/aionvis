@@ -67,7 +67,7 @@ class MLOpsAgent:
         base_weights = f"{arch}{TASK_SUFFIX[task]}.pt"
         ctx.set_agent("mlops", "waiting_gpu", f"Loading {base_weights} base weights")
         flush_vram(ctx)
-        ctx.log("info", f"Starting {base_weights} training ({task}) — "
+        ctx.log("info", f"Starting {base_weights} training ({task}): "
                         f"{epochs} epochs, imgsz {imgsz}, batch {batch}, "
                         f"device {device}",
                 agent="mlops")
@@ -122,7 +122,7 @@ class MLOpsAgent:
             headline = (f"top1 {point.top1:.3f}" if point.top1 is not None
                         else f"mAP50 {point.map50:.3f}")
             ctx.log("info",
-                    f"epoch {point.epoch}/{epochs} — box_loss {point.box_loss:.3f} "
+                    f"epoch {point.epoch}/{epochs}: box_loss {point.box_loss:.3f} "
                     f"cls_loss {point.cls_loss:.3f} {headline} "
                     f"({dt:.1f}s)", agent="mlops")
             ctx.publish_progress()
@@ -158,7 +158,7 @@ class MLOpsAgent:
             # flush, retry exactly once.
             halved = round(batch / 2, 2) if isinstance(batch, float) else max(batch // 2, 1)
             ctx.log("warn",
-                    f"Out of GPU memory at batch {batch} — flushing VRAM and "
+                    f"Out of GPU memory at batch {batch}. Flushing VRAM and "
                     f"retrying once at batch {halved}", agent="mlops")
             flush_vram(ctx)
             curves.clear()
@@ -233,7 +233,7 @@ class MLOpsAgent:
         store.models[model_id] = artifact
         store.save()
         ctx.log("info",
-                f"Model {model_id} registered — mAP50 {artifact.metrics.map50:.3f}, "
+                f"Model {model_id} registered: mAP50 {artifact.metrics.map50:.3f}, "
                 f"{artifact.file_size_mb} MB, trained in "
                 f"{artifact.metrics.training_time_min} min", agent="mlops")
         flush_vram(ctx)

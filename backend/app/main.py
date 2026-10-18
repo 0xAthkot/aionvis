@@ -62,7 +62,7 @@ async def api_key_guard(request: Request, call_next):
                 content={
                     "status": 401,
                     "code": "unauthorized",
-                    "message": "Missing or invalid API key — send it as "
+                    "message": "Missing or invalid API key. Send it as "
                                "'Authorization: Bearer <key>' or 'X-API-Key'.",
                 },
             )

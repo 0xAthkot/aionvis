@@ -24,7 +24,7 @@ def main() -> None:
 
     existing = [t for t in TARGETS if (DATA_DIR / t).exists()]
     if not existing:
-        print("Nothing to reset — data directory is already clean.")
+        print("Nothing to reset: data directory is already clean.")
         return
 
     print("Will delete from", DATA_DIR)

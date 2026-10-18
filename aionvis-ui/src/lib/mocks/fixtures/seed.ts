@@ -348,7 +348,7 @@ export const runs: PipelineRun[] = [
     startedAt: daysAgo(14),
     finishedAt: daysAgo(14),
     failureReason:
-      "Critic rejection rate 23% exceeded quality gate (20%) — dataset too noisy to train. Increase guidance scale or describe the use case more specifically.",
+      "Critic rejection rate 23% exceeded quality gate (20%). Dataset too noisy to train. Increase guidance scale or describe the use case more specifically.",
     costEstimateUsd: 6.8,
   },
   {
@@ -394,15 +394,15 @@ export const runs: PipelineRun[] = [
 
 /** Static log history for the live BYOD run (live tail comes in Phase 3). */
 const rawLogs: Pick<LogEvent, "level" | "agent" | "message">[] = [
-  { level: "stage", agent: undefined, message: "━━ STAGE: SEGMENTATION — Vision Agent taking over ━━" },
-  { level: "gpu", agent: "mlops", message: "hip.empty_cache() — VRAM flushed 41.2 GB → 6.8 GB before SAM 3 load" },
+  { level: "stage", agent: undefined, message: "━━ STAGE: SEGMENTATION · Vision Agent taking over ━━" },
+  { level: "gpu", agent: "mlops", message: "hip.empty_cache(): VRAM flushed 41.2 GB → 6.8 GB before SAM 3 load" },
   { level: "info", agent: "vision", message: "Loading SAM 3 checkpoint (sam3_h.pt, 14.1 GB) onto mi300x-0" },
   { level: "info", agent: "vision", message: "Zero-shot prompt set: ['hard hat', 'hi-vis vest', 'person']" },
   { level: "info", agent: "vision", message: "img_0412.jpg → 3 masks (person ×2, hard_hat ×1) in 118 ms" },
-  { level: "critic", agent: "critic", message: "REJECT img_0413.jpg: hard_hat mask IoU 0.43 < 0.85 — queued for regeneration" },
+  { level: "critic", agent: "critic", message: "REJECT img_0413.jpg: hard_hat mask IoU 0.43 < 0.85, queued for regeneration" },
   { level: "info", agent: "vision", message: "img_0413.jpg → retry with point-prompt refinement" },
-  { level: "critic", agent: "critic", message: "ACCEPT img_0413.jpg: retry IoU 0.91 — converted to YOLO bbox [0.44, 0.31, 0.09, 0.12]" },
-  { level: "info", agent: "vision", message: "Batch 13/39 complete — 420/1240 images segmented, accept rate 92.6%" },
+  { level: "critic", agent: "critic", message: "ACCEPT img_0413.jpg: retry IoU 0.91, converted to YOLO bbox [0.44, 0.31, 0.09, 0.12]" },
+  { level: "info", agent: "vision", message: "Batch 13/39 complete: 420/1240 images segmented, accept rate 92.6%" },
 ];
 
 export const runLogs: LogEvent[] = rawLogs.map((e, i) => ({

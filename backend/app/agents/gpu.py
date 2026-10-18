@@ -26,7 +26,7 @@ def flush_vram(ctx: Optional[RunContext] = None, quiet: bool = False) -> None:
         # MI300X profile: models stay resident between stages — flushing
         # would only force reloads.
         if ctx is not None and not quiet:
-            ctx.log("gpu", "keep-warm enabled — stage models stay resident, "
+            ctx.log("gpu", "keep-warm enabled: stage models stay resident, "
                            "no VRAM flush")
         return
     torch = _torch()
@@ -40,7 +40,7 @@ def flush_vram(ctx: Optional[RunContext] = None, quiet: bool = False) -> None:
         call = "hip.empty_cache()" if torch.version.hip else "torch.cuda.empty_cache()"
         ctx.log(
             "gpu",
-            f"{call} — reserved VRAM {before:.2f} GB → {after:.2f} GB "
+            f"{call}: reserved VRAM {before:.2f} GB → {after:.2f} GB "
             f"(freed {max(before - after, 0):.2f} GB for the next stage)",
         )
 

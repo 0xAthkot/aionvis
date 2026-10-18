@@ -49,7 +49,7 @@ export function FoundryPreview({
         <div className="space-y-1">
           <h2 className="section-label">Foundry output</h2>
           <p className="text-sm text-muted-foreground">
-            Synthetic images minted by the Synthesis Agent — new images land
+            Synthetic images minted by the Synthesis Agent. New images land
             on the last page
           </p>
         </div>

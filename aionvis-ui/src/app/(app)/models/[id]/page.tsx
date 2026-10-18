@@ -163,7 +163,7 @@ export default function ModelDetailPage({
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                Managed endpoints are on the roadmap — try the inference
+                Managed endpoints are on the roadmap. Try the inference
                 playground below for live predictions
               </TooltipContent>
             </Tooltip>

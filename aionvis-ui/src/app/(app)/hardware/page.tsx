@@ -181,7 +181,7 @@ export default function HardwarePage() {
             {node.residentModels && node.residentModels.length > 0 && (
               <div className="space-y-1.5">
                 <p className="text-sm text-muted-foreground">
-                  Resident swarm — every agent model held in VRAM at once,
+                  Resident swarm: every agent model held in VRAM at once,
                   so the pipeline streams instead of taking turns
                 </p>
                 <div className="flex flex-wrap gap-1.5">

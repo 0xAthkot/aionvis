@@ -55,7 +55,7 @@ export function UploadDropzone() {
             ? `${dataset.videoFrameCount.toLocaleString()} video frames extracted`
             : null,
           dataset.importedLabels
-            ? `${dataset.importedLabels.boxCount.toLocaleString()} ${dataset.importedLabels.format.toUpperCase()} labels detected — runs will audit them`
+            ? `${dataset.importedLabels.boxCount.toLocaleString()} ${dataset.importedLabels.format.toUpperCase()} labels detected. Runs will audit them`
             : null,
         ].filter(Boolean);
         toast.success("Dataset uploaded", {

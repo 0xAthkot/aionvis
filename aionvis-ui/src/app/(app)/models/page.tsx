@@ -186,7 +186,7 @@ export default function ModelsPage() {
             </HelpTip>
           </span>
         }
-        description="Deployable YOLO weights produced by the agent swarm — tick two or more to compare experiments."
+        description="Deployable YOLO weights produced by the agent swarm. Tick two or more to compare experiments."
         actions={
           selected.length > 0 ? (
             <>
@@ -268,13 +268,13 @@ export default function ModelsPage() {
         <div className="flex min-h-64 flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed">
           <Boxes className="size-8 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
-            No models yet — launch a run from the Foundry to train one.
+            No models yet. Launch a run from the Foundry to train one.
           </p>
         </div>
       ) : visible.length === 0 ? (
         <div className="flex min-h-40 flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed">
           <p className="text-sm text-muted-foreground">
-            Nothing matches “{query}” — try part of a model, project or class
+            Nothing matches “{query}”. Try part of a model, project or class
             name.
           </p>
         </div>

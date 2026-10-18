@@ -204,7 +204,7 @@ export class RunSimulator {
       db.dashboardStats.queuedRuns = Math.max(0, db.dashboardStats.queuedRuns - 1);
       db.dashboardStats.activeRuns += 1;
       this.emit({ kind: "status", payload: { runId: this.run.id, status: "running" } });
-      this.log("info", undefined, `Run accepted — scheduling agent swarm on ${this.run.training.device}`);
+      this.log("info", undefined, `Run accepted, scheduling agent swarm on ${this.run.training.device}`);
       this.transition("queued", this.entryStageOf(this.plan[this.stageIdx].stage));
     }
     this.enterStage(this.plan[this.stageIdx].stage);
@@ -272,7 +272,7 @@ export class RunSimulator {
       this.agents.forEach((a) => this.setAgent(a.kind, "idle"));
       setGpuLoad(9, 4);
       db.dashboardStats.activeRuns = Math.max(0, db.dashboardStats.activeRuns - 1);
-      this.log("warn", undefined, "Run cancelled by operator — releasing GPU");
+      this.log("warn", undefined, "Run cancelled by operator, releasing GPU");
       return;
     }
 
@@ -322,8 +322,8 @@ export class RunSimulator {
     switch (stage) {
       case "overlap": {
         const synthetic = this.run.path === "synthetic";
-        this.log("stage", undefined, "━━ PARALLEL SWARM — synthesis · vision · critic streaming concurrently on one MI300X ━━");
-        this.log("info", undefined, "Entire swarm resident in 192 GB HBM3 — Gemma 4 26B MoE, FLUX.2-klein, SAM 3 — no load→use→flush choreography");
+        this.log("stage", undefined, "━━ PARALLEL SWARM: synthesis · vision · critic streaming concurrently on one MI300X ━━");
+        this.log("info", undefined, "Entire swarm resident in 192 GB HBM3 (Gemma 4 26B MoE, FLUX.2-klein, SAM 3), no load→use→flush choreography");
         if (synthetic) {
           this.setAgent("prompt", "done");
           if (!this.overlap.synthDone)
@@ -338,14 +338,14 @@ export class RunSimulator {
         break;
       }
       case "prompt_expansion":
-        this.log("stage", undefined, "━━ STAGE: PROMPT EXPANSION — Prompt Agent taking over ━━");
+        this.log("stage", undefined, "━━ STAGE: PROMPT EXPANSION · Prompt Agent taking over ━━");
         this.setAgent("prompt", "thinking", "Designing scene prompts from the use case");
         setGpuLoad(12, 8);
         this.log("info", "prompt", `Requesting Gemma 4 via vLLM on MI300X · target: ${total} scenarios`);
         break;
       case "synthesis": {
         const flux = this.generator() === "flux";
-        this.log("stage", undefined, "━━ STAGE: SYNTHESIS — Synthesis Agent taking over ━━");
+        this.log("stage", undefined, "━━ STAGE: SYNTHESIS · Synthesis Agent taking over ━━");
         this.setAgent("prompt", "done");
         this.setAgent("synthesis", "working",
           `Generating ${total} images (${flux ? "FLUX.2-klein bf16" : "SDXL fp16"})`);
@@ -356,30 +356,30 @@ export class RunSimulator {
         break;
       }
       case "segmentation":
-        this.log("stage", undefined, "━━ STAGE: SEGMENTATION — Vision Agent taking over ━━");
+        this.log("stage", undefined, "━━ STAGE: SEGMENTATION · Vision Agent taking over ━━");
         this.setAgent("synthesis", "done");
-        this.log("gpu", "mlops", `hip.empty_cache() — VRAM flushed ${gpuLoad.vramGb.toFixed(1)} GB → 7.1 GB before SAM 3 load`);
+        this.log("gpu", "mlops", `hip.empty_cache(): VRAM flushed ${gpuLoad.vramGb.toFixed(1)} GB → 7.1 GB before SAM 3 load`);
         this.setAgent("vision", "working", "Zero-shot segmentation with SAM 3");
         setGpuLoad(64, 88);
         this.log("info", "vision", "Loading SAM 3 checkpoint (sam3_h.pt, 14.1 GB)");
         this.log("info", "vision", `Zero-shot prompt set: [${this.run.targetClasses.map((c) => `'${c.replace(/_/g, " ")}'`).join(", ")}]`);
         break;
       case "critic_review":
-        this.log("stage", undefined, "━━ STAGE: CRITIC REVIEW — Critic Agent taking over ━━");
+        this.log("stage", undefined, "━━ STAGE: CRITIC REVIEW · Critic Agent taking over ━━");
         this.setAgent("vision", "done");
-        this.setAgent("critic", "thinking", "Verifying labels — geometry + Gemma VLM");
+        this.setAgent("critic", "thinking", "Verifying labels: geometry + Gemma VLM");
         setGpuLoad(32, 46);
         this.log("info", "critic", "Geometric verification: IoU threshold 0.85, min box area 24 px²");
         break;
       case "dataset_compile":
-        this.log("stage", undefined, "━━ STAGE: DATASET COMPILE — MLOps Agent taking over ━━");
+        this.log("stage", undefined, "━━ STAGE: DATASET COMPILE · MLOps Agent taking over ━━");
         this.setAgent("critic", "done");
         this.setAgent("mlops", "working", "Compiling YOLO dataset");
         setGpuLoad(14, 12);
         break;
       case "training":
-        this.log("stage", undefined, "━━ STAGE: TRAINING — MLOps Agent taking over ━━");
-        this.log("gpu", "mlops", `hip.empty_cache() — VRAM flushed ${gpuLoad.vramGb.toFixed(1)} GB → 6.4 GB before training`);
+        this.log("stage", undefined, "━━ STAGE: TRAINING · MLOps Agent taking over ━━");
+        this.log("gpu", "mlops", `hip.empty_cache(): VRAM flushed ${gpuLoad.vramGb.toFixed(1)} GB → 6.4 GB before training`);
         this.setAgent("mlops", "working", `Training ${this.run.training.architecture.toUpperCase()} · ${this.run.training.epochs} epochs`);
         setGpuLoad(128, 97, 3.1, "it_per_s");
         this.log("info", "mlops", `torch.compile(model, backend="inductor") on ROCm ${db.hardwareNodes[0].rocmVersion}`);
@@ -417,22 +417,22 @@ export class RunSimulator {
           const idx = randInt(0, Math.max(0, annotated - 1));
           const img = `img_${String(idx).padStart(4, "0")}.png`;
           if (Math.random() < 0.2) {
-            this.log("critic", "critic", `REJECT ${img}: mask IoU ${rand(0.3, 0.8).toFixed(2)} < 0.85 — box re-derived from contour`);
+            this.log("critic", "critic", `REJECT ${img}: mask IoU ${rand(0.3, 0.8).toFixed(2)} < 0.85, box re-derived from contour`);
           } else {
-            this.log("critic", "critic", `ACCEPT ${img}: IoU ${rand(0.86, 0.98).toFixed(2)} — verified while synthesis renders ahead`);
+            this.log("critic", "critic", `ACCEPT ${img}: IoU ${rand(0.86, 0.98).toFixed(2)}, verified while synthesis renders ahead`);
           }
         }
 
         // A stream draining moves run.stage to the next bottleneck.
         if (synthetic && !this.overlap.synthDone && synthFrac >= 1) {
           this.overlap.synthDone = true;
-          this.log("info", "synthesis", `Synthesis stream drained — ${total} images handed off`);
+          this.log("info", "synthesis", `Synthesis stream drained: ${total} images handed off`);
           this.setAgent("synthesis", "done");
           this.transition(this.run.stage, "segmentation");
         }
         if (!this.overlap.visionDone && visionFrac >= 1) {
           this.overlap.visionDone = true;
-          this.log("info", "vision", `Vision stream drained — ${total} images annotated`);
+          this.log("info", "vision", `Vision stream drained: ${total} images annotated`);
           this.setAgent("vision", "done");
           this.transition(this.run.stage, "critic_review");
         }
@@ -478,10 +478,10 @@ export class RunSimulator {
           const img = `img_${String(idx).padStart(4, "0")}.png`;
           if (Math.random() < 0.25) {
             const iou = rand(0.3, 0.8).toFixed(2);
-            this.log("critic", "critic", `REJECT ${img}: mask IoU ${iou} < 0.85 — queued for regeneration`);
+            this.log("critic", "critic", `REJECT ${img}: mask IoU ${iou} < 0.85, queued for regeneration`);
           } else {
             const iou = rand(0.86, 0.98).toFixed(2);
-            this.log("critic", "critic", `ACCEPT ${img}: IoU ${iou} — converted to YOLO bbox [${rand(0.2, 0.7).toFixed(2)}, ${rand(0.2, 0.7).toFixed(2)}, ${rand(0.08, 0.3).toFixed(2)}, ${rand(0.08, 0.3).toFixed(2)}]`);
+            this.log("critic", "critic", `ACCEPT ${img}: IoU ${iou}, converted to YOLO bbox [${rand(0.2, 0.7).toFixed(2)}, ${rand(0.2, 0.7).toFixed(2)}, ${rand(0.08, 0.3).toFixed(2)}, ${rand(0.08, 0.3).toFixed(2)}]`);
           }
         }
         this.progress({ masksAccepted: accepted, masksRejected: rejected });
@@ -527,27 +527,27 @@ export class RunSimulator {
         this.setAgent("critic", "done");
         this.progress({ imagesAnnotated: total });
         const rate = ((this.run.progress.masksRejected / Math.max(1, this.run.progress.masksAccepted + this.run.progress.masksRejected)) * 100).toFixed(1);
-        this.log("critic", "critic", `Quality gate PASSED — reject rate ${rate}% < 20% threshold`);
-        this.log("info", undefined, "Streams drained — parallel phase complete, trainer joins with the full verified dataset");
+        this.log("critic", "critic", `Quality gate PASSED: reject rate ${rate}% < 20% threshold`);
+        this.log("info", undefined, "Streams drained: parallel phase complete, trainer joins with the full verified dataset");
         break;
       }
       case "prompt_expansion":
-        this.log("info", "prompt", `Expansion complete — ${total} scenario prompts staged`);
+        this.log("info", "prompt", `Expansion complete: ${total} scenario prompts staged`);
         break;
       case "synthesis":
         this.progress({ imagesGenerated: total });
-        this.log("info", "synthesis", `Synthesis complete — ${total} images written to /data/runs/${this.run.id}/raw`);
+        this.log("info", "synthesis", `Synthesis complete: ${total} images written to /data/runs/${this.run.id}/raw`);
         break;
       case "segmentation":
-        this.log("info", "vision", `Segmentation complete — masks proposed for ${total} images`);
+        this.log("info", "vision", `Segmentation complete: masks proposed for ${total} images`);
         break;
       case "critic_review": {
         const rate = ((this.run.progress.masksRejected / Math.max(1, this.run.progress.masksAccepted + this.run.progress.masksRejected)) * 100).toFixed(1);
-        this.log("critic", "critic", `Quality gate PASSED — reject rate ${rate}% < 20% threshold`);
+        this.log("critic", "critic", `Quality gate PASSED: reject rate ${rate}% < 20% threshold`);
         break;
       }
       case "dataset_compile":
-        this.log("info", "mlops", "Dataset compiled and frozen — handing off to trainer");
+        this.log("info", "mlops", "Dataset compiled and frozen, handing off to trainer");
         break;
       case "training":
         this.progress({ currentEpoch: this.run.training.epochs });
@@ -659,9 +659,9 @@ export class RunSimulator {
 
     this.setAgent("mlops", "done");
     setGpuLoad(9, 4);
-    this.log("gpu", "mlops", "hip.empty_cache() — VRAM released, node returned to pool");
-    this.log("info", "mlops", `Training complete — best.pt saved · mAP50 ${map50} · mAP50-95 ${map5095}`);
-    this.log("stage", undefined, "━━ RUN COMPLETE — model registered in the Model Registry ━━");
+    this.log("gpu", "mlops", "hip.empty_cache(): VRAM released, node returned to pool");
+    this.log("info", "mlops", `Training complete: best.pt saved · mAP50 ${map50} · mAP50-95 ${map5095}`);
+    this.log("stage", undefined, "━━ RUN COMPLETE · model registered in the Model Registry ━━");
 
     this.emit({ kind: "progress", payload: { ...run.progress } });
     this.emit({ kind: "stage", payload: { runId: run.id, from: "training", to: "complete", at: new Date().toISOString() } });

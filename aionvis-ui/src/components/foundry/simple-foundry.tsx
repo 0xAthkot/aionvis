@@ -65,7 +65,7 @@ const GENERATORS = [
   {
     id: "flux" as const,
     label: "FLUX",
-    hint: "Sharpest scenes — needs a datacenter GPU (MI300X)",
+    hint: "Sharpest scenes, needs a datacenter GPU (MI300X)",
   },
   {
     id: "sdxl" as const,
@@ -79,7 +79,7 @@ const LABELERS = [
   {
     id: "sam3" as const,
     label: "SAM 3",
-    hint: "Meta's concept labeler — most accurate outlines",
+    hint: "Meta's concept labeler, most accurate outlines",
   },
   {
     id: "yoloe" as const,
@@ -204,7 +204,7 @@ export function SimpleFoundry() {
             What is your model for?
           </h2>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            Say the job in one sentence — &ldquo;my drone needs to detect
+            Say the job in one sentence, like &ldquo;my drone needs to detect
             rotten potatoes&rdquo;. The Prompt Agent works out the scenes,
             then the swarm generates the training data, labels it, checks
             its own work and trains the model. You do nothing else.
@@ -247,7 +247,7 @@ export function SimpleFoundry() {
               placeholder="My warehouse cameras need to spot forklifts, stacked pallets and workers without safety vests"
             />
             <p className="text-xs text-muted-foreground">
-              Describe the deployment, not the picture — the Prompt Agent
+              Describe the deployment, not the picture. The Prompt Agent
               infers the camera viewpoint and environment for you.
             </p>
           </div>
@@ -347,7 +347,7 @@ export function SimpleFoundry() {
               Model output
               <HelpTip>
                 What the finished model draws on a photo: plain boxes, exact
-                outlines, rotated boxes, body keypoints — or just a label for
+                outlines, rotated boxes, body keypoints, or just a label for
                 the whole image.
               </HelpTip>
             </Label>
@@ -420,7 +420,7 @@ export function SimpleFoundry() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  The same architectures Pro offers — the recommended one suits
+                  The same architectures Pro offers. The recommended one suits
                   most jobs. Everything else (image size, batch, randomization)
                   is tuned automatically.
                 </p>
@@ -484,7 +484,7 @@ export function SimpleFoundry() {
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Optional — a sample of the scene variations the AI writes from
+                Optional: a sample of the scene variations the AI writes from
                 your sentence.
               </p>
             )}
@@ -538,14 +538,14 @@ export function SimpleFoundry() {
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Painted by {paint.data.model} — the full build creates{" "}
+                  Painted by {paint.data.model}. The full build creates{" "}
                   {sizeCfg.images.toLocaleString("en-US")} like these, then
                   labels and verifies them.
                 </p>
               </>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Optional — three sample photos painted from your sentence, so
+                Optional: three sample photos painted from your sentence, so
                 you can judge the look before you build. Takes a moment on the
                 node&apos;s GPU.
               </p>
@@ -598,7 +598,7 @@ export function SimpleFoundry() {
       </div>
 
       <p className="text-center text-xs text-muted-foreground">
-        Need the full control plane — architectures, randomization, epochs?{" "}
+        Need the full control plane (architectures, randomization, epochs)?{" "}
         <Badge variant="outline" className="font-normal">
           Switch to Pro in the top bar
         </Badge>

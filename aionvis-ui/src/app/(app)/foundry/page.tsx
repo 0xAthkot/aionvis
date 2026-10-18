@@ -217,7 +217,7 @@ export default function FoundryPage() {
             <HelpTip>
               The Foundry is where models are built: say what your model is
               for, and the AI agents design the scenes, create the photos,
-              label them and train the model — no annotation, no prompt
+              label them and train the model. No annotation, no prompt
               engineering.
             </HelpTip>
           </h1>
@@ -234,7 +234,7 @@ export default function FoundryPage() {
     <main className="page-enter mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 p-6">
       <PageHeader
         title="Synthetic Foundry"
-        description="Path A — describe the objects once; the agent swarm generates, labels, verifies and trains without further input."
+        description="Path A: describe the objects once; the agent swarm generates, labels, verifies and trains without further input."
       />
 
       <div className="grid items-start gap-8 lg:grid-cols-[1fr_320px]">
@@ -299,7 +299,7 @@ export default function FoundryPage() {
                 2 · Use case
               </h2>
               <p className="text-sm text-muted-foreground">
-                Say what the model is for — the Prompt Agent infers the
+                Say what the model is for. The Prompt Agent infers the
                 deployment viewpoint and environment, then designs{" "}
                 {imageCount.toLocaleString()} domain-randomized scenes itself.
               </p>
@@ -335,15 +335,15 @@ export default function FoundryPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="flux">
-                        FLUX.2 klein — big-VRAM nodes
+                        FLUX.2 klein (big-VRAM nodes)
                       </SelectItem>
                       <SelectItem value="sdxl">
-                        SDXL — any GPU
+                        SDXL (any GPU)
                       </SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Honored verbatim — nodes that can&apos;t run the chosen
+                    Honored verbatim: nodes that can&apos;t run the chosen
                     engine reject the run instead of substituting.
                   </p>
                 </div>
@@ -358,15 +358,15 @@ export default function FoundryPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="sam3">
-                        SAM 3 — Meta concept segmentation, highest quality
+                        SAM 3 (Meta concept segmentation, highest quality)
                       </SelectItem>
                       <SelectItem value="yoloe">
-                        YOLOE — open-vocab, runs anywhere
+                        YOLOE (open-vocab, runs anywhere)
                       </SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Also honored verbatim — a node without the selected
+                    Also honored verbatim: a node without the selected
                     labeler&apos;s runtime rejects the run with setup steps.
                   </p>
                 </div>
@@ -509,7 +509,7 @@ export default function FoundryPage() {
                       ))}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Painted by {paint.data.model} — the full run creates{" "}
+                      Painted by {paint.data.model}. The full run creates{" "}
                       {imageCount.toLocaleString()} like these, then labels
                       and verifies them.
                     </p>

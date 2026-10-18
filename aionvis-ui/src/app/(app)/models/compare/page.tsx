@@ -169,7 +169,7 @@ export default function CompareModelsPage({
             Compare experiments
           </h1>
           <p className="text-sm text-muted-foreground">
-            {models.length} models side by side — the best value in each row
+            {models.length} models side by side. The best value in each row
             wears the trophy.
           </p>
         </div>
@@ -257,7 +257,7 @@ export default function CompareModelsPage({
                               )}
                             >
                               {v === undefined || v === null ? (
-                                <span className="text-muted-foreground/50">—</span>
+                                <span className="text-muted-foreground/50">n/a</span>
                               ) : (
                                 <span className="inline-flex items-center gap-1.5">
                                   {row.format(v)}

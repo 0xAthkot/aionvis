@@ -43,7 +43,7 @@ def load_manifest(dataset: Dataset) -> dict:
     if not path.exists():
         raise RuntimeError(
             f"Dataset {dataset.id} is marked as label-imported but "
-            "labels.json is missing — re-upload the archive."
+            "labels.json is missing. Re-upload the archive."
         )
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -61,7 +61,7 @@ def audit_labels(ctx: RunContext, dataset: Dataset, image_paths: list[Path],
                   f"{len(per_image)} labeled images")
     ctx.log("info",
             f"Audit mode: {total_boxes} provided {manifest.get('format', '?').upper()} "
-            f"labels on {len(per_image)} of {len(image_paths)} images — "
+            f"labels on {len(per_image)} of {len(image_paths)} images, "
             "verifying instead of relabeling", agent="critic")
 
     reviewed: list[ReviewedImage] = []
@@ -78,7 +78,7 @@ def audit_labels(ctx: RunContext, dataset: Dataset, image_paths: list[Path],
             cls = int(entry.get("classId", -1))
             if cls < 0 or (n_classes and cls >= n_classes):
                 dropped += 1
-                ctx.log("critic", f"AUDIT REJECT {path.name} — class id {cls} "
+                ctx.log("critic", f"AUDIT REJECT {path.name}: class id {cls} "
                                   "outside the imported class list", agent="critic")
                 continue
             cx, cy = float(entry["cx"]), float(entry["cy"])
@@ -92,13 +92,13 @@ def audit_labels(ctx: RunContext, dataset: Dataset, image_paths: list[Path],
             area = w * h
             if area < settings.critic_min_box_area or area > 0.98:
                 dropped += 1
-                ctx.log("critic", f"AUDIT REJECT {path.name} class={cls} — "
+                ctx.log("critic", f"AUDIT REJECT {path.name} class={cls}: "
                                   f"degenerate area {area:.4f}", agent="critic")
                 continue
             aspect = (w * width) / max(h * height, 1e-6)
             if aspect > 20 or aspect < 0.05:
                 dropped += 1
-                ctx.log("critic", f"AUDIT REJECT {path.name} class={cls} — "
+                ctx.log("critic", f"AUDIT REJECT {path.name} class={cls}: "
                                   f"implausible aspect ratio {aspect:.1f}",
                         agent="critic")
                 continue
@@ -110,7 +110,7 @@ def audit_labels(ctx: RunContext, dataset: Dataset, image_paths: list[Path],
             # Near-duplicate of an already-accepted same-class box.
             if any(b.class_id == cls and _iou(b, candidate) > 0.95 for b in boxes):
                 dropped += 1
-                ctx.log("critic", f"AUDIT REJECT {path.name} class={cls} — "
+                ctx.log("critic", f"AUDIT REJECT {path.name} class={cls}: "
                                   "duplicate annotation (IoU > 0.95)", agent="critic")
                 continue
             boxes.append(candidate)
@@ -133,7 +133,7 @@ def audit_labels(ctx: RunContext, dataset: Dataset, image_paths: list[Path],
             reason = ("Every provided box failed the audit" if raw
                       else "No provided labels for this image")
             if raw:
-                ctx.log("critic", f"AUDIT REJECT {path.name} — {reason}",
+                ctx.log("critic", f"AUDIT REJECT {path.name}: {reason}",
                         agent="critic")
         reviewed.append(ReviewedImage(
             path=path, width=width, height=height, boxes=boxes,
@@ -148,7 +148,7 @@ def audit_labels(ctx: RunContext, dataset: Dataset, image_paths: list[Path],
 
     kept = sum(r.accepted for r in reviewed)
     ctx.log("info",
-            f"Label audit done — {kept}/{len(reviewed)} images usable, "
+            f"Label audit done: {kept}/{len(reviewed)} images usable, "
             f"{progress.masks_accepted} boxes accepted, "
             f"{progress.masks_rejected} rejected", agent="critic")
     return reviewed

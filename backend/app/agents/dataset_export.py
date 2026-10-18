@@ -77,7 +77,7 @@ def _write_coco(zf: zipfile.ZipFile, dataset: Dataset,
     root = f"{dataset.id}-coco"
     coco: dict = {
         "info": {
-            "description": f"{dataset.name} — generated and self-verified by "
+            "description": f"{dataset.name}, generated and self-verified by "
                            "aionVIS",
             "date_created": dataset.created_at,
         },

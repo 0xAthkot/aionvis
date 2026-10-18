@@ -43,7 +43,7 @@ export function ConnectNodeCard() {
       // all so each screen refetches from the attached node.
       queryClient.clear();
       toast.success(`Attached to ${node?.gpu ?? "the node"}`, {
-        description: `${endpoint.trim().replace(/\/+$/, "")} — every screen and live stream now reads this node.`,
+        description: `Every screen and live stream now reads ${endpoint.trim().replace(/\/+$/, "")}.`,
       });
     } catch (err) {
       toast.error("Could not attach the node", {
@@ -73,7 +73,7 @@ export function ConnectNodeCard() {
             </div>
             <CardDescription>
               Point the console at a GPU node running the aionVIS
-              backend. Everything — runs, datasets, live agent streams —
+              backend. Everything (runs, datasets, live agent streams)
               switches to it instantly; no rebuild.
             </CardDescription>
           </div>
@@ -91,8 +91,8 @@ export function ConnectNodeCard() {
           <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
             Ready for your AMD key. When the MI300X credentials arrive: run{" "}
             <code className="font-mono text-xs">backend/deploy_mi300x.sh</code>{" "}
-            on the node — it prints the endpoint URL and API key to paste
-            here — then hit Connect.
+            on the node (it prints the endpoint URL and API key to paste
+            here), then hit Connect.
           </p>
         )}
         <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto]">
@@ -110,7 +110,7 @@ export function ConnectNodeCard() {
             <Label htmlFor="node-token">
               API key{" "}
               <span className="text-muted-foreground">
-                (AA_API_KEY — blank if the node runs open)
+                (AA_API_KEY, blank if the node runs open)
               </span>
             </Label>
             <Input

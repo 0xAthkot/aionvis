@@ -120,16 +120,16 @@ class Settings(BaseSettings):
     def model_post_init(self, __context) -> None:
         # Config problems degrade, never crash the server.
         if self.pipeline_mode not in ("sequential", "streaming"):
-            print(f"[config] Unknown PIPELINE_MODE '{self.pipeline_mode}' — "
+            print(f"[config] Unknown PIPELINE_MODE '{self.pipeline_mode}', "
                   "falling back to sequential")
             self.pipeline_mode = "sequential"
         if self.pipeline_mode == "streaming" and not self.keep_models_warm:
             print("[config] PIPELINE_MODE=streaming requires KEEP_MODELS_WARM=true "
-                  "(the overlap only pays off with the swarm resident) — "
+                  "(the overlap only pays off with the swarm resident), "
                   "falling back to sequential")
             self.pipeline_mode = "sequential"
         if self.gpu_slots < 1:
-            print(f"[config] GPU_SLOTS={self.gpu_slots} is invalid — using 1")
+            print(f"[config] GPU_SLOTS={self.gpu_slots} is invalid, using 1")
             self.gpu_slots = 1
 
 
