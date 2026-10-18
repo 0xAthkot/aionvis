@@ -151,7 +151,7 @@ function DemoModeBanner() {
     <div className="mx-auto hidden min-w-0 items-center gap-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs lg:flex">
       <TriangleAlert className="size-3.5 shrink-0 text-amber-400" />
       <span className="truncate text-amber-200/90">
-        Demo mode — simulated data only. To train real models,{" "}
+        Demo mode: simulated data only. To train real models,{" "}
         <Link
           href="/login"
           className="font-medium text-amber-100 underline underline-offset-2"
