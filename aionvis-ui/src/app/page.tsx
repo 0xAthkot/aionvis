@@ -10,7 +10,6 @@ import {
   Download,
   FileText,
   Flag,
-  GitFork,
   KeyRound,
   Minus,
   ShieldCheck,
@@ -33,8 +32,19 @@ export const metadata: Metadata = {
   // does not apply to a page in its own segment, only to child segments.
   title: "aionVIS · Autonomous vision model training",
   description:
-    "An autonomous agent swarm that turns one sentence into a trained, deployable detection model. Zero human annotation. Built entirely on AMD MI300X.",
+    "An autonomous agent swarm that turns one sentence into a trained, deployable detection model. Zero human annotation. Tested on AMD MI300X.",
 };
+
+const REPO_URL = "https://github.com/0xAthkot/aionvis";
+
+/** GitHub's mark (Octicons, MIT); lucide no longer ships brand icons. */
+function GithubMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden className={className}>
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+    </svg>
+  );
+}
 
 const NAV_LINKS = [
   { href: "#pipeline", label: "Pipeline" },
@@ -191,7 +201,7 @@ export default function LandingPage() {
       {/* ---- Navbar ---- */}
       <header className="fixed inset-x-0 top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-md">
         <nav className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 sm:px-6">
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex shrink-0 items-center">
             <Image
               src="/aionvis-wordmark.png"
               alt="aionVIS"
@@ -203,6 +213,17 @@ export default function LandingPage() {
           </Link>
           <LandingNav links={NAV_LINKS} />
           <div className="ml-auto flex items-center gap-2">
+            <Button asChild variant="ghost" size="sm">
+              <a
+                href={REPO_URL}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="aionVIS on GitHub"
+              >
+                <GithubMark className="size-4" />
+                <span className="hidden lg:inline">GitHub</span>
+              </a>
+            </Button>
             <Button asChild variant="ghost" size="sm">
               <Link href="/login">Sign in</Link>
             </Button>
@@ -226,7 +247,7 @@ export default function LandingPage() {
             <div className="mx-auto max-w-3xl text-center">
               <Badge variant="outline" className="mb-6 gap-1.5 border-primary/40 py-1 text-xs">
                 <span className="size-1.5 rounded-full bg-primary" />
-                Powered end to end by AMD MI300X
+                Tested end to end on AMD MI300X
               </Badge>
               <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
                 Stop labeling data.
@@ -451,7 +472,7 @@ export default function LandingPage() {
                   </div>
                   <pre className="overflow-x-auto p-4 font-mono text-xs leading-relaxed text-zinc-300">
                     <code>{`# Full stack, your machine, no accounts
-git clone <this-repo> && cd aionvis
+git clone ${REPO_URL} && cd aionvis
 
 # Optional: point at your own LLM (falls back
 # to a deterministic template expander)
@@ -622,13 +643,13 @@ docker compose up --build
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs">
             <a
-              href="https://github.com/0xAthkot/aionvis"
+              href={REPO_URL}
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
             >
-              <GitFork className="size-3.5" />
-              Open-Source Version
+              <GithubMark className="size-3.5" />
+              Source on GitHub
             </a>
             <a
               href="https://www.aionvis.com/idea.pdf"

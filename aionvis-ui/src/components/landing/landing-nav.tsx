@@ -54,7 +54,7 @@ export function LandingNav({ links }: { links: NavLink[] }) {
   }, [links]);
 
   return (
-    <div className="hidden items-center gap-5 text-sm md:flex">
+    <div className="hidden items-center gap-5 text-sm lg:flex">
       {links.map((l) => (
         <a
           key={l.href}

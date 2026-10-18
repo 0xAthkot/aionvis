@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: "aionVIS · %s",
   },
   description:
-    "Autonomous agent swarm that generates, self-verifies and labels training data, then trains YOLO models natively on AMD hardware.",
+    "Autonomous agent swarm that generates, self-verifies and labels training data, then trains YOLO models. Tested on AMD hardware.",
 };
 
 export default function RootLayout({
