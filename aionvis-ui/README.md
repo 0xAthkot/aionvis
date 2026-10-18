@@ -1,8 +1,8 @@
 # aionVIS — MLOps Command Center
 
 Frontend-first control plane for an autonomous agent swarm that generates,
-self-verifies and labels training data, then trains deployable YOLO models
-natively on AMD MI300X hardware. Built for the AMD Developer Hackathon ACT II
+self-verifies and labels training data, then trains deployable YOLO models.
+Tested on AMD MI300X hardware. Built for the AMD Developer Hackathon ACT II
 (Unicorn Track).
 
 **The entire product runs with or without a backend.** Every screen talks to

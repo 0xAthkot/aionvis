@@ -27,7 +27,7 @@
 [Measured on one MI300X](#measured-on-one-amd-instinct-mi300x) ·
 [Setup](#setup-three-ways-in-easiest-first) ·
 [AMD resource usage](#amd-resource-usage) ·
-[Market & business model](#market--business-model) ·
+[How it compares](#how-it-compares) ·
 [Main code path](#main-code-path) ·
 [External services](#external-services) ·
 [Model lineup](#model-lineup-every-weight-is-open) ·
@@ -35,7 +35,7 @@
 
 aionVIS is an autonomous agent swarm for **computer vision**. It generates its
 own training data, labels it, verifies its own labels, and trains deployable
-**object-detection** models, natively on AMD hardware.
+**object-detection** models. Tested on AMD hardware.
 Built for the **AMD Developer Hackathon ACT II (Unicorn Track)**, and entered
 in the **Best Use of Gemma Models** challenge: Gemma 4 is the swarm's brain.
 It designs the scenes, spot-checks every label as a VLM, and writes each
@@ -205,20 +205,12 @@ resident beside it, so the semantic critic became a local call instead of a
 per-image network round trip to a third party. The Fireworks integration was
 removed on 2026-07-08; today no part of the swarm leaves the AMD card.
 
-## Market & business model
+## How it compares
 
-Labeling is a multi-billion-dollar industry that exists only because models
-can't feed themselves. At scale a box costs **$0.03–$0.10** to draw, so a
-modest 100k-image dataset runs **$50k+** with QA, and you pay again every
-time the camera angle or the product changes. The flagship run above cost
-**$1.25** and nobody drew a box.
-
-Pricing follows the cost: usage-based per GPU-minute (every run is metered
-and quoted in the wizard before launch) plus a per-seat platform fee. A
-500-image run is minutes of MI300X time, sellable at $5–15 with healthy
-margin. One engine serves eight vision markets, each in the billions:
-logistics ($22B), manufacturing ($20B), automotive ($19B), retail ($18B),
-agriculture ($18B), aviation ($12B), defense ($9.3B), robotics ($4.4B).
+Labeling is the slow, expensive step in computer vision. At scale a box costs
+**$0.03–$0.10** to draw, so a modest 100k-image dataset runs **$50k+** with
+QA, and you pay again every time the camera angle or the product changes. The
+flagship run above cost **$1.25** of GPU time and nobody drew a box.
 
 | | Data source | Labels | Human in the loop |
 |---|---|---|---|
@@ -228,8 +220,8 @@ agriculture ($18B), aviation ($12B), defense ($9.3B), robotics ($4.4B).
 | **aionVIS** | **generated from a sentence** | **self-verified by agents** | **no** |
 
 Synthetic data is easy to generate and hard to trust; the self-correcting
-Critic is the moat: we ship the trust layer. Roadmap: seed raise → paid
-design-partner pilots → commercial launch. Full pitch: [`PITCH.md`](PITCH.md).
+Critic is what makes it usable. aionVIS is open source (MIT) and self-hosted:
+bring your own GPU node, and your images, labels and models stay on it.
 
 ## Main code path
 
