@@ -253,9 +253,9 @@ or without a backend.
 Nothing here is mocked on the backend: every number in the results table came
 off the MI300X droplet. Check it yourself with
 [`backend/smoke_test.py`](backend/smoke_test.py) (preflights every endpoint,
-the LLM and live inference) and the 32 pytest cases in
+the LLM and live inference) and the 37 pytest cases in
 [`backend/tests/`](backend/tests), covering auth, streaming orchestration, mask
-geometry, prompt agent, and generator/labeler selection.
+geometry, prompt agent, generator/labeler selection and GPU telemetry.
 
 ## External services
 

@@ -2,7 +2,8 @@
 
 Detects the local accelerator once at startup and exposes:
 - `build_node()` — the HardwareNode the UI renders (real name/VRAM/stack)
-- `sample()` — a live TelemetrySample (pynvml on NVIDIA, amd-smi on ROCm)
+- `sample()` — a live TelemetrySample (pynvml on NVIDIA, amd-smi on ROCm,
+  rocm-smi when amd-smi is missing or its `metric` command is broken)
 - `throughput` — set by agents while they work (img/s in synthesis,
   it/s in training); None when the pipeline is idle.
 
@@ -186,10 +187,55 @@ def _sample_nvidia() -> Optional[dict]:
         return None
 
 
-def _sample_amd() -> Optional[dict]:
-    smi = shutil.which("amd-smi")
+def _sample_rocm_smi() -> Optional[dict]:
+    """rocm-smi carries the same counters as `amd-smi metric`, which is broken
+    on the AMD Developer Cloud ROCm 7.14 image (every call raises
+    "'Namespace' object has no attribute 'partition'")."""
+    smi = shutil.which("rocm-smi")
     if not smi:
         return None
+    try:
+        out = subprocess.run(
+            [smi, "--showmeminfo", "vram", "--showuse", "--showtemp",
+             "--showpower", "--json"],
+            capture_output=True, text=True, timeout=10, check=True,
+        ).stdout
+        data = json.loads(out)
+        card = data.get("card0") or next(iter(data.values()), {})
+
+        def num(*keys, default=0.0):
+            for key in keys:
+                if key in card:
+                    try:
+                        return float(card[key])
+                    except (TypeError, ValueError):
+                        continue
+            return default
+
+        total_b = num("VRAM Total Memory (B)")
+        return {
+            "used_gb": num("VRAM Total Used Memory (B)") / 1024**3,
+            "total_gb": (total_b / 1024**3) or GPU.vram_total_gb,
+            "util": num("GPU use (%)"),
+            "temp": num("Temperature (Sensor junction) (C)",
+                        "Temperature (Sensor edge) (C)"),
+            "power": num("Current Socket Graphics Package Power (W)",
+                         "Average Graphics Package Power (W)"),
+        }
+    except Exception:
+        return None
+
+
+# Set once `amd-smi metric` fails, so the 1 Hz loop stops paying for a
+# subprocess that will fail again and goes straight to rocm-smi.
+_amd_metric_broken = False
+
+
+def _sample_amd() -> Optional[dict]:
+    global _amd_metric_broken
+    smi = shutil.which("amd-smi")
+    if not smi or _amd_metric_broken:
+        return _sample_rocm_smi()
     try:
         out = subprocess.run(
             [smi, "metric", "--gpu", "0", "--usage", "--mem-usage",
@@ -218,7 +264,8 @@ def _sample_amd() -> Optional[dict]:
             "power": val("power", "socket_power"),
         }
     except Exception:
-        return None
+        _amd_metric_broken = True
+        return _sample_rocm_smi()
 
 
 def sample() -> TelemetrySample:
