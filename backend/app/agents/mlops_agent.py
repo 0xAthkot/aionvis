@@ -5,6 +5,7 @@ log/progress channels, then registers a ModelArtifact whose curves and
 mAP come from the actual training run. Export serves the real weights.
 """
 
+import os
 import shutil
 import time
 from pathlib import Path
@@ -142,7 +143,10 @@ class MLOpsAgent:
                 epochs=epochs, imgsz=min(imgsz, 224) if task == "classify" else imgsz,
                 batch=b,
                 device=0 if device != "cpu" else "cpu",
-                workers=0,  # required on Windows inside a non-main thread
+                # Windows can't spawn DataLoader workers from this non-main
+                # thread, so it loads images in-process. Elsewhere that
+                # starves the GPU: on the MI300X, 8 workers trained 4.6x faster.
+                workers=0 if os.name == "nt" else min(8, os.cpu_count() or 1),
                 project=str(workdir / "train"), name="yolo", exist_ok=True,
                 verbose=False, plots=False,
             )
