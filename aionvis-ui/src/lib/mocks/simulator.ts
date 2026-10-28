@@ -138,12 +138,33 @@ const AGENT_ROSTER: Record<
   AgentKind,
   { displayName: string; model: string; provider: string }
 > = {
-  prompt: { displayName: "Prompt Agent", model: "Gemma 4", provider: "vLLM · MI300X" },
-  synthesis: { displayName: "Synthesis Agent", model: "SDXL", provider: "MI300X · local" },
+  prompt: { displayName: "Prompt Agent", model: "gemma-4-26B-A4B-it", provider: "vLLM · MI300X" },
+  synthesis: { displayName: "Synthesis Agent", model: "FLUX.2-klein-4B", provider: "MI300X · local" },
   vision: { displayName: "Vision Agent", model: "SAM 3", provider: "MI300X · local" },
-  critic: { displayName: "Critic Agent", model: "Gemma 4 VLM + geometry", provider: "vLLM · MI300X" },
-  mlops: { displayName: "MLOps Agent", model: "YOLOv10 · PyTorch", provider: "MI300X · ROCm" },
+  critic: { displayName: "Critic Agent", model: "gemma-4-26B-A4B-it VLM + geometric checks", provider: "vLLM · MI300X" },
+  mlops: { displayName: "MLOps Agent", model: "Ultralytics YOLO26M", provider: "MI300X · ROCm" },
 };
+
+/** The model each agent really uses for this run (backend context.agent_model). */
+export function agentModel(kind: AgentKind, run: PipelineRun): string {
+  switch (kind) {
+    case "synthesis":
+      return run.source.path === "synthetic" && run.source.generator === "flux"
+        ? "FLUX.2-klein-4B"
+        : "stable-diffusion-xl-base-1.0";
+    case "vision":
+      return run.visionBackend === "yoloe" ? "YOLOE open-vocab" : "SAM 3";
+    case "mlops": {
+      const arch = run.training.architecture;
+      const scratch = run.training.pretrained === false ? ", from scratch" : "";
+      return arch.startsWith("rf-detr")
+        ? `Roboflow ${arch.toUpperCase()}`
+        : `Ultralytics ${arch.toUpperCase()}${scratch}`;
+    }
+    default:
+      return AGENT_ROSTER[kind].model;
+  }
+}
 
 const rand = (lo: number, hi: number) => lo + Math.random() * (hi - lo);
 const randInt = (lo: number, hi: number) => Math.floor(rand(lo, hi + 1));
@@ -177,6 +198,7 @@ export class RunSimulator {
       kind,
       state: "idle",
       ...AGENT_ROSTER[kind],
+      model: agentModel(kind, run),
     }));
     // A seeded mid-flight run resumes from its persisted stage. Streaming
     // runs persist a contract stage (synthesis/segmentation/critic_review)

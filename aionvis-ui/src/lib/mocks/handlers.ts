@@ -25,7 +25,7 @@ import { computeAnalytics } from "./analytics";
 import { db, nextId } from "./db";
 import { placeholderImage } from "./fixtures/placeholder";
 import { planScenes } from "./scene-plan";
-import { getSimulatedAgents } from "./simulator";
+import { agentModel, getSimulatedAgents } from "./simulator";
 
 /** Small realistic latency so loading skeletons are actually visible. */
 const lag = () => delay(Math.round(150 + Math.random() * 250));
@@ -389,6 +389,7 @@ export const handlers = [
             ? "Segmenting batch 14/39 (SAM 3 zero-shot)"
             : undefined,
         ...a,
+        model: agentModel(a.kind, run),
       })),
     );
   }),

@@ -27,14 +27,38 @@ class RunCancelled(Exception):
     pass
 
 
-AGENT_SPECS: dict[AgentKind, tuple[str, str, str]] = {
-    # kind -> (displayName, model, provider) — provider is patched at runtime
-    "prompt": ("Prompt Agent", "Gemma (vLLM)", "vLLM · MI300X"),
-    "synthesis": ("Synthesis Agent", "SDXL-Turbo", "local GPU"),
-    "vision": ("Vision Agent", "SAM / YOLOE open-vocab", "local GPU"),
-    "critic": ("Critic Agent", "Gemma VLM + geometric checks", "vLLM · MI300X"),
-    "mlops": ("MLOps Agent", "Ultralytics YOLOv10", "local GPU"),
+AGENT_SPECS: dict[AgentKind, tuple[str, str]] = {
+    # kind -> (displayName, provider); the model comes from the run itself
+    "prompt": ("Prompt Agent", "vLLM · MI300X"),
+    "synthesis": ("Synthesis Agent", "local GPU"),
+    "vision": ("Vision Agent", "local GPU"),
+    "critic": ("Critic Agent", "vLLM · MI300X"),
+    "mlops": ("MLOps Agent", "local GPU"),
 }
+
+
+def agent_model(kind: AgentKind, run: PipelineRun) -> str:
+    """The model this run's agent actually uses (shown in Mission Control):
+    the run's generator, labeler and architecture, the node's LLM. These
+    were fixed placeholders ("SDXL-Turbo", "YOLOv10") whatever the run used."""
+    from ..config import settings
+
+    llm = settings.llm_model.rsplit("/", 1)[-1]
+    if kind == "prompt":
+        return llm
+    if kind == "synthesis":
+        model = (settings.flux_model if getattr(run.source, "generator", "") == "flux"
+                 else settings.sdxl_model)
+        return model.rsplit("/", 1)[-1]
+    if kind == "vision":
+        backend = run.vision_backend or settings.vision_backend
+        return "SAM 3" if backend == "sam3" else "YOLOE open-vocab"
+    if kind == "critic":
+        return f"{llm} VLM + geometric checks"
+    arch = run.training.architecture
+    scratch = "" if run.training.pretrained else ", from scratch"
+    return (f"Ultralytics {arch.upper()}{scratch}" if not arch.startswith("rf-detr")
+            else f"Roboflow {arch.upper()}")
 
 
 class RunContext:
@@ -55,13 +79,13 @@ class RunContext:
             else ["vision", "critic", "mlops"]
         )
         for kind in kinds:
-            name, model, provider = AGENT_SPECS[kind]
+            name, provider = AGENT_SPECS[kind]
             self.agents[kind] = AgentInstance(
                 id=f"{run.id}-{kind}",
                 run_id=run.id,
                 kind=kind,
                 display_name=name,
-                model=model,
+                model=agent_model(kind, run),
                 provider=provider,
                 state="idle",
             )
