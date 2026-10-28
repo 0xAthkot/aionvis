@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, Database, Search } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { HelpTip } from "@/components/shared/help-tip";
 import { StartRunDialog } from "@/components/datasets/start-run-dialog";
+import { TrainModelDialog } from "@/components/datasets/train-model-dialog";
 import { UploadDropzone } from "@/components/datasets/upload-dropzone";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import { fuzzyAny } from "@/lib/fuzzy";
+import { DATASET_ORIGIN } from "@/lib/simple-language";
 import type {
   AnnotatedImage,
   Dataset,
@@ -99,9 +101,7 @@ function DatasetRow({ dataset }: { dataset: Dataset }) {
         >
           {dataset.name}
         </Link>
-        <Badge variant="secondary">
-          {dataset.origin === "synthetic" ? "Synthetic" : "BYOD"}
-        </Badge>
+        <Badge variant="secondary">{DATASET_ORIGIN[dataset.origin]}</Badge>
         {dataset.importedLabels && (
           <Badge variant="outline" className="font-mono text-xs uppercase">
             {dataset.importedLabels.format} labels
@@ -241,10 +241,13 @@ export default function DatasetsPage() {
 
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="section-label flex items-center gap-2">
-            <Database className="size-4" />
-            Library
-          </h2>
+          <div className="flex items-center gap-3">
+            <h2 className="section-label flex items-center gap-2">
+              <Database className="size-4" />
+              Library
+            </h2>
+            <TrainModelDialog />
+          </div>
           {datasetPage && datasetPage.total > 0 && (
             <p className="text-xs text-muted-foreground">
               {searching ? (

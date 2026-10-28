@@ -35,6 +35,34 @@ const feedbackStore: FoundryFeedback[] = [];
 const notFound = (code: string, message: string) =>
   HttpResponse.json({ status: 404, code, message }, { status: 404 });
 
+const badRequest = (code: string, message: string) =>
+  HttpResponse.json({ status: 400, code, message }, { status: 400 });
+
+/** Class-name identity for merges (backend dataset_merge.norm). */
+const normClass = (name: string) =>
+  name.replace(/_/g, " ").toLowerCase().split(/\s+/).filter(Boolean).join(" ");
+
+/** Union of the datasets' classes, first spelling wins (merged_class_names). */
+export function mergedClassNames(datasetIds: string[]): string[] {
+  const names: string[] = [];
+  const seen = new Set<string>();
+  for (const id of datasetIds) {
+    const ds = db.datasets.find((d) => d.id === id);
+    for (const cls of [...(ds?.classes ?? [])].sort((a, b) => a.id - b.id)) {
+      const key = normClass(cls.name);
+      if (!seen.has(key)) {
+        seen.add(key);
+        names.push(cls.name);
+      }
+    }
+  }
+  return names;
+}
+
+/** Labeled images a dataset run can train on (mock: the labeled count). */
+const labeledImages = (datasetId: string) =>
+  db.datasets.find((d) => d.id === datasetId)?.labeledCount ?? 0;
+
 function paginate<T>(items: T[], url: string): Paginated<T> {
   const params = new URL(url).searchParams;
   const page = Number(params.get("page") ?? 1);
@@ -224,38 +252,74 @@ export const handlers = [
     await lag();
     const body = (await request.json()) as CreateRunRequest;
     // The mock node is an MI300X, so runs stream (agents overlap) — except
-    // audit runs on imported labels, which are near-instant and stay
-    // sequential. Mirrors the real backend's selection in routers.create_run.
+    // audit runs on imported labels, which are near-instant, and dataset
+    // runs, which have nothing to overlap. Mirrors routers.create_run.
     const source = body.source;
+    const trainModel = body.trainModel ?? true;
+    const pretrained = body.training.pretrained ?? true;
+    if (body.training.architecture.startsWith("rf-detr") && !pretrained)
+      return badRequest("pretrained_only",
+        "RF-DETR trains from its pretrained weights only. Pick a YOLO or RT-DETR architecture to train from scratch.");
     const sourceDataset =
       source.path === "byod"
         ? db.datasets.find((d) => d.id === source.datasetId)
         : undefined;
+    let targetClasses = body.targetClasses ?? [];
+    let imagesTotal = 0;
+    if (source.path === "dataset") {
+      const ids = [...new Set(source.datasetIds)];
+      if (!ids.length)
+        return badRequest("no_datasets", "Pick at least one dataset to train on.");
+      for (const id of ids) {
+        const ds = db.datasets.find((d) => d.id === id);
+        if (!ds) return notFound("dataset_not_found", `No dataset ${id}`);
+        if (!labeledImages(id))
+          return badRequest("dataset_unlabeled",
+            `Dataset '${ds.name}' has no labeled images yet. Label it with a run first.`);
+        imagesTotal += labeledImages(id);
+      }
+      if (ids.length === 1 && !trainModel)
+        return badRequest("nothing_to_do",
+          "Nothing to do: with training off, pick two or more datasets to merge them into one.");
+      source.datasetIds = ids;
+      targetClasses = mergedClassNames(ids);
+    } else if (sourceDataset?.importedLabels) {
+      targetClasses = sourceDataset.importedLabels.classNames;
+    }
+    if (!targetClasses.length)
+      return badRequest("no_classes", "Add at least one target class.");
+    if (source.path === "synthetic") imagesTotal = source.randomization.imageCount;
+    if (source.path === "byod") imagesTotal = source.imageCount;
     const run: PipelineRun = {
       id: nextId("run"),
       orgId: db.organizations[0].id,
       projectId: body.projectId,
       name: body.name,
-      path: body.source.path,
+      path: source.path,
       status: "queued",
       stage: "queued",
-      pipelineMode: sourceDataset?.importedLabels ? "sequential" : "streaming",
+      pipelineMode:
+        sourceDataset?.importedLabels || source.path === "dataset"
+          ? "sequential"
+          : "streaming",
       // Mock node profile is the MI300X where SAM 3 is installed; the user's
       // explicit choice wins — mirrors routers.create_run's resolution.
-      visionBackend: body.visionBackend ?? "sam3",
-      source: body.source,
-      training: body.training,
-      targetClasses: body.targetClasses,
+      // Dataset runs label nothing, so no labeler is resolved.
+      visionBackend: source.path === "dataset"
+        ? undefined
+        : ("visionBackend" in body ? body.visionBackend : undefined) ?? "sam3",
+      source,
+      training: { ...body.training, pretrained },
+      trainModel,
+      targetClasses,
       progress: {
         pct: 0,
         imagesGenerated: 0,
-        imagesTotal: body.source.path === "synthetic"
-          ? body.source.randomization.imageCount
-          : body.source.imageCount,
+        imagesTotal,
         masksAccepted: 0,
         masksRejected: 0,
         currentEpoch: 0,
-        totalEpochs: body.training.epochs,
+        totalEpochs: trainModel ? body.training.epochs : 0,
       },
       createdBy: db.members[0].id,
       createdAt: new Date().toISOString(),
@@ -301,9 +365,11 @@ export const handlers = [
       { kind: "critic", displayName: "Critic Agent", model: "Gemma 4 VLM + geometry", provider: "vLLM · MI300X" },
       { kind: "mlops", displayName: "MLOps Agent", model: "YOLOv10 · PyTorch", provider: "MI300X · ROCm" },
     ] as const;
-    const active = run.path === "byod"
-      ? roster.filter((a) => a.kind !== "prompt" && a.kind !== "synthesis")
-      : roster;
+    const active = run.path === "dataset"
+      ? roster.filter((a) => a.kind === "mlops")
+      : run.path === "byod"
+        ? roster.filter((a) => a.kind !== "prompt" && a.kind !== "synthesis")
+        : roster;
     return HttpResponse.json(
       active.map((a) => ({
         id: `${run.id}_${a.kind}`,
@@ -327,21 +393,31 @@ export const handlers = [
     return HttpResponse.json(db.runLogs.filter((l) => l.runId === params.id));
   }),
 
-  http.get(`${API_BASE}/runs/:id/preview`, async ({ params }) => {
+  http.get(`${API_BASE}/runs/:id/preview`, async ({ params, request }) => {
     await lag();
     const run = db.runs.find((r) => r.id === params.id);
     if (!run) return notFound("not_found", `Run '${params.id}' not found`);
     if (run.source.path !== "synthetic") return HttpResponse.json([]);
-    // SVG-data-URI tiles are cheap; the run page windows them to 24/page.
-    const count = Math.min(run.progress.imagesGenerated, 500);
+    // Same window semantics as the backend: ?offset=&limit=, oldest first;
+    // without them every image (SVG data-URI tiles are cheap to mint).
+    const url = new URL(request.url);
+    const generated = run.progress.imagesGenerated;
+    const offset = Math.max(0, Number(url.searchParams.get("offset") ?? 0) || 0);
+    const limitParam = url.searchParams.get("limit");
+    const end = limitParam === null
+      ? generated
+      : Math.min(generated, offset + Math.max(0, Number(limitParam) || 0));
     const view = deploymentView(run.source.useCase);
     const scene = sceneContext(run.source.useCase) ||
       run.targetClasses.join(", ").replace(/_/g, " ");
-    const previews: RunPreviewImage[] = Array.from({ length: count }, (_, i) => ({
-      fileName: `img_${String(i).padStart(4, "0")}.jpg`,
-      url: placeholderImage(i + 7, `foundry ${i}`, 320, 320),
-      scenario: `Photorealistic scene of ${scene}${view ? `, ${view}` : ""}, variation ${i + 1}`,
-    }));
+    const previews: RunPreviewImage[] = [];
+    for (let i = offset; i < end; i++) {
+      previews.push({
+        fileName: `img_${String(i).padStart(4, "0")}.jpg`,
+        url: placeholderImage(i + 7, `foundry ${i}`, 320, 320),
+        scenario: `Photorealistic scene of ${scene}${view ? `, ${view}` : ""}, variation ${i + 1}`,
+      });
+    }
     return HttpResponse.json(previews);
   }),
 
@@ -352,42 +428,55 @@ export const handlers = [
     // streaming runs (2026-07-11); the rate is the AMD Developer Cloud
     // droplet's $2/hour.
     const USD_PER_HOUR = 2;
-    const images = body.source.path === "synthetic"
-      ? body.source.randomization.imageCount
-      : body.source.imageCount;
+    const source = body.source;
+    const images = source.path === "synthetic"
+      ? source.randomization.imageCount
+      : source.path === "dataset"
+        ? source.datasetIds.reduce((n, id) => n + labeledImages(id), 0)
+        : source.imageCount;
     const arch = body.training.architecture;
     const archFactor = arch.startsWith("rf-detr")
       ? arch.endsWith("large") ? 4.5 : 3
       : arch.startsWith("rtdetr")
         ? arch.endsWith("l") ? 3 : 4.5
         : ({ n: 1, s: 1.3, m: 1.8, l: 2.5, x: 3.5 }[arch.slice(-1)] ?? 1);
-    const genSeconds = body.source.path === "synthetic"
-      ? body.source.generator === "flux" ? 1.5 : 5
+    const genSeconds = source.path === "synthetic"
+      ? source.generator === "flux" ? 1.5 : 5
       : 0;
     const synthesisMin = (images * genSeconds) / 60;
     const segmentationMin = (images * 0.3) / 60;
     const criticMin = (images * 0.2) / 60;
     const trainingMin =
       body.training.epochs * (0.05 + images * 0.0005 * archFactor);
-    const totalMin =
-      (body.source.path === "synthetic" ? 0.3 + synthesisMin : 0) +
-      segmentationMin + criticMin + 0.3 + trainingMin;
+    const breakdown: CostEstimate["breakdown"] = [
+      ...(source.path === "synthetic"
+        ? [
+            { stage: "prompt_expansion", minutes: 0.3 },
+            { stage: "synthesis", minutes: +synthesisMin.toFixed(2) },
+          ] as CostEstimate["breakdown"]
+        : []),
+      ...(source.path !== "dataset"
+        ? [
+            { stage: "segmentation", minutes: +segmentationMin.toFixed(2) },
+            { stage: "critic_review", minutes: +criticMin.toFixed(2) },
+          ] as CostEstimate["breakdown"]
+        : []),
+      {
+        stage: "dataset_compile",
+        minutes: source.path === "dataset"
+          ? +(0.3 + (images * 0.002) / 60).toFixed(2)
+          : 0.3,
+      },
+      ...((body.trainModel ?? true)
+        ? [{ stage: "training", minutes: +trainingMin.toFixed(2) }] as CostEstimate["breakdown"]
+        : []),
+    ];
+    const totalMin = breakdown.reduce((sum, row) => sum + row.minutes, 0);
     const estimate: CostEstimate = {
       gpuMinutes: +totalMin.toFixed(1),
       estimatedUsd: +((totalMin * USD_PER_HOUR) / 60).toFixed(2),
       usdPerHour: USD_PER_HOUR,
-      breakdown: [
-        ...(body.source.path === "synthetic"
-          ? [
-              { stage: "prompt_expansion", minutes: 0.3 },
-              { stage: "synthesis", minutes: +synthesisMin.toFixed(2) },
-            ] as CostEstimate["breakdown"]
-          : []),
-        { stage: "segmentation", minutes: +segmentationMin.toFixed(2) },
-        { stage: "critic_review", minutes: +criticMin.toFixed(2) },
-        { stage: "dataset_compile", minutes: 0.3 },
-        { stage: "training", minutes: +trainingMin.toFixed(2) },
-      ],
+      breakdown,
     };
     return HttpResponse.json(estimate);
   }),

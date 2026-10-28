@@ -28,4 +28,19 @@ export const SIMPLE_STATUS: Record<RunStatus, string> = {
 export const SIMPLE_PATH: Record<PipelinePath, string> = {
   synthetic: "Built from your description",
   byod: "From your uploaded photos",
+  dataset: "Trained on your existing datasets",
+};
+
+/** Dataset origin badges (origin "dataset" = merged from other datasets). */
+export const DATASET_ORIGIN: Record<PipelinePath, string> = {
+  synthetic: "Synthetic",
+  byod: "BYOD",
+  dataset: "Merged",
+};
+
+/** Pro-mode run source names (badges, captions). */
+export const PRO_PATH: Record<PipelinePath, string> = {
+  synthetic: "Synthetic Foundry",
+  byod: "BYOD",
+  dataset: "Existing datasets",
 };

@@ -44,7 +44,10 @@ export function LaunchSummary({
   const images =
     request.source.path === "synthetic"
       ? request.source.randomization.imageCount
-      : request.source.imageCount;
+      : request.source.path === "byod"
+        ? request.source.imageCount
+        : undefined;
+  const trainModel = request.trainModel ?? true;
 
   return (
     <Card className="sticky top-6">
@@ -56,24 +59,43 @@ export function LaunchSummary({
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
         <dl className="space-y-2">
-          <div className="flex justify-between">
-            <dt className="text-muted-foreground">Images</dt>
-            <dd className="font-medium">{images.toLocaleString()}</dd>
-          </div>
+          {images !== undefined && (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Images</dt>
+              <dd className="font-medium">{images.toLocaleString()}</dd>
+            </div>
+          )}
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Target classes</dt>
-            <dd className="font-medium">{request.targetClasses.length}</dd>
+            <dd className="font-medium">{request.targetClasses?.length ?? 0}</dd>
           </div>
-          <div className="flex justify-between">
-            <dt className="text-muted-foreground">Architecture</dt>
-            <dd className="font-mono text-xs font-medium uppercase">
-              {request.training.architecture}
-            </dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-muted-foreground">Epochs</dt>
-            <dd className="font-medium">{request.training.epochs}</dd>
-          </div>
+          {trainModel ? (
+            <>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Architecture</dt>
+                <dd className="font-mono text-xs font-medium uppercase">
+                  {request.training.architecture}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Starting weights</dt>
+                <dd className="font-medium">
+                  {request.training.pretrained === false
+                    ? "From scratch"
+                    : "Pretrained"}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Epochs</dt>
+                <dd className="font-medium">{request.training.epochs}</dd>
+              </div>
+            </>
+          ) : (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Training</dt>
+              <dd className="font-medium">Off (dataset only)</dd>
+            </div>
+          )}
         </dl>
 
         <Separator />
@@ -117,7 +139,11 @@ export function LaunchSummary({
           onClick={() => launch.mutate(request)}
         >
           <Rocket className="size-4" />
-          {launch.isPending ? "Queueing…" : "Launch autonomous run"}
+          {launch.isPending
+            ? "Queueing…"
+            : trainModel
+              ? "Launch autonomous run"
+              : "Build the dataset"}
         </Button>
       </CardFooter>
     </Card>

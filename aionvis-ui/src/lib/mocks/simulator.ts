@@ -91,7 +91,22 @@ interface StagePlan {
 }
 
 function planFor(run: PipelineRun): StagePlan[] {
+  const plan = basePlanFor(run);
+  // Dataset-only runs (trainModel: false) end after the dataset compiles.
+  return run.trainModel === false
+    ? plan.filter((p) => p.stage !== "training")
+    : plan;
+}
+
+function basePlanFor(run: PipelineRun): StagePlan[] {
   const synthetic = run.path === "synthetic";
+  if (run.path === "dataset") {
+    // Training on existing datasets: labels exist, compile then train.
+    return [
+      { stage: "dataset_compile", ticks: 10, weight: 15 },
+      { stage: "training", ticks: 60, weight: 85 },
+    ];
+  }
   if (run.pipelineMode === "streaming") {
     // Parallel swarm on the MI300X: the middle stages run as one overlap
     // phase; training still needs the compiled dataset, so it joins last.
@@ -152,7 +167,9 @@ export class RunSimulator {
     const kinds: AgentKind[] =
       run.path === "synthetic"
         ? ["prompt", "synthesis", "vision", "critic", "mlops"]
-        : ["vision", "critic", "mlops"];
+        : run.path === "dataset"
+          ? ["mlops"]
+          : ["vision", "critic", "mlops"];
     this.agents = kinds.map((kind) => ({
       id: `${run.id}_${kind}`,
       runId: run.id,
@@ -371,19 +388,41 @@ export class RunSimulator {
         setGpuLoad(32, 46);
         this.log("info", "critic", "Geometric verification: IoU threshold 0.85, min box area 24 px²");
         break;
-      case "dataset_compile":
+      case "dataset_compile": {
         this.log("stage", undefined, "━━ STAGE: DATASET COMPILE · MLOps Agent taking over ━━");
         this.setAgent("critic", "done");
-        this.setAgent("mlops", "working", "Compiling YOLO dataset");
+        const src = this.run.source;
+        if (src.path === "dataset") {
+          const names = src.datasetIds
+            .map((id) => db.datasets.find((d) => d.id === id)?.name ?? id)
+            .join(", ");
+          this.log("info", "mlops", `Training on existing labels from ${src.datasetIds.length} dataset${src.datasetIds.length > 1 ? "s" : ""}: ${names}`);
+          this.setAgent("mlops", "working", src.datasetIds.length > 1
+            ? `Merging ${src.datasetIds.length} datasets by class name`
+            : "Building the training set from the existing dataset");
+          // Like the backend: every image is already labeled; the accepted
+          // count is the instances being reused.
+          this.progress({
+            imagesGenerated: total,
+            masksAccepted: Math.round(total * 1.6),
+          });
+        } else {
+          this.setAgent("mlops", "working", "Compiling YOLO dataset");
+        }
         setGpuLoad(14, 12);
         break;
-      case "training":
+      }
+      case "training": {
+        const pretrained = this.run.training.pretrained ?? true;
         this.log("stage", undefined, "━━ STAGE: TRAINING · MLOps Agent taking over ━━");
         this.log("gpu", "mlops", `hip.empty_cache(): VRAM flushed ${gpuLoad.vramGb.toFixed(1)} GB → 6.4 GB before training`);
-        this.setAgent("mlops", "working", `Training ${this.run.training.architecture.toUpperCase()} · ${this.run.training.epochs} epochs`);
+        this.setAgent("mlops", "working", `Training ${this.run.training.architecture.toUpperCase()} · ${this.run.training.epochs} epochs${pretrained ? "" : " · from scratch"}`);
         setGpuLoad(128, 97, 3.1, "it_per_s");
-        this.log("info", "mlops", `torch.compile(model, backend="inductor") on ROCm ${db.hardwareNodes[0].rocmVersion}`);
+        this.log("info", "mlops", pretrained
+          ? `Fine-tuning from ${this.run.training.architecture}.pt (pretrained weights)`
+          : `Building ${this.run.training.architecture}.yaml with random weights: learning only from this dataset`);
         break;
+      }
       default:
         break;
     }
@@ -569,7 +608,53 @@ export class RunSimulator {
     let datasetId: string | undefined =
       run.source.path === "byod" ? run.source.datasetId : undefined;
     const instances = Math.round(run.progress.imagesTotal * 1.6);
-    if (run.path === "synthetic") {
+    if (run.source.path === "dataset" && run.source.datasetIds.length === 1) {
+      // Training on one dataset reads it in place; nothing new is minted.
+      datasetId = run.source.datasetIds[0];
+    } else if (run.source.path === "dataset") {
+      // Two or more: merged by class name into a new dataset.
+      const sources = run.source.datasetIds;
+      const merged = nextId("ds");
+      datasetId = merged;
+      const classIndex = new Map(
+        run.targetClasses.map((c, i) => [c.replace(/_/g, " ").toLowerCase(), i]),
+      );
+      db.datasets.unshift({
+        id: merged,
+        orgId: run.orgId,
+        projectId: run.projectId,
+        name: `${run.name} · dataset`,
+        origin: "dataset",
+        status: "ready",
+        imageCount: run.progress.imagesTotal,
+        labeledCount: run.progress.imagesTotal,
+        classes: datasetClassesFrom(run.targetClasses, instances),
+        sizeMb: sources.reduce(
+          (mb, id) => mb + (db.datasets.find((d) => d.id === id)?.sizeMb ?? 0), 0),
+        createdAt: new Date().toISOString(),
+        runId: run.id,
+        mergedFrom: sources,
+      });
+      for (const id of sources) {
+        const names = db.datasets.find((d) => d.id === id)?.classes ?? [];
+        for (const img of db.annotatedImages.filter(
+          (i) => i.datasetId === id && i.curationState === "accepted")) {
+          db.annotatedImages.push({
+            ...img,
+            id: `${merged}_${img.id}`,
+            datasetId: merged,
+            fileName: `${id}_${img.fileName}`,
+            boxes: img.boxes.map((b) => {
+              const name = names.find((c) => c.id === b.classId)?.name ?? "";
+              return {
+                ...b,
+                classId: classIndex.get(name.replace(/_/g, " ").toLowerCase()) ?? b.classId,
+              };
+            }),
+          });
+        }
+      }
+    } else if (run.path === "synthetic") {
       datasetId = nextId("ds");
       db.datasets.unshift({
         id: datasetId,
@@ -600,6 +685,25 @@ export class RunSimulator {
       }
     }
 
+    // Dataset-only runs stop here: no model is trained.
+    if (run.trainModel === false) {
+      run.status = "succeeded";
+      run.stage = "complete";
+      run.finishedAt = new Date().toISOString();
+      run.datasetId = datasetId;
+      run.progress.pct = 100;
+      db.dashboardStats.activeRuns = Math.max(0, db.dashboardStats.activeRuns - 1);
+      db.dashboardStats.imagesLabeled += run.progress.masksAccepted;
+      this.setAgent("mlops", "done");
+      setGpuLoad(9, 4);
+      this.log("info", "mlops", "Dataset-only run: training skipped as requested. Train a model on this dataset any time from the Datasets page.");
+      this.log("stage", undefined, "━━ RUN COMPLETE · dataset ready in the Datasets page ━━");
+      this.emit({ kind: "progress", payload: { ...run.progress } });
+      this.emit({ kind: "stage", payload: { runId: run.id, from: "dataset_compile", to: "complete", at: new Date().toISOString() } });
+      this.emit({ kind: "status", payload: { runId: run.id, status: "succeeded" } });
+      return;
+    }
+
     // Model artifact
     const modelId = nextId("mdl");
     const baseName = run.name.split("·")[0].trim().replace(/\s+/g, "-");
@@ -612,6 +716,7 @@ export class RunSimulator {
       name: baseName,
       version: priorVersions + 1,
       architecture: run.training.architecture,
+      pretrained: run.training.pretrained ?? true,
       fileName: `${baseName}_v${priorVersions + 1}_${run.training.architecture}.pt`,
       fileSizeMb: +rand(15, 34).toFixed(1),
       classes: run.targetClasses,

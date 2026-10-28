@@ -75,12 +75,37 @@ NEXT_PUBLIC_WS_BASE_URL=ws://localhost:8000
 | POST | `/runs/{id}/cancel` | → `PipelineRun` (status `cancelled`) |
 | GET | `/runs/{id}/agents` | → `AgentInstance[]` (current states) |
 | GET | `/runs/{id}/logs` | → `LogEvent[]` (history; live tail is on the WebSocket) |
-| GET | `/runs/{id}/preview` | → `RunPreviewImage[]` (images generated so far; the UI polls ~2 s while running) |
+| GET | `/runs/{id}/preview` | → `RunPreviewImage[]` (images generated so far, oldest first; optional `?offset=&limit=` return one window, which is how the UI pages a big run; the UI polls only a page still filling up, ~2 s while running) |
 | POST | `/runs/estimate` | `CreateRunRequest` → `CostEstimate` (dry run, no side effects) |
 
 Notes: `CreateRunRequest` is a union on `source.path` (`"synthetic"` |
-`"byod"`). BYOD runs skip the `prompt_expansion` and `synthesis` stages. On
-success the backend sets `datasetId` and `modelId` on the run.
+`"byod"` | `"dataset"`). BYOD runs skip the `prompt_expansion` and
+`synthesis` stages. On success the backend sets `datasetId` and `modelId` on
+the run.
+
+**Training on existing datasets** (`source.path: "dataset"`,
+`source.datasetIds`): no generation or labeling. The run enters at
+`dataset_compile` and reuses the stored labels: only `accepted` images, each
+keeping its split. `targetClasses` always comes from the datasets (merged by
+name, case and `_`/space insensitive; any sent value is ignored). One dataset
+trains in place (`datasetId` = that dataset, nothing new minted); two or
+more merge into a new `Dataset` with `origin: "dataset"` and `mergedFrom`.
+400 when no dataset is given, a dataset has no accepted images, or training
+is off with a single dataset (nothing to do); 404 for an unknown id.
+`visionBackend` is not resolved for these runs (absent) and they always run
+`sequential`.
+
+**Dataset-only runs.** `CreateRunRequest.trainModel: false` (default true)
+ends any run after `dataset_compile`: no `training` stage, `modelId` stays
+unset, `progress.totalEpochs` is 0, and `/runs/estimate` drops the training
+row. Echoed as `PipelineRun.trainModel`.
+
+**Starting weights.** `training.pretrained` (default true) fine-tunes the
+architecture's published checkpoint (COCO for most detectors, ImageNet for
+classify, DOTA for obb). `false` trains from random weights, so the model
+learns only from the run's images. RF-DETR is pretrained-only (400).
+Recorded on the result as `ModelArtifact.pretrained` (absent on older
+models, which were all fine-tuned).
 `source.generator` (`"flux"` | `"sdxl"`) is the user's explicit choice and
 is honored verbatim: a node that can't run FLUX (VRAM below
 `FLUX_MIN_VRAM_GB`, or no GPU) rejects the run with a 400 at creation —
@@ -170,7 +195,9 @@ pipeline. The archive may contain, in any mix:
   degenerate area, aspect ratio, duplicates + the VLM semantic spot-check)
   and the run's `targetClasses` are overridden with the labels' class names.
 
-Bounding boxes are YOLO-normalized (`cx cy w h` ∈ 0–1).
+Bounding boxes are YOLO-normalized (`cx cy w h` ∈ 0–1). `Dataset.origin` is
+the `PipelinePath` that produced it; `"dataset"` marks a merge of other
+datasets (listed in `Dataset.mergedFrom`).
 
 ### Models
 | Method | Path | Request → Response |

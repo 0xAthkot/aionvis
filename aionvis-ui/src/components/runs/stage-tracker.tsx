@@ -27,12 +27,21 @@ const OVERLAP_STAGES: PipelineStage[] = [
   "critic_review",
 ];
 
-/** Pipeline stages for a path, without the queued/complete bookends. */
-export function stagesForPath(path: PipelinePath): PipelineStage[] {
+/**
+ * Pipeline stages a run executes, without the queued/complete bookends.
+ * Mirrors the backend's stages_for(run).
+ */
+export function stagesForPath(
+  path: PipelinePath,
+  trainModel = true,
+): PipelineStage[] {
   return STAGE_ORDER.filter((s) => {
     if (s === "queued" || s === "complete") return false;
-    if (path === "byod" && (s === "prompt_expansion" || s === "synthesis"))
+    if (path !== "synthetic" && (s === "prompt_expansion" || s === "synthesis"))
       return false;
+    if (path === "dataset" && (s === "segmentation" || s === "critic_review"))
+      return false;
+    if (!trainModel && s === "training") return false;
     return true;
   });
 }
@@ -163,14 +172,17 @@ export function StageTracker({
   status,
   mode,
   progress,
+  trainModel = true,
 }: {
   path: PipelinePath;
   stage: PipelineStage;
   status: RunStatus;
   mode?: PipelineMode;
   progress?: RunProgress;
+  /** false = dataset-only run: no training chip. */
+  trainModel?: boolean;
 }) {
-  const stages = stagesForPath(path);
+  const stages = stagesForPath(path, trainModel);
   const currentIdx =
     stage === "complete" ? stages.length : stages.indexOf(stage);
 
@@ -186,7 +198,9 @@ export function StageTracker({
   if (overlapActive) {
     const before = stages.filter((s) => !OVERLAP_STAGES.includes(s) &&
       stages.indexOf(s) < stages.indexOf("dataset_compile"));
-    const after: PipelineStage[] = ["dataset_compile", "training"];
+    const after = stages.filter(
+      (s) => s === "dataset_compile" || s === "training",
+    );
     return (
       <div className="flex flex-wrap items-center gap-y-2">
         {before.map((s, i) => (

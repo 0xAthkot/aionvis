@@ -65,12 +65,20 @@ class MLOpsAgent:
             batch = round(min(0.6 / settings.gpu_slots, 0.9), 2)
 
         task = run.training.task
-        base_weights = f"{arch}{TASK_SUFFIX[task]}.pt"
-        ctx.set_agent("mlops", "waiting_gpu", f"Loading {base_weights} base weights")
+        pretrained = run.training.pretrained
+        # Pretrained: Ultralytics' published checkpoint (.pt, COCO for most
+        # detectors). From scratch: the architecture definition (.yaml) with
+        # random weights, so the model learns only from this dataset.
+        base_weights = f"{arch}{TASK_SUFFIX[task]}.{'pt' if pretrained else 'yaml'}"
+        ctx.set_agent("mlops", "waiting_gpu",
+                      f"Loading {base_weights} base weights" if pretrained
+                      else f"Building {arch}{TASK_SUFFIX[task]} with random weights")
         flush_vram(ctx)
         ctx.log("info", f"Starting {base_weights} training ({task}): "
                         f"{epochs} epochs, imgsz {imgsz}, batch {batch}, "
-                        f"device {device}",
+                        f"device {device}, "
+                        + ("fine-tuning from pretrained weights" if pretrained
+                           else "from scratch (no pretrained weights)"),
                 agent="mlops")
         model = _model_class(arch)(base_weights)
 
@@ -147,6 +155,7 @@ class MLOpsAgent:
                 # thread, so it loads images in-process. Elsewhere that
                 # starves the GPU: on the MI300X, 8 workers trained 4.6x faster.
                 workers=0 if os.name == "nt" else min(8, os.cpu_count() or 1),
+                pretrained=pretrained,
                 project=str(workdir / "train"), name="yolo", exist_ok=True,
                 verbose=False, plots=False,
             )
@@ -213,7 +222,7 @@ class MLOpsAgent:
         artifact = ModelArtifact(
             id=model_id, org_id=run.org_id, run_id=run.id, dataset_id=dataset.id,
             name=f"{run.name} · {arch}{TASK_SUFFIX[task]}", version=version,
-            architecture=arch, task=task,
+            architecture=arch, task=task, pretrained=pretrained,
             file_name=weights.name,
             file_size_mb=round(weights.stat().st_size / 1024**2, 1),
             classes=classes,

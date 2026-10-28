@@ -60,7 +60,9 @@ class CreateProjectRequest(ApiModel):
 # Pipeline runs
 # ---------------------------------------------------------------------------
 
-PipelinePath = Literal["synthetic", "byod"]
+# synthetic = Synthetic Foundry, byod = uploaded images, dataset = train a new
+# model on datasets that already exist (labeled by earlier runs).
+PipelinePath = Literal["synthetic", "byod", "dataset"]
 
 RunStatus = Literal["queued", "running", "paused", "succeeded", "failed", "cancelled"]
 
@@ -123,8 +125,17 @@ class ByodSourceConfig(ApiModel):
     image_count: int
 
 
+class DatasetSourceConfig(ApiModel):
+    """Train on existing labeled datasets. Accepted images only, each keeps
+    its split; two or more datasets merge by class name into a new one."""
+
+    path: Literal["dataset"]
+    dataset_ids: list[str]
+
+
 SourceConfig = Annotated[
-    Union[SyntheticSourceConfig, ByodSourceConfig], Field(discriminator="path")
+    Union[SyntheticSourceConfig, ByodSourceConfig, DatasetSourceConfig],
+    Field(discriminator="path"),
 ]
 
 Architecture = Literal[
@@ -151,6 +162,10 @@ class TrainingConfig(ApiModel):
     image_size: int
     batch_size: int
     device: str
+    # True: fine-tune from the published pretrained weights (COCO for most
+    # detectors, ImageNet for classify, DOTA for obb). False: random init, the
+    # model learns only from this run's images. RF-DETR is pretrained-only.
+    pretrained: bool = True
 
 
 class RunProgress(ApiModel):
@@ -187,6 +202,8 @@ class PipelineRun(ApiModel):
     vision_backend: Optional[VisionBackend] = None
     source: SourceConfig
     training: TrainingConfig
+    # False = dataset-only run: stops after the dataset compiles, no model.
+    train_model: bool = True
     target_classes: list[str]
     progress: RunProgress
     created_by: str
@@ -286,6 +303,8 @@ class Dataset(ApiModel):
     imported_labels: Optional[ImportedLabels] = None
     # BYOD archives with videos: how many frames were extracted from them.
     video_frame_count: Optional[int] = None
+    # origin "dataset": the datasets this one was merged from.
+    merged_from: Optional[list[str]] = None
 
 
 class BoundingBox(ApiModel):
@@ -398,6 +417,9 @@ class ModelArtifact(ApiModel):
     version: int
     architecture: Architecture
     task: TrainingTask = "detect"
+    # True = fine-tuned from published pretrained weights, False = from
+    # scratch. Older models predate the option; they were all fine-tuned.
+    pretrained: bool = True
     file_name: str
     file_size_mb: float
     classes: list[str]
@@ -510,11 +532,14 @@ class ApiErrorBody(ApiModel):
 class CreateRunRequest(ApiModel):
     project_id: str
     name: str
-    target_classes: list[str]
+    # Dataset runs take their classes from the datasets (field ignored).
+    target_classes: list[str] = Field(default_factory=list)
     source: SourceConfig
     training: TrainingConfig
     # Omitted -> the node's VISION_BACKEND default.
     vision_backend: Optional[VisionBackend] = None
+    # False = build the labeled dataset only, train nothing.
+    train_model: bool = True
 
 
 class CurateImageRequest(ApiModel):

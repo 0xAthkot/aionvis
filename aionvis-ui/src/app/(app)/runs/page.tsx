@@ -121,9 +121,13 @@ export default function RunsPage() {
                         ? simple
                           ? "Described"
                           : "Synthetic"
-                        : simple
-                          ? "Uploaded"
-                          : "BYOD"}
+                        : run.path === "dataset"
+                          ? simple
+                            ? "Retrained"
+                            : "Datasets"
+                          : simple
+                            ? "Uploaded"
+                            : "BYOD"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">

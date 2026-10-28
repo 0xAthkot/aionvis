@@ -118,21 +118,29 @@ class Sam3Session:
             pass
 
 
-# KEEP_MODELS_WARM=true: the worker (and its loaded model) survives runs.
-_warm_session: Sam3Session | None = None
+# KEEP_MODELS_WARM=true: workers (and their loaded models) survive runs. One
+# worker per concurrently labeling run, up to GPU_SLOTS: a single shared
+# worker made parallel runs queue behind each other's images (each request
+# holds the worker's lock). Idle workers wait in the pool for the next run.
+_pool_lock = threading.Lock()
+_idle: list[Sam3Session] = []
 
 
 def get_session(on_log=None) -> Sam3Session:
-    global _warm_session
-    if settings.keep_models_warm and _warm_session is not None \
-            and _warm_session.alive():
-        return _warm_session
-    session = Sam3Session(on_log=on_log)
     if settings.keep_models_warm:
-        _warm_session = session
-    return session
+        with _pool_lock:
+            while _idle:
+                session = _idle.pop()
+                if session.alive():
+                    return session
+    # Model load is slow; never hold the pool lock across it.
+    return Sam3Session(on_log=on_log)
 
 
 def release_session(session: Sam3Session) -> None:
-    if not settings.keep_models_warm:
-        session.close()
+    if settings.keep_models_warm and session.alive():
+        with _pool_lock:
+            if len(_idle) < max(settings.gpu_slots, 1):
+                _idle.append(session)
+                return
+    session.close()

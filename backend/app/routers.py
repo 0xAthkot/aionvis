@@ -2,6 +2,7 @@
 
 import secrets
 from pathlib import Path
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request
 from starlette.datastructures import UploadFile
@@ -229,6 +230,32 @@ def create_run(body: CreateRunRequest) -> PipelineRun:
 
         if not available():
             raise HTTPException(400, SETUP_HINT)
+        if not body.training.pretrained:
+            raise HTTPException(
+                400, "RF-DETR trains from its pretrained weights only. Pick a "
+                     "YOLO or RT-DETR architecture to train from scratch.")
+    train_model = body.train_model
+    dataset_images = 0
+    if body.source.path == "dataset":
+        from .agents.dataset_merge import accepted_images, merged_class_names
+
+        ids = list(dict.fromkeys(body.source.dataset_ids))
+        if not ids:
+            raise HTTPException(400, "Pick at least one dataset to train on.")
+        for did in ids:
+            if did not in store.datasets:
+                raise _not_found("Dataset", did)
+            n = len(accepted_images(did))
+            if n == 0:
+                raise HTTPException(
+                    400, f"Dataset '{store.datasets[did].name}' has no labeled "
+                         "images yet. Label it with a run first.")
+            dataset_images += n
+        if len(ids) == 1 and not train_model:
+            raise HTTPException(
+                400, "Nothing to do: with training off, pick two or more "
+                     "datasets to merge them into one.")
+        body.source.dataset_ids = ids
     if body.source.path == "synthetic" and body.source.generator == "flux":
         # The generator is the user's explicit choice — a node that can't
         # honor it rejects the run instead of silently substituting SDXL.
@@ -242,7 +269,9 @@ def create_run(body: CreateRunRequest) -> PipelineRun:
     # The labeler is the user's explicit choice too — reject if this node
     # can't honor it instead of silently substituting (audit runs have no
     # vision stage, so BYOD label-audit datasets are exempt below).
-    vision_backend = body.vision_backend or settings.vision_backend
+    # Dataset runs label nothing, so no labeler is resolved or required.
+    vision_backend = (None if body.source.path == "dataset"
+                      else body.vision_backend or settings.vision_backend)
     if vision_backend == "sam3":
         from .agents.sam3_bridge import SETUP_HINT as SAM3_HINT, available as sam3_available
 
@@ -257,10 +286,17 @@ def create_run(body: CreateRunRequest) -> PipelineRun:
         if imported:
             target_classes = imported.class_names
             audit_mode = True
+    if body.source.path == "dataset":
+        # The datasets' own classes, merged by name.
+        target_classes = merged_class_names(body.source.dataset_ids)
+    if not target_classes:
+        raise HTTPException(400, "Add at least one target class.")
     # Streaming overlaps synthesis/vision/critic on the resident swarm.
-    # Audit runs stay sequential — they're near-instant, no overlap to win.
+    # Audit runs stay sequential (near-instant, no overlap to win), and
+    # dataset runs have no generation or labeling stages to overlap.
     pipeline_mode = ("streaming"
                      if settings.pipeline_mode == "streaming" and not audit_mode
+                     and body.source.path != "dataset"
                      else "sequential")
     org = store.organizations[0]
     run = PipelineRun(
@@ -275,6 +311,7 @@ def create_run(body: CreateRunRequest) -> PipelineRun:
         vision_backend=vision_backend,
         source=body.source,
         training=body.training,
+        train_model=train_model,
         target_classes=target_classes,
         progress=RunProgress(
             pct=0,
@@ -282,12 +319,14 @@ def create_run(body: CreateRunRequest) -> PipelineRun:
             images_total=(
                 min(body.source.randomization.image_count, settings.max_images_per_run)
                 if body.source.path == "synthetic"
+                else dataset_images if body.source.path == "dataset"
                 else body.source.image_count
             ),
             masks_accepted=0,
             masks_rejected=0,
             current_epoch=0,
-            total_epochs=min(body.training.epochs, settings.max_epochs),
+            total_epochs=(min(body.training.epochs, settings.max_epochs)
+                          if train_model else 0),
         ),
         created_by="member_1",
         created_at=now_iso(),
@@ -339,6 +378,15 @@ def _estimate(body: CreateRunRequest) -> CostEstimate:
             ("dataset_compile", 0.3),
             ("training", train_min(images)),
         ]
+    elif body.source.path == "dataset":
+        from .agents.dataset_merge import accepted_images
+
+        images = sum(len(accepted_images(did)) for did in body.source.dataset_ids
+                     if did in store.datasets)
+        stages = [
+            ("dataset_compile", 0.3 + images * 0.002 / 60),
+            ("training", train_min(images)),
+        ]
     else:
         images = body.source.image_count
         stages = [
@@ -347,6 +395,8 @@ def _estimate(body: CreateRunRequest) -> CostEstimate:
             ("dataset_compile", 0.3),
             ("training", train_min(images)),
         ]
+    if not body.train_model:
+        stages = [(s, m) for s, m in stages if s != "training"]
     total_min = sum(m for _, m in stages)
     return CostEstimate(
         gpu_minutes=round(total_min, 1),
@@ -389,9 +439,16 @@ def run_logs(run_id: str) -> list[LogEvent]:
     return store.run_logs.get(run_id, [])
 
 
+# Parsed preview manifests keyed by path, reused while the file is unchanged
+# (a 50k-image manifest is ~7 MB; the gallery polls every 2 s).
+_manifest_cache: dict[str, tuple[int, list]] = {}
+
+
 @router.get("/runs/{run_id}/preview")
-def run_preview(run_id: str) -> list[RunPreviewImage]:
-    """Images the Synthesis Agent has produced so far (poll while running)."""
+def run_preview(run_id: str, offset: int = 0,
+                limit: Optional[int] = None) -> list[RunPreviewImage]:
+    """Images the Synthesis Agent has produced so far (poll while running),
+    oldest first. offset/limit return one window; omitted = every image."""
     import json as _json
 
     from .config import DATA_DIR
@@ -399,9 +456,21 @@ def run_preview(run_id: str) -> list[RunPreviewImage]:
     if run_id not in store.runs:
         raise _not_found("Run", run_id)
     manifest_path = DATA_DIR / "files" / "runs" / run_id / "preview.json"
-    if not manifest_path.exists():
+    try:
+        mtime = manifest_path.stat().st_mtime_ns
+    except FileNotFoundError:
         return []
-    entries = _json.loads(manifest_path.read_text(encoding="utf-8"))
+    key = str(manifest_path)
+    cached = _manifest_cache.get(key)
+    if cached and cached[0] == mtime:
+        entries = cached[1]
+    else:
+        entries = _json.loads(manifest_path.read_text(encoding="utf-8"))
+        if len(_manifest_cache) >= 8:
+            _manifest_cache.pop(next(iter(_manifest_cache)))
+        _manifest_cache[key] = (mtime, entries)
+    start = max(offset, 0)
+    window = entries[start:start + limit] if limit is not None else entries[start:]
     base = f"{settings.public_base_url}/files/runs/{run_id}"
     return [
         RunPreviewImage(
@@ -409,7 +478,7 @@ def run_preview(run_id: str) -> list[RunPreviewImage]:
             url=f"{base}/{e['fileName']}",
             scenario=e.get("scenario"),
         )
-        for e in entries
+        for e in window
     ]
 
 

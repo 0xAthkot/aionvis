@@ -112,10 +112,19 @@ export default function RunDetailPage({
                 ? pro
                   ? "Synthetic Foundry"
                   : "Built from your description"
-                : pro
-                  ? "BYOD"
-                  : "From your uploaded photos"}
+                : run.path === "dataset"
+                  ? pro
+                    ? "Existing datasets"
+                    : "Trained on your existing datasets"
+                  : pro
+                    ? "BYOD"
+                    : "From your uploaded photos"}
             </Badge>
+            {run.trainModel === false && (
+              <Badge variant="outline">
+                {pro ? "Dataset only" : "Dataset only, no model"}
+              </Badge>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Badge variant="outline" className="cursor-default">
@@ -181,6 +190,7 @@ export default function RunDetailPage({
           status={run.status}
           mode={run.pipelineMode}
           progress={run.progress}
+          trainModel={run.trainModel ?? true}
         />
         {run.failureReason && (
           <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
@@ -209,6 +219,21 @@ export default function RunDetailPage({
                 </Link>
               </Button>
             </div>
+          </div>
+        )}
+        {run.status === "succeeded" && run.trainModel === false && run.datasetId && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3">
+            <div className="flex items-center gap-2 text-sm text-emerald-400">
+              <CheckCircle2 className="size-4" />
+              Dataset ready. No model was trained (dataset-only run); train
+              one from the dataset page whenever you like.
+            </div>
+            <Button size="sm" asChild>
+              <Link href={`/datasets/${run.datasetId}`}>
+                <Database className="size-3.5" />
+                View dataset
+              </Link>
+            </Button>
           </div>
         )}
       </header>
@@ -248,6 +273,7 @@ export default function RunDetailPage({
               runId={id}
               active={streaming}
               imagesTotal={run.progress.imagesTotal}
+              imagesGenerated={run.progress.imagesGenerated}
             />
           )}
 
@@ -297,7 +323,9 @@ export default function RunDetailPage({
               <p className="text-sm text-muted-foreground">
                 {run.path === "byod"
                   ? "BYOD runs skip prompt expansion and synthesis"
-                  : "Five agents, zero human intervention"}
+                  : run.path === "dataset"
+                    ? "The labels already exist, so only the MLOps Agent works"
+                    : "Five agents, zero human intervention"}
               </p>
             </div>
             {agents ? (
@@ -330,6 +358,21 @@ export default function RunDetailPage({
                     <dd>{run.source.randomization.guidanceScale}</dd>
                   </div>
                 </>
+              ) : run.source.path === "dataset" ? (
+                <div className="py-2">
+                  <dt className="text-muted-foreground">
+                    {run.source.datasetIds.length > 1
+                      ? `Merged from ${run.source.datasetIds.length} datasets`
+                      : "Dataset"}
+                  </dt>
+                  <dd className="mt-0.5 flex flex-wrap gap-x-2 font-mono text-xs">
+                    {run.source.datasetIds.map((id) => (
+                      <Link key={id} href={`/datasets/${id}`} className="underline-offset-2 hover:underline">
+                        {id}
+                      </Link>
+                    ))}
+                  </dd>
+                </div>
               ) : (
                 <>
                   <div className="flex justify-between py-2">
@@ -350,16 +393,33 @@ export default function RunDetailPage({
                   {run.targetClasses.join(", ")}
                 </dd>
               </div>
-              <div className="flex justify-between py-2">
-                <dt className="text-muted-foreground">Architecture</dt>
-                <dd className="font-mono text-xs uppercase">
-                  {run.training.architecture}
-                </dd>
-              </div>
-              <div className="flex justify-between py-2">
-                <dt className="text-muted-foreground">Epochs</dt>
-                <dd>{run.training.epochs}</dd>
-              </div>
+              {run.trainModel === false ? (
+                <div className="flex justify-between py-2">
+                  <dt className="text-muted-foreground">Training</dt>
+                  <dd>Off (dataset only)</dd>
+                </div>
+              ) : (
+                <>
+                  <div className="flex justify-between py-2">
+                    <dt className="text-muted-foreground">Architecture</dt>
+                    <dd className="font-mono text-xs uppercase">
+                      {run.training.architecture}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <dt className="text-muted-foreground">Starting weights</dt>
+                    <dd>
+                      {run.training.pretrained === false
+                        ? "From scratch"
+                        : "Pretrained (fine-tune)"}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <dt className="text-muted-foreground">Epochs</dt>
+                    <dd>{run.training.epochs}</dd>
+                  </div>
+                </>
+              )}
               <div className="flex justify-between py-2">
                 <dt className="text-muted-foreground">Device</dt>
                 <dd className="font-mono text-xs">{run.training.device}</dd>

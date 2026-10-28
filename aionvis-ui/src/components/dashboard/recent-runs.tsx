@@ -10,12 +10,12 @@ import { RunStatusChip } from "@/components/shared/status-chip";
 import { api } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type { Paginated, PipelineRun } from "@/lib/api/types";
-import { SIMPLE_PATH, SIMPLE_STAGE } from "@/lib/simple-language";
+import { PRO_PATH, SIMPLE_PATH, SIMPLE_STAGE } from "@/lib/simple-language";
 import { useUiModeStore } from "@/lib/stores/ui-mode";
 
 function caption(run: PipelineRun, simple: boolean): string {
   if (!simple) {
-    return `${run.path === "synthetic" ? "Synthetic Foundry" : "BYOD"} · stage: ${run.stage.replace(/_/g, " ")}`;
+    return `${PRO_PATH[run.path]} · stage: ${run.stage.replace(/_/g, " ")}`;
   }
   if (run.status === "failed") return "Something went wrong. Open to see why";
   return `${SIMPLE_PATH[run.path]} · ${SIMPLE_STAGE[run.stage]}`;

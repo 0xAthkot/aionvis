@@ -31,7 +31,9 @@ import type {
   Project,
   TrainingConfig,
 } from "@/lib/api/types";
+import { Switch } from "@/components/ui/switch";
 import { useLaunchRun } from "@/hooks/use-launch-run";
+import { STARTS } from "@/lib/architectures";
 
 /** Path B: configure the labeling+training run for an uploaded dataset.
  * Datasets that shipped their own labels run in AUDIT mode: the class list
@@ -48,6 +50,8 @@ export function StartRunDialog({ dataset }: { dataset: Dataset }) {
   const [architecture, setArchitecture] =
     useState<TrainingConfig["architecture"]>("yolov10m");
   const [epochs, setEpochs] = useState(50);
+  const [trainModel, setTrainModel] = useState(true);
+  const [pretrained, setPretrained] = useState(true);
 
   const { data: projects } = useQuery({
     queryKey: ["projects"],
@@ -73,7 +77,9 @@ export function StartRunDialog({ dataset }: { dataset: Dataset }) {
       imageSize: 640,
       batchSize: 32,
       device: "mi300x-0",
+      pretrained,
     },
+    trainModel,
   };
 
   const isValid =
@@ -135,7 +141,42 @@ export function StartRunDialog({ dataset }: { dataset: Dataset }) {
               disabled={!!audit}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="byod-train-model"
+              checked={trainModel}
+              onCheckedChange={setTrainModel}
+            />
+            <Label htmlFor="byod-train-model">
+              Train a model after {audit ? "the audit" : "labeling"}
+            </Label>
+          </div>
+          <fieldset
+            disabled={!trainModel}
+            className="grid grid-cols-2 gap-4 disabled:opacity-50"
+          >
+            <div className="space-y-2 col-span-2">
+              <Label>Starting weights</Label>
+              <Select
+                value={pretrained ? "pretrained" : "scratch"}
+                onValueChange={(v) => setPretrained(v === "pretrained")}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STARTS.map((s) => (
+                    <SelectItem
+                      key={s.label}
+                      value={s.pretrained ? "pretrained" : "scratch"}
+                    >
+                      {s.label}
+                      <span className="text-muted-foreground"> · {s.hint}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label>Architecture</Label>
               <Select
@@ -169,7 +210,7 @@ export function StartRunDialog({ dataset }: { dataset: Dataset }) {
                 onChange={(e) => setEpochs(Number(e.target.value) || 50)}
               />
             </div>
-          </div>
+          </fieldset>
         </div>
         <DialogFooter>
           <Button

@@ -31,7 +31,11 @@ export const endpoints = {
   },
 
   runs: {
-    /** GET → Paginated<PipelineRun> · POST CreateRunRequest → PipelineRun */
+    /**
+     * GET → Paginated<PipelineRun> · POST CreateRunRequest → PipelineRun
+     * (synthetic, byod, or `dataset` = train on existing datasets; any of
+     * them with `trainModel: false` stops after the dataset is compiled)
+     */
     list: () => `${API_BASE}/runs`,
     /**
      * GET → PipelineRun · DELETE → 204 (removes the run + its dataset/model
@@ -44,8 +48,14 @@ export const endpoints = {
     agents: (id: string) => `${API_BASE}/runs/${id}/agents`,
     /** GET → LogEvent[] (history; live tail comes over the WebSocket) */
     logs: (id: string) => `${API_BASE}/runs/${id}/logs`,
-    /** GET → RunPreviewImage[] (images generated so far; poll while running) */
-    preview: (id: string) => `${API_BASE}/runs/${id}/preview`,
+    /**
+     * GET → RunPreviewImage[] (images generated so far, oldest first; poll
+     * while running). Optional ?offset=&limit= return one window; without
+     * them, every image.
+     */
+    preview: (id: string, window?: { offset: number; limit: number }) =>
+      `${API_BASE}/runs/${id}/preview` +
+      (window ? `?offset=${window.offset}&limit=${window.limit}` : ""),
     /** POST CreateRunRequest → CostEstimate (dry-run pricing for the wizard) */
     estimate: () => `${API_BASE}/runs/estimate`,
   },

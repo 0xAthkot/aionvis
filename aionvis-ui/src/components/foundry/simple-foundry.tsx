@@ -40,6 +40,9 @@ import { useLaunchRun } from "@/hooks/use-launch-run";
 import {
   ARCH_FAMILIES,
   RECOMMENDED_ARCH,
+  SCRATCH_EPOCH_FACTOR,
+  STARTS,
+  supportsScratch,
   supportsTask,
   TASKS,
 } from "@/lib/architectures";
@@ -102,14 +105,24 @@ export function SimpleFoundry() {
   const [architecture, setArchitecture] = useState<Architecture>(RECOMMENDED_ARCH);
   const [task, setTask] = useState<TrainingTask>("detect");
   const [showMore, setShowMore] = useState(false);
+  // false = photos + labels only, no model (train one later from Datasets).
+  const [trainModel, setTrainModel] = useState(true);
+  const [pretrained, setPretrained] = useState(true);
 
   function selectTask(next: TrainingTask) {
     setTask(next);
     if (!supportsTask(architecture, next)) setArchitecture(RECOMMENDED_ARCH);
   }
 
+  function selectArchitecture(next: Architecture) {
+    setArchitecture(next);
+    if (!supportsScratch(next)) setPretrained(true);
+  }
+
   const project = projects?.find((p) => p.id === projectId);
   const sizeCfg = SIZES.find((s) => s.id === size) ?? SIZES[1];
+  const epochsFor = (base: number) =>
+    pretrained ? base : base * SCRATCH_EPOCH_FACTOR;
   const isValid = !!project && useCase.trim().length > 15;
   // Why the launch button is disabled — surfaced as its hover tooltip.
   const blockers = [
@@ -148,12 +161,14 @@ export function SimpleFoundry() {
     training: {
       architecture,
       task,
-      epochs: sizeCfg.epochs,
+      epochs: epochsFor(sizeCfg.epochs),
       imageSize: 640,
       batchSize: 32,
       device: "mi300x-0",
+      pretrained,
     },
     visionBackend: labeler,
+    trainModel,
   };
 
   const { data: feedback } = useQuery({
@@ -254,6 +269,38 @@ export function SimpleFoundry() {
 
           <div className="space-y-2">
             <Label className="gap-1.5">
+              What to build
+              <HelpTip>
+                Dataset only stops once your photos are created, labeled and
+                checked. Train a model on them later from the Datasets page,
+                as many times and in as many ways as you like.
+              </HelpTip>
+            </Label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { train: true, label: "Dataset + model", hint: "Photos, labels and a trained model" },
+                { train: false, label: "Dataset only", hint: "Photos and labels, train later" },
+              ].map((o) => (
+                <button
+                  key={o.label}
+                  type="button"
+                  onClick={() => setTrainModel(o.train)}
+                  className={cn(
+                    "rounded-lg border p-3 text-left transition-all duration-200",
+                    trainModel === o.train
+                      ? "border-primary bg-primary/10 shadow-sm shadow-primary/20"
+                      : "hover:border-muted-foreground/40 hover:bg-accent/40",
+                  )}
+                >
+                  <p className="text-sm font-medium">{o.label}</p>
+                  <p className="text-xs text-muted-foreground">{o.hint}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="gap-1.5">
               Dataset size
               <HelpTip>
                 How many training photos the swarm creates, and how long the
@@ -277,7 +324,8 @@ export function SimpleFoundry() {
                   <p className="text-sm font-medium">{s.label}</p>
                   <p className="text-xs text-muted-foreground">
                     {s.images >= 1000 ? `${s.images / 1000}k` : s.images}{" "}
-                    images · {s.epochs} epochs
+                    images
+                    {trainModel && ` · ${epochsFor(s.epochs)} epochs`}
                   </p>
                 </button>
               ))}
@@ -371,6 +419,45 @@ export function SimpleFoundry() {
             </div>
           </div>
 
+          {trainModel && (
+            <div className="space-y-2">
+              <Label className="gap-1.5">
+                How the model starts
+                <HelpTip>
+                  Pretrained starts from a model that already learned from
+                  real photos (the public COCO dataset) and adapts it to your
+                  job: best results with few photos. From scratch starts
+                  empty, so everything it knows comes from your photos. It
+                  trains twice as long.
+                </HelpTip>
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                {STARTS.map((s) => {
+                  const disabled = !s.pretrained && !supportsScratch(architecture);
+                  return (
+                    <button
+                      key={s.label}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => setPretrained(s.pretrained)}
+                      className={cn(
+                        "rounded-lg border p-3 text-left transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50",
+                        pretrained === s.pretrained
+                          ? "border-primary bg-primary/10 shadow-sm shadow-primary/20"
+                          : "hover:border-muted-foreground/40 hover:bg-accent/40",
+                      )}
+                    >
+                      <p className="text-sm font-medium">{s.label}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {disabled ? "not available for RF-DETR" : s.hint}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <button
               type="button"
@@ -392,7 +479,7 @@ export function SimpleFoundry() {
                 <Label>Model architecture</Label>
                 <Select
                   value={architecture}
-                  onValueChange={(v) => setArchitecture(v as Architecture)}
+                  onValueChange={(v) => selectArchitecture(v as Architecture)}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue />
@@ -585,7 +672,11 @@ export function SimpleFoundry() {
                     onClick={() => launch.mutate(request)}
                   >
                     <Rocket className="size-4" />
-                    {launch.isPending ? "Queueing…" : "Build my model"}
+                    {launch.isPending
+                      ? "Queueing…"
+                      : trainModel
+                        ? "Build my model"
+                        : "Build my dataset"}
                   </Button>
                 </span>
               </TooltipTrigger>

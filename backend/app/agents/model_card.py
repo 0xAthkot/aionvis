@@ -21,6 +21,13 @@ limitations (synthetic-only data, small dataset, domain gap to real imagery).
 No preamble, no code fences — start directly with the first heading."""
 
 
+def _start_text(artifact: ModelArtifact) -> str:
+    if artifact.pretrained:
+        return ("fine-tuned from the published pretrained checkpoint (COCO for "
+                "detection, ImageNet for classify, DOTA for obb)")
+    return "trained from scratch, random init, no pretrained weights"
+
+
 def _facts(ctx: RunContext, artifact: ModelArtifact, dataset: Dataset) -> str:
     run = ctx.run
     m = artifact.metrics
@@ -31,6 +38,9 @@ def _facts(ctx: RunContext, artifact: ModelArtifact, dataset: Dataset) -> str:
     if run.source.path == "synthetic":
         source = (f'Synthetic images designed for this use case: "{run.source.use_case}". '
                   f"Domain randomization applied (lighting/angle/background/occlusion).")
+    elif run.source.path == "dataset":
+        source = (f"Re-used labels from {len(run.source.dataset_ids)} existing "
+                  f"dataset(s): {', '.join(run.source.dataset_ids)}.")
     else:
         source = f"Customer-supplied archive {run.source.archive_name} labeled by the swarm."
     return (
@@ -40,6 +50,7 @@ def _facts(ctx: RunContext, artifact: ModelArtifact, dataset: Dataset) -> str:
         f"Labels: auto-generated, Critic Agent accepted {run.progress.masks_accepted} "
         f"and rejected {run.progress.masks_rejected} candidate boxes "
         f"(geometric IoU check + VLM spot-check)\n"
+        f"Starting weights: {_start_text(artifact)}\n"
         f"Training: {m.epochs_run} epochs in {m.training_time_min} min on "
         f"{artifact.trained_on.gpu}\n"
         + (f"Metrics: top-1 accuracy {m.top1}, top-5 accuracy {m.top5}"
@@ -60,7 +71,8 @@ def _template_card(ctx: RunContext, artifact: ModelArtifact, dataset: Dataset) -
         f"## Training Data\n"
         f"{dataset.image_count} images ({dataset.origin}); the Critic Agent "
         f"accepted {run.progress.masks_accepted} and rejected "
-        f"{run.progress.masks_rejected} candidate labels.\n\n"
+        f"{run.progress.masks_rejected} candidate labels. Starting weights: "
+        f"{_start_text(artifact)}.\n\n"
         f"## Evaluation\n"
         + (f"top-1 accuracy {m.top1} · top-5 accuracy {m.top5}"
            if m.top1 is not None else

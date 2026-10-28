@@ -38,9 +38,12 @@ import { useReportUnsaved } from "@/lib/stores/unsaved";
 import {
   ARCH_FAMILIES,
   RECOMMENDED_ARCH,
+  STARTS,
+  supportsScratch,
   supportsTask,
   TASKS,
 } from "@/lib/architectures";
+import { Switch } from "@/components/ui/switch";
 import type {
   CreateSyntheticRunRequest,
   ExpandPromptRequest,
@@ -118,17 +121,24 @@ export default function FoundryPage() {
     imageSize: 640,
     batchSize: 32,
     device: "mi300x-0",
+    pretrained: true,
   });
+  // false = build and label the dataset only; no model is trained.
+  const [trainModel, setTrainModel] = useState(true);
 
   function selectTask(task: TrainingTask) {
-    setTraining((t) => ({
-      ...t,
-      task,
+    setTraining((t) => {
       // YOLOv10/RT-DETR have no segment/obb/pose heads — swap to the default.
-      architecture: supportsTask(t.architecture, task)
+      const architecture = supportsTask(t.architecture, task)
         ? t.architecture
-        : RECOMMENDED_ARCH,
-    }));
+        : RECOMMENDED_ARCH;
+      return {
+        ...t,
+        task,
+        architecture,
+        pretrained: supportsScratch(architecture) ? t.pretrained : true,
+      };
+    });
   }
 
   function selectProject(id: string) {
@@ -166,6 +176,7 @@ export default function FoundryPage() {
     },
     training,
     visionBackend,
+    trainModel,
   };
 
   const isValid =
@@ -174,7 +185,7 @@ export default function FoundryPage() {
     targetClasses.length > 0 &&
     useCase.trim().length > 15 &&
     imageCount >= 1 &&
-    training.epochs >= 1;
+    (!trainModel || training.epochs >= 1);
 
   // Slider tweaks are one flick to redo; typed text is the progress worth
   // guarding when a mode switch would unmount the wizard.
@@ -604,16 +615,70 @@ export default function FoundryPage() {
           </section>
 
           <section className="space-y-5 py-8 last:pb-0">
-            <div className="space-y-1">
-              <h2 className="text-base font-semibold tracking-tight">
-                4 · Training
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                The MLOps Agent triggers this after the Critic signs off the
-                dataset.
-              </p>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="space-y-1">
+                <h2 className="text-base font-semibold tracking-tight">
+                  4 · Training
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  The MLOps Agent triggers this after the Critic signs off the
+                  dataset.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="train-model"
+                  checked={trainModel}
+                  onCheckedChange={setTrainModel}
+                />
+                <Label htmlFor="train-model" className="gap-1.5">
+                  Train a model
+                  <HelpTip>
+                    Off: the run stops once the labeled dataset is compiled
+                    (dataset only). You can train any architecture on it
+                    later from the Datasets page, as many times as you like.
+                  </HelpTip>
+                </Label>
+              </div>
             </div>
-            <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
+            <fieldset
+              disabled={!trainModel}
+              className="grid gap-x-8 gap-y-5 disabled:opacity-50 sm:grid-cols-2"
+            >
+              <div className="space-y-2 sm:col-span-2">
+                <Label className="gap-1.5">
+                  Starting weights
+                  <HelpTip>
+                    Pretrained fine-tunes the architecture&apos;s published
+                    weights (trained on COCO&apos;s real photos; ImageNet for
+                    Labels, DOTA for rotated boxes). From scratch starts from
+                    random weights, so everything the model knows comes from
+                    this run&apos;s images. It needs more epochs.
+                  </HelpTip>
+                </Label>
+                <Select
+                  value={training.pretrained === false ? "scratch" : "pretrained"}
+                  onValueChange={(v) =>
+                    setTraining({ ...training, pretrained: v === "pretrained" })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STARTS.map((s) => (
+                      <SelectItem
+                        key={s.label}
+                        value={s.pretrained ? "pretrained" : "scratch"}
+                        disabled={!s.pretrained && !supportsScratch(training.architecture)}
+                      >
+                        {s.label}
+                        <span className="text-muted-foreground"> · {s.hint}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label>Task</Label>
                 <Select
@@ -637,12 +702,17 @@ export default function FoundryPage() {
                 <Label>Architecture</Label>
                 <Select
                   value={training.architecture}
-                  onValueChange={(v) =>
+                  onValueChange={(v) => {
+                    const architecture = v as TrainingConfig["architecture"];
                     setTraining({
                       ...training,
-                      architecture: v as TrainingConfig["architecture"],
-                    })
-                  }
+                      architecture,
+                      // RF-DETR is pretrained-only.
+                      pretrained: supportsScratch(architecture)
+                        ? training.pretrained
+                        : true,
+                    });
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -731,7 +801,7 @@ export default function FoundryPage() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+            </fieldset>
           </section>
         </div>
 

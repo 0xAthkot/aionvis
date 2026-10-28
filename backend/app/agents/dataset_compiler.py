@@ -13,8 +13,10 @@ Label format follows run.training.task:
              cut from the verified boxes (imagefolder layout for YOLO-cls)
 """
 
+import os
 import random
 import shutil
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import yaml
@@ -42,6 +44,35 @@ def _copy_shared(src: Path, dst: Path) -> None:
     """
     with open(src, "rb") as f_in, open(dst, "wb") as f_out:
         shutil.copyfileobj(f_in, f_out)
+
+
+def _link_or_copy(src: Path, dst: Path) -> None:
+    """Place an image at dst without duplicating its bytes when possible.
+
+    Every compiled image used to be written twice more (dataset viewer copy
+    + YOLO training copy). A hard link shares the one file instead: instant
+    and no extra disk. Images are never edited in place, and deleting the
+    original path (e.g. DELETE /runs) leaves the link's data intact. Falls
+    back to a stream copy across filesystems or where links are unsupported.
+    """
+    try:
+        if dst.exists():
+            if dst.samefile(src):
+                return
+            dst.unlink()
+        os.link(src, dst)
+    except OSError:
+        _copy_shared(src, dst)
+
+
+def _out_name(item: ReviewedImage) -> str:
+    return item.out_name or item.path.name
+
+
+def _make_thumb(src: Path, dst: Path) -> None:
+    with Image.open(src) as im:
+        im.thumbnail((THUMB_SIZE, THUMB_SIZE))
+        im.convert("RGB").save(dst, quality=80)
 
 
 def _box_corners(b: BoundingBox) -> list[float]:
@@ -155,9 +186,9 @@ def _write_rfdetr_coco(pairs: list[tuple[ReviewedImage, str]], workdir: Path,
         coco = {"images": [], "annotations": [], "categories": categories}
         ann_id = 1
         for idx, item in enumerate(items):
-            _copy_shared(item.path, split_dir / item.path.name)
+            _link_or_copy(item.path, split_dir / _out_name(item))
             coco["images"].append({
-                "id": idx, "file_name": item.path.name,
+                "id": idx, "file_name": _out_name(item),
                 "width": item.width, "height": item.height,
             })
             for b in item.boxes:
@@ -203,7 +234,8 @@ def _write_cls_crops(ctx: RunContext, pairs: list[tuple[ReviewedImage, str]],
                 out_dir = root / split / name
                 out_dir.mkdir(parents=True, exist_ok=True)
                 crop = im.crop((int(x1), int(y1), int(x2), int(y2)))
-                crop.save(out_dir / f"{item.path.stem}_{i}.jpg", quality=90)
+                crop.save(out_dir / f"{Path(_out_name(item)).stem}_{i}.jpg",
+                          quality=90)
                 counts[name] = counts.get(name, 0) + 1
 
     if not counts:
@@ -230,7 +262,10 @@ def _write_cls_crops(ctx: RunContext, pairs: list[tuple[ReviewedImage, str]],
 
 
 def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
-                    workdir: Path) -> Dataset:
+                    workdir: Path, register: bool = True) -> Dataset:
+    """register=False (training on ONE existing dataset): write only the
+    training layout under workdir; the dataset's records and files are left
+    exactly as they are."""
     run = ctx.run
     usable = [r for r in reviewed if r.accepted]
     if not usable:
@@ -238,8 +273,11 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
                            "Try a more concrete prompt or lower critic thresholds.")
     task = run.training.task
 
-    # --- reuse the uploaded dataset record for BYOD, mint a new one otherwise
-    if run.path == "byod" and run.source.dataset_id in store.datasets:
+    # --- reuse the uploaded dataset record for BYOD (or the one dataset a
+    # re-training run reads), mint a new one otherwise
+    if not register:
+        dataset = store.datasets[run.source.dataset_ids[0]]
+    elif run.path == "byod" and run.source.dataset_id in store.datasets:
         dataset = store.datasets[run.source.dataset_id]
     else:
         dataset = Dataset(
@@ -247,28 +285,41 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
             name=f"{run.name} · dataset", origin=run.path, status="labeling",
             image_count=0, labeled_count=0, classes=[], size_mb=0,
             created_at=now_iso(), run_id=run.id,
+            merged_from=(list(run.source.dataset_ids)
+                         if run.path == "dataset" else None),
         )
         store.datasets[dataset.id] = dataset
     run.dataset_id = dataset.id
-    dataset.run_id = run.id
+    if register:
+        dataset.run_id = run.id
 
     files_dir = DATA_DIR / "files" / "datasets" / dataset.id
     img_dir, thumb_dir = files_dir / "images", files_dir / "thumbs"
     yolo_dir = workdir / "yolo"
-    for d in (img_dir, thumb_dir):
-        d.mkdir(parents=True, exist_ok=True)
+    if register:
+        for d in (img_dir, thumb_dir):
+            d.mkdir(parents=True, exist_ok=True)
     for split in ("train", "val"):
         (yolo_dir / "images" / split).mkdir(parents=True, exist_ok=True)
         (yolo_dir / "labels" / split).mkdir(parents=True, exist_ok=True)
 
     # --- deterministic split: ~85/15 with at least one val image, and never
     # an empty train set (a single-image dataset trains and validates on it).
+    # Images re-used from an existing dataset keep the split they already had.
     order = list(range(len(usable)))
     random.Random(42).shuffle(order)
     n_val = max(1, round(len(usable) * 0.15))
     if n_val >= len(usable):
         n_val = 0  # too few images to hold any out; val reuses train below
     val_idx = set(order[:n_val])
+    # Position lookup by identity: list.index() here was O(n²) and compared
+    # whole label lists per step, which crawled on 10k+ image runs.
+    usable_pos = {id(item): k for k, item in enumerate(usable)}
+
+    def split_of(item: ReviewedImage) -> str:
+        if item.split in ("train", "val"):
+            return item.split
+        return "val" if usable_pos[id(item)] in val_idx else "train"
 
     records: list[AnnotatedImage] = []
     instance_counts: dict[int, int] = {}
@@ -279,20 +330,28 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
     pose_matched = 0
     split_pairs: list[tuple[ReviewedImage, str]] = []
 
+    if register:
+        # Viewer thumbnails in parallel: PIL decode/resize releases the GIL.
+        workers = min(8, os.cpu_count() or 1)
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            for start in range(0, len(reviewed), 256):
+                ctx.check_cancelled()
+                chunk = reviewed[start:start + 256]
+                list(pool.map(
+                    lambda it: _make_thumb(it.path, thumb_dir / _out_name(it)),
+                    chunk))
+
     for i, item in enumerate(reviewed):
         ctx.check_cancelled()
-        file_name = item.path.name
-        _copy_shared(item.path, img_dir / file_name)
-        total_bytes += item.path.stat().st_size
-        with Image.open(item.path) as im:
-            im.thumbnail((THUMB_SIZE, THUMB_SIZE))
-            im.convert("RGB").save(thumb_dir / file_name, quality=80)
+        file_name = _out_name(item)
+        if register:
+            _link_or_copy(item.path, img_dir / file_name)
+            total_bytes += item.path.stat().st_size
 
         if item.accepted:
-            usable_pos = usable.index(item)
-            split = "val" if usable_pos in val_idx else "train"
+            split = split_of(item)
             split_pairs.append((item, split))
-            _copy_shared(item.path, yolo_dir / "images" / split / file_name)
+            _link_or_copy(item.path, yolo_dir / "images" / split / file_name)
             label_lines = []
             for b in item.boxes:
                 if task == "segment":
@@ -306,21 +365,23 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
                 else:
                     label_lines.append(f"{b.class_id} {b.cx} {b.cy} {b.w} {b.h}")
                 instance_counts[b.class_id] = instance_counts.get(b.class_id, 0) + 1
-            (yolo_dir / "labels" / split / f"{item.path.stem}.txt").write_text(
+            (yolo_dir / "labels" / split / f"{Path(file_name).stem}.txt").write_text(
                 "\n".join(label_lines), encoding="utf-8"
             )
         else:
             split = "train"
 
-        records.append(AnnotatedImage(
-            id=f"{dataset.id}-img-{i:04d}", dataset_id=dataset.id,
-            file_name=file_name, width=item.width, height=item.height,
-            url=f"{base_url}/images/{file_name}",
-            thumbnail_url=f"{base_url}/thumbs/{file_name}",
-            boxes=item.boxes, split=split,
-            curation_state="accepted" if item.accepted else "rejected",
-            critique=item.critique,
-        ))
+        if register:
+            records.append(AnnotatedImage(
+                id=f"{dataset.id}-img-{i:04d}", dataset_id=dataset.id,
+                file_name=file_name, width=item.width, height=item.height,
+                url=f"{base_url}/images/{file_name}",
+                thumbnail_url=f"{base_url}/thumbs/{file_name}",
+                boxes=item.boxes, split=split,
+                curation_state="accepted" if item.accepted else "rejected",
+                critique=item.critique,
+            ))
+    n_val = sum(1 for _, s in split_pairs if s == "val")
 
     if run.training.architecture.startswith("rf-detr"):
         _write_rfdetr_coco(split_pairs, workdir,
@@ -348,6 +409,14 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
         data_yaml["flip_idx"] = COCO_FLIP_IDX
     (yolo_dir / "data.yaml").write_text(yaml.safe_dump(data_yaml),
                                         encoding="utf-8")
+
+    if not register:
+        ctx.log("info",
+                f"Training set built from dataset {dataset.id} (unchanged): "
+                f"{len(usable)} labeled images ({len(usable) - n_val} train / "
+                f"{n_val} val), {sum(instance_counts.values())} instances",
+                agent="mlops")
+        return dataset
 
     dataset.classes = [
         DatasetClass(id=i, name=cls, color=CLASS_COLORS[i % len(CLASS_COLORS)],

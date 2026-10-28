@@ -14,33 +14,43 @@ import type { RunPreviewImage } from "@/lib/api/types";
 const PAGE_SIZE = 24;
 
 /**
- * Live gallery of the Synthesis Agent's output. Polls the preview endpoint
- * while the run is active. Pages are chronological and STABLE: new images
- * append to the last page only, so the browser fetches a page's tiles
- * once — never the whole run. "Latest" jumps to where the paint lands.
+ * Live gallery of the Synthesis Agent's output. Pages are chronological and
+ * STABLE: new images append to the last page only. Only the page on screen
+ * is fetched (offset/limit), and only a page still filling up is re-polled,
+ * so a 50k-image run costs the same to watch as a 50-image one. "Latest"
+ * jumps to where the paint lands.
  */
 export function FoundryPreview({
   runId,
   active,
   imagesTotal,
+  imagesGenerated,
 }: {
   runId: string;
   active: boolean;
   imagesTotal: number;
+  imagesGenerated: number;
 }) {
   const [page, setPage] = useState(1);
-  const { data: images } = useQuery({
-    queryKey: ["run-preview", runId],
-    queryFn: () => api<RunPreviewImage[]>(endpoints.runs.preview(runId)),
-    refetchInterval: active ? 2000 : false,
+  const totalPages = Math.max(1, Math.ceil(imagesGenerated / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const { data: tiles } = useQuery({
+    queryKey: ["run-preview", runId, safePage],
+    queryFn: () =>
+      api<RunPreviewImage[]>(
+        endpoints.runs.preview(runId, {
+          offset: (safePage - 1) * PAGE_SIZE,
+          limit: PAGE_SIZE,
+        }),
+      ),
+    refetchInterval: (query) =>
+      active && (query.state.data?.length ?? 0) < PAGE_SIZE ? 2000 : false,
+    placeholderData: (prev) => prev,
   });
 
-  if (!images?.length) return null;
+  if (!imagesGenerated || !tiles?.length) return null;
 
-  const totalPages = Math.max(1, Math.ceil(images.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-  const tiles = images.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
-  const streaming = active && images.length < imagesTotal;
+  const streaming = active && imagesGenerated < imagesTotal;
   const onLastPage = safePage === totalPages;
 
   return (
@@ -57,7 +67,7 @@ export function FoundryPreview({
           {streaming && (
             <span className="size-1.5 animate-pulse rounded-full bg-primary" />
           )}
-          {images.length} / {imagesTotal}
+          {imagesGenerated} / {imagesTotal}
         </Badge>
       </div>
       <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-8">

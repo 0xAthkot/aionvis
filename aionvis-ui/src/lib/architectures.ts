@@ -58,3 +58,31 @@ export const TASKS: { id: TrainingTask; label: string; hint: string }[] = [
 export function supportsTask(arch: Architecture, task: TrainingTask): boolean {
   return task === "detect" || arch.startsWith("yolo11") || arch.startsWith("yolo26");
 }
+
+/**
+ * Where training starts (`TrainingConfig.pretrained`). Plain language for
+ * Simple and Pro alike.
+ */
+export const STARTS: { pretrained: boolean; label: string; hint: string }[] = [
+  {
+    pretrained: true,
+    label: "Pretrained",
+    hint: "fine-tunes published weights (COCO); strongest with few images",
+  },
+  {
+    pretrained: false,
+    label: "From scratch",
+    hint: "learns only from your images; needs more epochs",
+  },
+];
+
+/** RF-DETR trains from its pretrained weights only (the backend rejects scratch). */
+export function supportsScratch(arch: Architecture): boolean {
+  return !arch.startsWith("rf-detr");
+}
+
+/**
+ * Simple mode picks epochs for the user; a model starting from random
+ * weights needs longer, so from-scratch runs train twice as many.
+ */
+export const SCRATCH_EPOCH_FACTOR = 2;

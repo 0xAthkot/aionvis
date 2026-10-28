@@ -51,8 +51,11 @@ export interface CreateProjectRequest {
 // Pipeline runs
 // ---------------------------------------------------------------------------
 
-/** Path A = Synthetic Foundry, Path B = BYOD Enterprise. */
-export type PipelinePath = "synthetic" | "byod";
+/**
+ * Path A = Synthetic Foundry, Path B = BYOD Enterprise, Path C = train a new
+ * model on datasets that already exist (labeled by earlier runs).
+ */
+export type PipelinePath = "synthetic" | "byod" | "dataset";
 
 export type RunStatus =
   | "queued"
@@ -76,7 +79,9 @@ export type PipelineMode = "sequential" | "streaming";
 
 /**
  * Stages of the agent pipeline, in execution order. BYOD runs skip
- * `prompt_expansion` and `synthesis`.
+ * `prompt_expansion` and `synthesis`; `dataset` runs also skip
+ * `segmentation` and `critic_review` (their labels already exist). Runs
+ * created with `trainModel: false` skip `training`.
  */
 export type PipelineStage =
   | "queued"
@@ -136,7 +141,21 @@ export interface ByodSourceConfig {
   imageCount: number;
 }
 
-export type SourceConfig = SyntheticSourceConfig | ByodSourceConfig;
+/**
+ * Path C: train on labeled datasets that already exist. Only images whose
+ * curation state is "accepted" are used, and each keeps its train/val split.
+ * One dataset trains in place; two or more are merged by class name (case and
+ * `_`/space insensitive) into a new dataset with `origin: "dataset"`.
+ */
+export interface DatasetSourceConfig {
+  path: "dataset";
+  datasetIds: string[];
+}
+
+export type SourceConfig =
+  | SyntheticSourceConfig
+  | ByodSourceConfig
+  | DatasetSourceConfig;
 
 /** Trainable detector families (all via Ultralytics). */
 export type Architecture =
@@ -167,6 +186,13 @@ export interface TrainingConfig {
   batchSize: number;
   /** e.g. "mi300x-0" */
   device: string;
+  /**
+   * true (default when omitted): fine-tune from the architecture's published
+   * pretrained weights (COCO for most detectors; ImageNet for classify, DOTA
+   * for obb). false: start from random weights, so the model learns only from
+   * this run's images (needs more epochs). RF-DETR is pretrained-only (400).
+   */
+  pretrained?: boolean;
 }
 
 export interface RunProgress {
@@ -209,6 +235,11 @@ export interface PipelineRun {
   visionBackend?: VisionBackend;
   source: SourceConfig;
   training: TrainingConfig;
+  /**
+   * false = a dataset-only run: it stops after the labeled dataset is
+   * compiled and `modelId` stays unset. Absent on older runs (= true).
+   */
+  trainModel?: boolean;
   targetClasses: string[];
   progress: RunProgress;
   createdBy: string;
@@ -338,6 +369,8 @@ export interface Dataset {
   importedLabels?: ImportedLabels;
   /** BYOD archives with videos: how many frames were extracted from them. */
   videoFrameCount?: number;
+  /** origin "dataset": the datasets this one was merged from. */
+  mergedFrom?: string[];
 }
 
 /** YOLO-normalized box: center x/y and width/height, all 0–1. */
@@ -430,6 +463,12 @@ export interface ModelArtifact {
   architecture: TrainingConfig["architecture"];
   /** Absent on models trained before tasks existed (= "detect"). */
   task?: TrainingTask;
+  /**
+   * How training started: true = fine-tuned from published pretrained
+   * weights, false = from scratch on this dataset only. Absent on models
+   * trained before the option existed (they were all fine-tuned = true).
+   */
+  pretrained?: boolean;
   fileName: string;
   fileSizeMb: number;
   classes: string[];
@@ -617,6 +656,8 @@ export interface CreateSyntheticRunRequest {
   training: TrainingConfig;
   /** Omitted → the node's VISION_BACKEND default. */
   visionBackend?: VisionBackend;
+  /** false = generate and label the dataset only, train nothing. Default true. */
+  trainModel?: boolean;
 }
 
 export interface CreateByodRunRequest {
@@ -627,9 +668,29 @@ export interface CreateByodRunRequest {
   training: TrainingConfig;
   /** Omitted → the node's VISION_BACKEND default. */
   visionBackend?: VisionBackend;
+  /** false = label (or audit) the dataset only, train nothing. Default true. */
+  trainModel?: boolean;
 }
 
-export type CreateRunRequest = CreateSyntheticRunRequest | CreateByodRunRequest;
+/**
+ * Train a new model on existing datasets. The class list always comes from
+ * the datasets themselves (any `targetClasses` sent is ignored).
+ * `trainModel: false` merges two or more datasets without training; with a
+ * single dataset that would do nothing and is rejected (400).
+ */
+export interface CreateDatasetRunRequest {
+  projectId: string;
+  name: string;
+  targetClasses?: string[];
+  source: DatasetSourceConfig;
+  training: TrainingConfig;
+  trainModel?: boolean;
+}
+
+export type CreateRunRequest =
+  | CreateSyntheticRunRequest
+  | CreateByodRunRequest
+  | CreateDatasetRunRequest;
 
 export interface CurateImageRequest {
   curationState: "accepted" | "rejected";

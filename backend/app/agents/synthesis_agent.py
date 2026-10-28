@@ -140,6 +140,20 @@ class SynthesisAgent:
                 height=size,
             ).images[0]
 
+    def _diffuse_flux_batch(self, pipe, prompts: list[str], size: int) -> list:
+        """Several FLUX images in one serialized call. Same settings as
+        _diffuse; the batch is always full-size (callers pad), because every
+        new batch shape pays a one-time kernel-tuning cost on ROCm."""
+        with _gen_lock:
+            return pipe(
+                prompt=prompts,
+                num_inference_steps=4,
+                guidance_scale=0.0,
+                max_sequence_length=256,
+                width=size,
+                height=size,
+            ).images
+
     def preview(self, generator: str, scenarios: list[str],
                 out_dir: Path) -> tuple[list[Path], str]:
         """Builder dry-run: paint one image per scenario with no run
@@ -196,39 +210,63 @@ class SynthesisAgent:
             model_id, is_flux)
 
         size = settings.synthesis_image_size
+        # FLUX on a big-VRAM node paints several images per call (measured
+        # on the MI300X: 4 per call = 0.19 s/img vs 0.25 s one at a time).
+        # SDXL keeps one per call: it also runs on small cards.
+        batch = max(1, settings.flux_batch_size) if is_flux else 1
         paths: list[Path] = []
         manifest: list[dict] = []  # read by GET /runs/{id}/preview
+        manifest_path = out_dir / "preview.json"
+        manifest_written = 0.0
         ctx.set_agent("synthesis", "working", f"Generating {count} images")
         started = time.monotonic()
-        for i in range(count):
+        i = 0
+        while i < count:
             ctx.check_cancelled()
-            prompt = scenarios[i % len(scenarios)]
+            n = min(batch, count - i)
+            prompts = [scenarios[(i + k) % len(scenarios)] for k in range(n)]
             t0 = time.monotonic()
-            image = self._diffuse(
-                pipe, prompt, is_flux=is_flux, is_turbo=is_turbo,
-                negative_prompt=negative_prompt,
-                guidance_scale=guidance_scale, size=size,
-            )
-            path = out_dir / f"img_{i:04d}.jpg"
-            image.save(path, quality=92)
-            paths.append(path)
-            manifest.append({"fileName": path.name, "scenario": prompt})
-            (out_dir / "preview.json").write_text(
-                json.dumps(manifest), encoding="utf-8"
-            )
+            if batch > 1:
+                # Pad the last batch to full size (same shape, no retuning).
+                padded = prompts + [prompts[-1]] * (batch - n)
+                images = self._diffuse_flux_batch(pipe, padded, size)[:n]
+            else:
+                images = [self._diffuse(
+                    pipe, prompts[0], is_flux=is_flux, is_turbo=is_turbo,
+                    negative_prompt=negative_prompt,
+                    guidance_scale=guidance_scale, size=size,
+                )]
+            dt = (time.monotonic() - t0) / n
 
-            dt = time.monotonic() - t0
-            ctx.run.progress.images_generated = i + 1
-            rate = (i + 1) / (time.monotonic() - started)
-            telemetry.throughput = Throughput(kind="img_per_s", value=round(rate, 2))
-            ctx.log("info",
-                    f"[{i + 1}/{count}] {dt:.1f}s · \"{prompt[:88]}…\"",
-                    agent="synthesis")
-            on_progress(i + 1)
-            if on_image is not None:
-                # Streaming mode: hand the finished image straight to the
-                # vision stream (may block on queue backpressure).
-                on_image(path, prompt)
+            for k, (image, prompt) in enumerate(zip(images, prompts)):
+                idx = i + k
+                path = out_dir / f"img_{idx:04d}.jpg"
+                image.save(path, quality=92)
+                paths.append(path)
+                manifest.append({"fileName": path.name, "scenario": prompt})
+                ctx.run.progress.images_generated = idx + 1
+                rate = (idx + 1) / (time.monotonic() - started)
+                telemetry.throughput = Throughput(kind="img_per_s",
+                                                  value=round(rate, 2))
+                ctx.log("info",
+                        f"[{idx + 1}/{count}] {dt:.1f}s · \"{prompt[:88]}…\"",
+                        agent="synthesis")
+                on_progress(idx + 1)
+                if on_image is not None:
+                    # Streaming mode: hand the finished image straight to the
+                    # vision stream (may block on queue backpressure).
+                    on_image(path, prompt)
+            i += n
+
+            # The manifest used to be rewritten whole after EVERY image:
+            # quadratic, hundreds of GB of writes on a 50k-image run. The
+            # live gallery polls every 2 s, so refresh it at most that often.
+            now = time.monotonic()
+            if now - manifest_written >= 2.0 or i >= count:
+                tmp = manifest_path.with_suffix(".json.tmp")
+                tmp.write_text(json.dumps(manifest), encoding="utf-8")
+                tmp.replace(manifest_path)
+                manifest_written = now
 
         if not settings.keep_models_warm:
             del pipe

@@ -7,6 +7,8 @@ import { ArrowLeft, ArrowRight, Check, Download, X } from "lucide-react";
 import { toast } from "sonner";
 import { BBoxImage, type BBoxView } from "@/components/datasets/bbox-image";
 import { DatasetAnalyticsPanel } from "@/components/datasets/dataset-analytics";
+import { TrainModelDialog } from "@/components/datasets/train-model-dialog";
+import { DATASET_ORIGIN } from "@/lib/simple-language";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -182,9 +184,7 @@ export default function DatasetDetailPage({
             <h1 className="font-mono text-2xl font-semibold tracking-tight">
               {dataset.name}
             </h1>
-            <Badge variant="secondary">
-              {dataset.origin === "synthetic" ? "Synthetic" : "BYOD"}
-            </Badge>
+            <Badge variant="secondary">{DATASET_ORIGIN[dataset.origin]}</Badge>
             <span
               className={`chip capitalize ${
                 dataset.status === "ready"
@@ -210,6 +210,9 @@ export default function DatasetDetailPage({
                 {format.toUpperCase()}
               </Button>
             ))}
+            {dataset.status === "ready" && dataset.labeledCount > 0 && (
+              <TrainModelDialog initialDatasetIds={[dataset.id]} />
+            )}
             {dataset.runId && (
               <Button variant="outline" size="sm" asChild>
                 <Link href={`/runs/${dataset.runId}`}>

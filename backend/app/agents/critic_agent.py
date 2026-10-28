@@ -32,6 +32,11 @@ class ReviewedImage:
     boxes: list[BoundingBox]
     critique: CritiqueRecord
     accepted: bool
+    # Set when re-training on existing datasets: the file name inside the
+    # compiled dataset (unique across merged sources) and the split the
+    # image already had. None = path.name and a fresh random split.
+    out_name: Optional[str] = None
+    split: Optional[str] = None
 
 
 def _iou(a: tuple[float, float, float, float],

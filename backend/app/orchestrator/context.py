@@ -50,6 +50,8 @@ class RunContext:
         kinds: list[AgentKind] = (
             ["prompt", "synthesis", "vision", "critic", "mlops"]
             if run.path == "synthetic"
+            # Training on existing datasets: nothing to generate or label.
+            else ["mlops"] if run.path == "dataset"
             else ["vision", "critic", "mlops"]
         )
         for kind in kinds:

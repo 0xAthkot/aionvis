@@ -107,6 +107,18 @@ export default function ModelDetailPage({
                 {model.task === "obb" ? "Rotated boxes" : model.task}
               </Badge>
             )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="outline" className="cursor-default">
+                  {model.pretrained === false ? "From scratch" : "Fine-tuned"}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-64">
+                {model.pretrained === false
+                  ? "Trained from random weights: everything this model knows came from its training dataset."
+                  : "Fine-tuned from the architecture's published pretrained weights (trained on COCO's real photos; ImageNet for classify, DOTA for rotated boxes)."}
+              </TooltipContent>
+            </Tooltip>
             <span
               className={`chip ${
                 model.status === "ready"

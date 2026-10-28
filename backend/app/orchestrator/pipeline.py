@@ -3,8 +3,10 @@
 Stage machine (synthetic):
   prompt_expansion → synthesis → segmentation → critic_review
   → dataset_compile → training → complete
-BYOD runs enter at segmentation. Heavy agents import torch lazily so the
-API server also boots on machines without the ML stack installed.
+BYOD runs enter at segmentation; dataset runs (training on datasets that
+already exist) enter at dataset_compile. train_model=False ends a run after
+dataset_compile. Heavy agents import torch lazily so the API server also
+boots on machines without the ML stack installed.
 
 PIPELINE_MODE=streaming (MI300X, requires KEEP_MODELS_WARM): the three
 middle stages overlap as bounded producer/consumer streams — see
@@ -38,6 +40,18 @@ STAGE_WEIGHTS: dict[PipelineStage, float] = {
 # Sentinel a queue reader receives when the stream was aborted (failure or
 # cancellation) rather than drained; None marks a normal drain.
 _ABORT = object()
+
+
+def stages_for(run) -> list[PipelineStage]:
+    """The weighted stages this run actually executes, in order."""
+    skip: set[str] = set()
+    if run.path != "synthetic":
+        skip |= {"prompt_expansion", "synthesis"}
+    if run.path == "dataset":
+        skip |= {"segmentation", "critic_review"}
+    if not run.train_model:
+        skip.add("training")
+    return [s for s in STAGE_WEIGHTS if s not in skip]
 
 
 class Pipeline:
@@ -95,8 +109,7 @@ class Pipeline:
     # --- progress helper --------------------------------------------------------
 
     def _pct(self, ctx: RunContext, fraction: float) -> None:
-        stages = [s for s in STAGE_WEIGHTS if ctx.run.path == "synthetic"
-                  or s not in ("prompt_expansion", "synthesis")]
+        stages = stages_for(ctx.run)
         total = sum(STAGE_WEIGHTS[s] for s in stages)
         done = 0.0
         for s in stages:
@@ -161,7 +174,10 @@ class Pipeline:
                               if run.path == "byod" else None)
             audit = source_dataset is not None and bool(source_dataset.imported_labels)
 
-            if run.pipeline_mode == "streaming" and not audit:
+            if run.path == "dataset":
+                # Labels already exist: straight to compile + train.
+                reviewed = self._dataset_source(ctx)
+            elif run.pipeline_mode == "streaming" and not audit:
                 # Parallel swarm: synthesis → vision → critic overlap.
                 # Audit runs stay sequential (near-instant, nothing to win).
                 reviewed = self._streaming_stages(ctx, workdir)
@@ -177,14 +193,22 @@ class Pipeline:
                 annotated = self._segmentation_stage(ctx, image_paths)
                 reviewed = self._critic_stage(ctx, annotated)
             dataset = self._compile_stage(ctx, reviewed, workdir)
-            self._training_stage(ctx, dataset, workdir)
+            if run.train_model:
+                self._training_stage(ctx, dataset, workdir)
+            else:
+                ctx.log("info", "Dataset-only run: training skipped as "
+                                "requested. Train a model on this dataset "
+                                "any time from the Datasets page.",
+                        agent="mlops")
+                ctx.set_agent("mlops", "done")
 
             ctx.set_stage("complete")
             self._pct(ctx, 1.0)
             run.status = "succeeded"
             run.finished_at = now_iso()
-            ctx.log("info", f"Run complete: dataset {run.dataset_id}, "
-                            f"model {run.model_id}. Swarm going idle.")
+            ctx.log("info", f"Run complete: dataset {run.dataset_id}"
+                            + (f", model {run.model_id}" if run.model_id else "")
+                            + ". Swarm going idle.")
             ctx.publish_status()
         except RunCancelled:
             run.status = "cancelled"
@@ -384,9 +408,7 @@ class Pipeline:
         def publish_pct() -> None:
             # Overall % during the overlap = weighted mean of the three
             # per-image stage fractions (prompt stage already complete).
-            stages = [s for s in STAGE_WEIGHTS if synthetic
-                      or s not in ("prompt_expansion", "synthesis")]
-            total_w = sum(STAGE_WEIGHTS[s] for s in stages)
+            total_w = sum(STAGE_WEIGHTS[s] for s in stages_for(run))
             done = 0.0
             if synthetic:
                 done += STAGE_WEIGHTS["prompt_expansion"]
@@ -556,12 +578,35 @@ class Pipeline:
         ctx.set_agent("critic", "done")
         return reviewed
 
+    def _dataset_source(self, ctx: RunContext):
+        """Dataset runs: rebuild the reviewed set from stored labels."""
+        from ..agents.dataset_merge import reviewed_from_datasets
+
+        run = ctx.run
+        ids = run.source.dataset_ids
+        names = ", ".join(store.datasets[d].name for d in ids)
+        ctx.log("info", f"Training on existing labels from {len(ids)} "
+                        f"dataset{'s' if len(ids) > 1 else ''}: {names}",
+                agent="mlops")
+        reviewed = reviewed_from_datasets(ids, run.target_classes)
+        run.progress.images_total = len(reviewed)
+        run.progress.images_generated = len(reviewed)
+        run.progress.masks_accepted = sum(len(r.boxes) for r in reviewed)
+        return reviewed
+
     def _compile_stage(self, ctx: RunContext, reviewed, workdir: Path):
         from ..agents.dataset_compiler import compile_dataset
 
-        ctx.set_stage("dataset_compile", "Formatting YOLO dataset")
-        ctx.set_agent("mlops", "working", "Compiling YOLO dataset + train/val split")
-        dataset = compile_dataset(ctx, reviewed, workdir)
+        run = ctx.run
+        merging = run.path == "dataset" and len(run.source.dataset_ids) > 1
+        in_place = run.path == "dataset" and not merging
+        ctx.set_stage("dataset_compile",
+                      f"Merging {len(run.source.dataset_ids)} datasets"
+                      if merging else "Formatting YOLO dataset")
+        ctx.set_agent("mlops", "working",
+                      "Building the training set from the existing dataset"
+                      if in_place else "Compiling YOLO dataset + train/val split")
+        dataset = compile_dataset(ctx, reviewed, workdir, register=not in_place)
         self._pct(ctx, 1.0)
         return dataset
 
@@ -570,7 +615,8 @@ class Pipeline:
 
         run = ctx.run
         ctx.set_stage("training",
-                      f"{run.training.architecture} · {run.progress.total_epochs} epochs")
+                      f"{run.training.architecture} · {run.progress.total_epochs} epochs"
+                      + ("" if run.training.pretrained else " · from scratch"))
         artifact = mlops_agent.train(
             ctx, dataset, workdir,
             on_epoch=lambda e: self._pct(ctx, e / max(run.progress.total_epochs, 1)),

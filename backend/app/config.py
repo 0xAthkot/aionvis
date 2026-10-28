@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     sdxl_model: str = "stabilityai/sdxl-turbo"
     flux_model: str = "black-forest-labs/FLUX.2-klein-4B"
     synthesis_image_size: int = 640
+    # FLUX images per diffusion call (FLUX only runs on big-VRAM nodes).
+    # 4 measured fastest on the MI300X; 1 = one image per call.
+    flux_batch_size: int = 4
     # FLUX runs need this much VRAM; below it (or on CPU) a "flux" run is
     # REJECTED at creation (before downloading the 24 GB checkpoint) — the
     # generator is the user's choice and is never silently swapped.
