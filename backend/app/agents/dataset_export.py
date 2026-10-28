@@ -56,7 +56,9 @@ def _write_yolo(zf: zipfile.ZipFile, dataset: Dataset,
     root = f"{dataset.id}-yolo"
     splits = {i.split for i in images}
     zf.writestr(f"{root}/data.yaml", yaml.safe_dump({
-        "path": ".",
+        # No "path" key: Ultralytics then resolves the splits next to this
+        # file. "path: ." meant the shell's working directory, so training
+        # failed unless it was started inside the unzipped folder.
         "train": "images/train",
         # Single-split datasets validate on train, same as the pipeline does.
         "val": "images/val" if "val" in splits else "images/train",

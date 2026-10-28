@@ -226,6 +226,30 @@ def test_compile_in_place_leaves_dataset_untouched(data_dir, tmp_path):
     assert (yolo / "data.yaml").exists()
 
 
+def test_yolo_export_trains_from_any_directory(data_dir, tmp_path, monkeypatch):
+    """The exported data.yaml must resolve its splits next to itself, not in
+    whatever directory the user's shell happens to be in."""
+    import zipfile
+
+    import ultralytics.data.utils as yolo_utils
+
+    from app.agents import dataset_export
+
+    monkeypatch.setattr(dataset_export, "DATA_DIR", data_dir)
+    monkeypatch.setattr(yolo_utils, "check_font", lambda *a, **k: None)  # no download
+    ds = _make_dataset(data_dir, "ds_t1", ["cat", "dog"], 8)
+    dataset_export.export_dataset(ds, store.images["ds_t1"], "yolo")
+    zip_path = data_dir / "files" / "datasets" / "ds_t1" / "exports" / "ds_t1-yolo.zip"
+    zipfile.ZipFile(zip_path).extractall(tmp_path / "unzipped")
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+    data = yolo_utils.check_det_dataset(str(tmp_path / "unzipped" / "ds_t1-yolo" / "data.yaml"))
+    assert Path(data["train"]) == tmp_path / "unzipped" / "ds_t1-yolo" / "images" / "train"
+    assert len(list(Path(data["val"]).iterdir())) == 2
+    assert data["names"] == {0: "cat", 1: "dog"}
+
+
 def test_compile_merge_mints_new_dataset_with_unique_files(data_dir, tmp_path):
     _make_dataset(data_dir, "ds_t1", ["a"], 3)
     _make_dataset(data_dir, "ds_t2", ["a"], 3)  # same file names as ds_t1
