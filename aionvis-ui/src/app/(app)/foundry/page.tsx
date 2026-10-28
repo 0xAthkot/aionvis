@@ -57,6 +57,7 @@ import type {
   VisionBackend,
 } from "@/lib/api/types";
 import { ClassMixEditor } from "@/components/foundry/class-mix-editor";
+import { SceneCountPicker } from "@/components/foundry/scene-count-picker";
 
 function PercentSlider({
   id,
@@ -645,40 +646,13 @@ export default function FoundryPage() {
                     Up to 100,000 per run.
                   </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="scene-count" className="gap-1.5">
-                    Distinct scenes
-                    <HelpTip>
-                      How many different scenes the Prompt Agent designs.
-                      Images cycle through them, so the default (one per
-                      image) gives every image its own scene. Fewer scenes
-                      means repeated setups with different random details.
-                    </HelpTip>
-                  </Label>
-                  <Input
-                    id="scene-count"
-                    type="number"
-                    min={1}
-                    max={imageCount}
-                    value={scenes || ""}
-                    onChange={(e) => {
-                      const v = Math.round(Number(e.target.value));
-                      setSceneCount(
-                        Number.isFinite(v) && v > 0
-                          ? Math.min(v, imageCount)
-                          : 0,
-                      );
-                    }}
-                    onBlur={() => {
-                      if (!sceneCount || sceneCount >= imageCount) setSceneCount(null);
-                    }}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {sceneCount === null
-                      ? "One per image (default)."
-                      : `About ${Math.round(imageCount / Math.max(scenes, 1))} images per scene.`}
-                  </p>
-                </div>
+                <SceneCountPicker
+                  id="scene-count"
+                  label="Distinct scenes"
+                  images={imageCount}
+                  value={sceneCount}
+                  onChange={setSceneCount}
+                />
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <Label htmlFor="guidance">Guidance scale</Label>

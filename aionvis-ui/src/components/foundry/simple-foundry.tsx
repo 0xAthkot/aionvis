@@ -8,7 +8,6 @@ import { HelpTip } from "@/components/shared/help-tip";
 import { NewProjectDialog } from "@/components/shared/new-project-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -54,6 +53,7 @@ import type {
   VisionBackend,
 } from "@/lib/api/types";
 import { ClassMixEditor } from "@/components/foundry/class-mix-editor";
+import { SceneCountPicker } from "@/components/foundry/scene-count-picker";
 import { useReportUnsaved } from "@/lib/stores/unsaved";
 import { cn } from "@/lib/utils";
 
@@ -527,40 +527,13 @@ export function SimpleFoundry() {
                   most jobs. Everything else (image size, batch, randomization)
                   is tuned automatically.
                 </p>
-                <div className="space-y-2">
-                  <Label htmlFor="simple-scenes" className="gap-1.5">
-                    Different scenes
-                    <HelpTip>
-                      Photos cycle through the scenes. One per photo gives
-                      every photo its own scene.
-                    </HelpTip>
-                  </Label>
-                  <Input
-                    id="simple-scenes"
-                    type="number"
-                    min={1}
-                    max={sizeCfg.images}
-                    className="w-32"
-                    value={scenes || ""}
-                    onChange={(e) => {
-                      const v = Math.round(Number(e.target.value));
-                      setSceneCount(
-                        Number.isFinite(v) && v > 0
-                          ? Math.min(v, sizeCfg.images)
-                          : 0,
-                      );
-                    }}
-                    onBlur={() => {
-                      if (!sceneCount || sceneCount >= sizeCfg.images)
-                        setSceneCount(null);
-                    }}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {sceneCount === null
-                      ? "One per photo (default)."
-                      : `About ${Math.round(sizeCfg.images / Math.max(scenes, 1))} photos per scene.`}
-                  </p>
-                </div>
+                <SceneCountPicker
+                  id="simple-scenes"
+                  label="Different scenes"
+                  images={sizeCfg.images}
+                  value={sceneCount}
+                  onChange={setSceneCount}
+                />
                 {project && (
                   <ClassMixEditor
                     classes={project.targetClasses}
