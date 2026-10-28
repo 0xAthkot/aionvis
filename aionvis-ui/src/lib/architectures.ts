@@ -64,17 +64,16 @@ export function supportsTask(arch: Architecture, task: TrainingTask): boolean {
  * Simple and Pro alike.
  */
 export const STARTS: { pretrained: boolean; label: string; hint: string }[] = [
-  {
-    pretrained: true,
-    label: "Pretrained",
-    hint: "fine-tunes published weights (COCO); strongest with few images",
-  },
+  { pretrained: true, label: "Pretrained", hint: "Fine-tunes COCO" },
   {
     pretrained: false,
     label: "From scratch",
-    hint: "learns only from your images; needs more epochs",
+    hint: "Trains only from generated images",
   },
 ];
+
+/** Scratch hint where the images are uploaded or reused, not generated. */
+export const SCRATCH_HINT_EXISTING = "Trains only from these images";
 
 /** RF-DETR trains from its pretrained weights only (the backend rejects scratch). */
 export function supportsScratch(arch: Architecture): boolean {

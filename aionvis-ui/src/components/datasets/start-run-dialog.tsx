@@ -34,7 +34,7 @@ import type {
 } from "@/lib/api/types";
 import { Switch } from "@/components/ui/switch";
 import { useLaunchRun } from "@/hooks/use-launch-run";
-import { STARTS } from "@/lib/architectures";
+import { SCRATCH_HINT_EXISTING, STARTS } from "@/lib/architectures";
 
 /** Path B: configure the labeling+training run for an uploaded dataset.
  * Datasets that shipped their own labels run in AUDIT mode: the class list
@@ -189,7 +189,9 @@ export function StartRunDialog({ dataset }: { dataset: Dataset }) {
                       value={s.pretrained ? "pretrained" : "scratch"}
                     >
                       {s.label}
-                      <span className="text-muted-foreground"> · {s.hint}</span>
+                      <span className="text-muted-foreground">
+                        {" "}· {s.pretrained ? s.hint : SCRATCH_HINT_EXISTING}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>

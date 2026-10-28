@@ -733,13 +733,7 @@ export default function FoundryPage() {
               <div className="space-y-2 sm:col-span-2">
                 <Label className="gap-1.5">
                   Starting weights
-                  <HelpTip>
-                    Pretrained fine-tunes the architecture&apos;s published
-                    weights (trained on COCO&apos;s real photos; ImageNet for
-                    Labels, DOTA for rotated boxes). From scratch starts from
-                    random weights, so everything the model knows comes from
-                    this run&apos;s images. It needs more epochs.
-                  </HelpTip>
+                  <HelpTip>From scratch needs more epochs.</HelpTip>
                 </Label>
                 <Select
                   value={training.pretrained === false ? "scratch" : "pretrained"}

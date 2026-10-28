@@ -8,6 +8,7 @@ import { HelpTip } from "@/components/shared/help-tip";
 import { NewProjectDialog } from "@/components/shared/new-project-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -117,6 +118,8 @@ export function SimpleFoundry() {
   const [classMix, setClassMix] = useState<Record<string, number> | undefined>();
   const [maxClassesPerScene, setMaxClassesPerScene] = useState(3);
   const [semanticCheck, setSemanticCheck] = useState<SemanticCheck>("all");
+  // null = one distinct scene per image (follows the dataset size).
+  const [sceneCount, setSceneCount] = useState<number | null>(null);
 
   function selectProject(id: string) {
     setProjectId(id);
@@ -137,6 +140,7 @@ export function SimpleFoundry() {
   const sizeCfg = SIZES.find((s) => s.id === size) ?? SIZES[1];
   const epochsFor = (base: number) =>
     pretrained ? base : base * SCRATCH_EPOCH_FACTOR;
+  const scenes = Math.min(sceneCount ?? sizeCfg.images, sizeCfg.images);
   const isValid = !!project && useCase.trim().length > 15;
   // Why the launch button is disabled — surfaced as its hover tooltip.
   const blockers = [
@@ -167,8 +171,8 @@ export function SimpleFoundry() {
         cameraAngleVariation: 0.4,
         backgroundDiversity: 0.5,
         occlusionRate: 0.2,
-        // One distinct scene per image.
-        scenarioCount: sizeCfg.images,
+        // One distinct scene per image unless set under More options.
+        scenarioCount: scenes,
         imageCount: sizeCfg.images,
         guidanceScale: 7.5,
         classMix,
@@ -441,13 +445,7 @@ export function SimpleFoundry() {
             <div className="space-y-2">
               <Label className="gap-1.5">
                 How the model starts
-                <HelpTip>
-                  Pretrained starts from a model that already learned from
-                  real photos (the public COCO dataset) and adapts it to your
-                  job: best results with few photos. From scratch starts
-                  empty, so everything it knows comes from your photos. It
-                  trains twice as long.
-                </HelpTip>
+                <HelpTip>From scratch trains twice as many epochs.</HelpTip>
               </Label>
               <div className="grid grid-cols-2 gap-2">
                 {STARTS.map((s) => {
@@ -529,6 +527,40 @@ export function SimpleFoundry() {
                   most jobs. Everything else (image size, batch, randomization)
                   is tuned automatically.
                 </p>
+                <div className="space-y-2">
+                  <Label htmlFor="simple-scenes" className="gap-1.5">
+                    Different scenes
+                    <HelpTip>
+                      Photos cycle through the scenes. One per photo gives
+                      every photo its own scene.
+                    </HelpTip>
+                  </Label>
+                  <Input
+                    id="simple-scenes"
+                    type="number"
+                    min={1}
+                    max={sizeCfg.images}
+                    className="w-32"
+                    value={scenes || ""}
+                    onChange={(e) => {
+                      const v = Math.round(Number(e.target.value));
+                      setSceneCount(
+                        Number.isFinite(v) && v > 0
+                          ? Math.min(v, sizeCfg.images)
+                          : 0,
+                      );
+                    }}
+                    onBlur={() => {
+                      if (!sceneCount || sceneCount >= sizeCfg.images)
+                        setSceneCount(null);
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {sceneCount === null
+                      ? "One per photo (default)."
+                      : `About ${Math.round(sizeCfg.images / Math.max(scenes, 1))} photos per scene.`}
+                  </p>
+                </div>
                 {project && (
                   <ClassMixEditor
                     classes={project.targetClasses}

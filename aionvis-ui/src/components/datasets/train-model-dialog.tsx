@@ -42,6 +42,7 @@ import type {
 import {
   ARCH_FAMILIES,
   RECOMMENDED_ARCH,
+  SCRATCH_HINT_EXISTING,
   STARTS,
   supportsScratch,
   supportsTask,
@@ -308,12 +309,7 @@ export function TrainModelDialog({
             <div className="space-y-2 sm:col-span-2">
               <Label className="gap-1.5">
                 Starting weights
-                <HelpTip>
-                  Pretrained fine-tunes the architecture&apos;s published
-                  weights (trained on COCO&apos;s real photos). From scratch
-                  starts from random weights, so the model learns only from
-                  these datasets. It needs more epochs.
-                </HelpTip>
+                <HelpTip>From scratch needs more epochs.</HelpTip>
               </Label>
               <div className="grid grid-cols-2 gap-2">
                 {STARTS.map((s) => {
@@ -326,7 +322,13 @@ export function TrainModelDialog({
                       size="sm"
                       disabled={disabled}
                       onClick={() => setPretrained(s.pretrained)}
-                      title={disabled ? "RF-DETR is pretrained-only" : s.hint}
+                      title={
+                        disabled
+                          ? "RF-DETR is pretrained-only"
+                          : s.pretrained
+                            ? s.hint
+                            : SCRATCH_HINT_EXISTING
+                      }
                     >
                       {s.label}
                     </Button>
