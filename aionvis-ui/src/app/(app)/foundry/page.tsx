@@ -51,10 +51,12 @@ import type {
   FoundryFeedback,
   PreviewImagesResponse,
   Project,
+  SemanticCheck,
   TrainingConfig,
   TrainingTask,
   VisionBackend,
 } from "@/lib/api/types";
+import { ClassMixEditor } from "@/components/foundry/class-mix-editor";
 
 function PercentSlider({
   id,
@@ -112,7 +114,12 @@ export default function FoundryPage() {
   const [backgroundDiversity, setBackgroundDiversity] = useState(0.5);
   const [occlusionRate, setOcclusionRate] = useState(0.2);
   const [imageCount, setImageCount] = useState(500);
+  // null = one distinct scene per image (follows the image count).
+  const [sceneCount, setSceneCount] = useState<number | null>(null);
   const [guidanceScale, setGuidanceScale] = useState(7.5);
+  const [classMix, setClassMix] = useState<Record<string, number> | undefined>();
+  const [maxClassesPerScene, setMaxClassesPerScene] = useState(3);
+  const [semanticCheck, setSemanticCheck] = useState<SemanticCheck>("all");
 
   const [training, setTraining] = useState<TrainingConfig>({
     architecture: RECOMMENDED_ARCH,
@@ -141,11 +148,16 @@ export default function FoundryPage() {
     });
   }
 
+  function changeClasses(next: string[]) {
+    setTargetClasses(next);
+    setClassMix(undefined); // a new class list starts from equal shares
+  }
+
   function selectProject(id: string) {
     setProjectId(id);
     const project = projects?.find((p) => p.id === id);
     if (project) {
-      if (targetClasses.length === 0) setTargetClasses(project.targetClasses);
+      if (targetClasses.length === 0) changeClasses(project.targetClasses);
       if (!name)
         setName(
           `${project.name.toLowerCase().replace(/\s+/g, "-")} · synthetic`,
@@ -153,14 +165,17 @@ export default function FoundryPage() {
     }
   }
 
+  const scenes = Math.min(sceneCount ?? imageCount, imageCount);
   const randomization = {
     lightingVariation,
     cameraAngleVariation,
     backgroundDiversity,
     occlusionRate,
-    scenarioCount: imageCount,
+    scenarioCount: scenes,
     imageCount,
     guidanceScale,
+    classMix,
+    maxClassesPerScene,
   };
 
   const request: CreateSyntheticRunRequest = {
@@ -177,6 +192,7 @@ export default function FoundryPage() {
     training,
     visionBackend,
     trainModel,
+    semanticCheck,
   };
 
   const isValid =
@@ -298,9 +314,16 @@ export default function FoundryPage() {
                 <TagInput
                   id="classes"
                   value={targetClasses}
-                  onChange={setTargetClasses}
+                  onChange={changeClasses}
                 />
               </div>
+              <ClassMixEditor
+                classes={targetClasses}
+                mix={classMix}
+                onMix={setClassMix}
+                maxPerScene={maxClassesPerScene}
+                onMaxPerScene={setMaxClassesPerScene}
+              />
             </div>
           </section>
 
@@ -312,7 +335,7 @@ export default function FoundryPage() {
               <p className="text-sm text-muted-foreground">
                 Say what the model is for. The Prompt Agent infers the
                 deployment viewpoint and environment, then designs{" "}
-                {imageCount.toLocaleString()} domain-randomized scenes itself.
+                {scenes.toLocaleString()} domain-randomized scenes itself.
               </p>
             </div>
             <div className="space-y-4">
@@ -380,6 +403,34 @@ export default function FoundryPage() {
                     Also honored verbatim: a node without the selected
                     labeler&apos;s runtime rejects the run with setup steps.
                   </p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="gap-1.5">
+                    AI label check
+                    <HelpTip>
+                      After the geometric checks, the Critic&apos;s
+                      vision-language model looks at each label crop and asks
+                      whether it really shows the class. A clear no removes
+                      the label. Checking every label takes longer on big
+                      runs (about 14 labels per second on an MI300X).
+                    </HelpTip>
+                  </Label>
+                  <Select
+                    value={semanticCheck}
+                    onValueChange={(v) => setSemanticCheck(v as SemanticCheck)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">
+                        Every label (recommended)
+                      </SelectItem>
+                      <SelectItem value="sample">
+                        Spot-check (faster on huge runs)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -592,6 +643,40 @@ export default function FoundryPage() {
                   />
                   <p className="text-xs text-muted-foreground">
                     Up to 100,000 per run.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="scene-count" className="gap-1.5">
+                    Distinct scenes
+                    <HelpTip>
+                      How many different scenes the Prompt Agent designs.
+                      Images cycle through them, so the default (one per
+                      image) gives every image its own scene. Fewer scenes
+                      means repeated setups with different random details.
+                    </HelpTip>
+                  </Label>
+                  <Input
+                    id="scene-count"
+                    type="number"
+                    min={1}
+                    max={imageCount}
+                    value={scenes || ""}
+                    onChange={(e) => {
+                      const v = Math.round(Number(e.target.value));
+                      setSceneCount(
+                        Number.isFinite(v) && v > 0
+                          ? Math.min(v, imageCount)
+                          : 0,
+                      );
+                    }}
+                    onBlur={() => {
+                      if (!sceneCount || sceneCount >= imageCount) setSceneCount(null);
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {sceneCount === null
+                      ? "One per image (default)."
+                      : `About ${Math.round(imageCount / Math.max(scenes, 1))} images per scene.`}
                   </p>
                 </div>
                 <div className="space-y-2">

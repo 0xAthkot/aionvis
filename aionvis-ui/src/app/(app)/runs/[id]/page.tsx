@@ -50,9 +50,11 @@ export default function RunDetailPage({
     queryKey: ["run-agents", id],
     queryFn: () => api<AgentInstance[]>(endpoints.runs.agents(id)),
   });
+  // Only the newest lines: a 50k-image run logs well over a million, and
+  // the terminal shows a scrolling window anyway.
   const { data: logs } = useQuery({
     queryKey: ["run-logs", id],
-    queryFn: () => api<LogEvent[]>(endpoints.runs.logs(id)),
+    queryFn: () => api<LogEvent[]>(endpoints.runs.logs(id, 2000)),
   });
 
   const [confirmCancel, setConfirmCancel] = useState(false);
@@ -357,6 +359,28 @@ export default function RunDetailPage({
                     <dt className="text-muted-foreground">Guidance scale</dt>
                     <dd>{run.source.randomization.guidanceScale}</dd>
                   </div>
+                  <div className="flex justify-between py-2">
+                    <dt className="text-muted-foreground">Distinct scenes</dt>
+                    <dd>
+                      {Math.max(
+                        1,
+                        Math.min(
+                          run.source.randomization.scenarioCount,
+                          run.source.randomization.imageCount,
+                        ),
+                      ).toLocaleString()}
+                    </dd>
+                  </div>
+                  {run.source.randomization.classMix && (
+                    <div className="py-2">
+                      <dt className="text-muted-foreground">Class mix</dt>
+                      <dd className="mt-0.5 font-mono text-xs">
+                        {Object.entries(run.source.randomization.classMix)
+                          .map(([c, w]) => `${c} ${w}`)
+                          .join(" · ")}
+                      </dd>
+                    </div>
+                  )}
                 </>
               ) : run.source.path === "dataset" ? (
                 <div className="py-2">
@@ -393,6 +417,14 @@ export default function RunDetailPage({
                   {run.targetClasses.join(", ")}
                 </dd>
               </div>
+              {run.semanticCheck && (
+                <div className="flex justify-between py-2">
+                  <dt className="text-muted-foreground">AI label check</dt>
+                  <dd>
+                    {run.semanticCheck === "all" ? "Every label" : "Spot-check"}
+                  </dd>
+                </div>
+              )}
               {run.trainModel === false ? (
                 <div className="flex justify-between py-2">
                   <dt className="text-muted-foreground">Training</dt>

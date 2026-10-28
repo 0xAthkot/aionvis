@@ -110,12 +110,29 @@ export interface DomainRandomizationConfig {
   cameraAngleVariation: number;
   backgroundDiversity: number;
   occlusionRate: number;
-  /** How many scenario prompts the Prompt Agent designs from the use case. */
+  /**
+   * How many distinct scenes the Prompt Agent designs (1 up to imageCount;
+   * larger values are clamped). Images cycle through the scenes, so
+   * scenarioCount = imageCount gives every image its own scene.
+   */
   scenarioCount: number;
   /** Total images to synthesize. */
   imageCount: number;
   /** Diffusion guidance scale (typically 4–12). */
   guidanceScale: number;
+  /**
+   * Share of scenes that feature each target class as their main subject,
+   * keyed by class name (relative weights, e.g. percentages; normalized
+   * server-side; classes left out get no featured scenes). Omitted = equal
+   * shares. Every image is still labeled for ALL target classes.
+   */
+  classMix?: Record<string, number>;
+  /**
+   * The most target classes one scene features (main subject + companions
+   * that naturally belong; default 3). With this many classes or fewer and
+   * no classMix, every scene shows all of them.
+   */
+  maxClassesPerScene?: number;
 }
 
 export interface SyntheticSourceConfig {
@@ -221,6 +238,14 @@ export interface RunProgress {
  */
 export type VisionBackend = "sam3" | "yoloe";
 
+/**
+ * How much of the labeling the Critic's vision-language model verifies.
+ * `all` (default): every accepted label, in parallel, overlapping generation
+ * in streaming mode. `sample`: a fixed spot-check per run (cheaper on huge
+ * runs). A label is removed only on a clear NO.
+ */
+export type SemanticCheck = "all" | "sample";
+
 export interface PipelineRun {
   id: string;
   orgId: string;
@@ -240,6 +265,8 @@ export interface PipelineRun {
    * compiled and `modelId` stays unset. Absent on older runs (= true).
    */
   trainModel?: boolean;
+  /** Resolved at creation; absent on older runs (they used `sample`). */
+  semanticCheck?: SemanticCheck;
   targetClasses: string[];
   progress: RunProgress;
   createdBy: string;
@@ -392,6 +419,12 @@ export interface BoundingBox {
    * compile time) and on pose-model predictions.
    */
   keypoints?: number[];
+  /**
+   * The Critic VLM's verdict on this label: "confirmed" or "unsure" (kept).
+   * Labels it rejected are removed, so they never appear. Absent = not
+   * checked (spot-check runs, imported labels, older datasets).
+   */
+  semantic?: "confirmed" | "unsure";
 }
 
 export interface CritiqueRecord {
@@ -658,6 +691,8 @@ export interface CreateSyntheticRunRequest {
   visionBackend?: VisionBackend;
   /** false = generate and label the dataset only, train nothing. Default true. */
   trainModel?: boolean;
+  /** Omitted → "all" (every label verified by the Critic VLM). */
+  semanticCheck?: SemanticCheck;
 }
 
 export interface CreateByodRunRequest {
@@ -670,6 +705,8 @@ export interface CreateByodRunRequest {
   visionBackend?: VisionBackend;
   /** false = label (or audit) the dataset only, train nothing. Default true. */
   trainModel?: boolean;
+  /** Omitted → "all" (every label verified by the Critic VLM). */
+  semanticCheck?: SemanticCheck;
 }
 
 /**

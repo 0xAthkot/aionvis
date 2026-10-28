@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
-TARGETS = ["state.json", "files", "runs", "byod", "predictions"]
+TARGETS = ["state.json", "images", "logs", "files", "runs", "byod", "predictions"]
 
 
 def main() -> None:

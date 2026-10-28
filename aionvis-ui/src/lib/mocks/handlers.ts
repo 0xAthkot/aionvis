@@ -24,6 +24,7 @@ import type {
 import { computeAnalytics } from "./analytics";
 import { db, nextId } from "./db";
 import { placeholderImage } from "./fixtures/placeholder";
+import { planScenes } from "./scene-plan";
 import { getSimulatedAgents } from "./simulator";
 
 /** Small realistic latency so loading skeletons are actually visible. */
@@ -311,6 +312,10 @@ export const handlers = [
       source,
       training: { ...body.training, pretrained },
       trainModel,
+      // Dataset runs label nothing, so nothing for the VLM to verify.
+      semanticCheck: source.path === "dataset"
+        ? undefined
+        : ("semanticCheck" in body ? body.semanticCheck : undefined) ?? "all",
       targetClasses,
       progress: {
         pct: 0,
@@ -388,9 +393,11 @@ export const handlers = [
     );
   }),
 
-  http.get(`${API_BASE}/runs/:id/logs`, async ({ params }) => {
+  http.get(`${API_BASE}/runs/:id/logs`, async ({ params, request }) => {
     await lag();
-    return HttpResponse.json(db.runLogs.filter((l) => l.runId === params.id));
+    const logs = db.runLogs.filter((l) => l.runId === params.id);
+    const limit = Number(new URL(request.url).searchParams.get("limit") ?? 0);
+    return HttpResponse.json(limit > 0 ? logs.slice(-limit) : logs);
   }),
 
   http.get(`${API_BASE}/runs/:id/preview`, async ({ params, request }) => {
@@ -424,9 +431,8 @@ export const handlers = [
   http.post(`${API_BASE}/runs/estimate`, async ({ request }) => {
     await lag();
     const body = (await request.json()) as CreateRunRequest;
-    // Same math as the backend's _estimate, calibrated against real MI300X
-    // streaming runs (2026-07-11); the rate is the AMD Developer Cloud
-    // droplet's $2/hour.
+    // Same math as the backend's _estimate, recalibrated against real MI300X
+    // runs (2026-10-28); the rate is the AMD Developer Cloud droplet's $2/hour.
     const USD_PER_HOUR = 2;
     const source = body.source;
     const images = source.path === "synthetic"
@@ -441,17 +447,24 @@ export const handlers = [
         ? arch.endsWith("l") ? 3 : 4.5
         : ({ n: 1, s: 1.3, m: 1.8, l: 2.5, x: 3.5 }[arch.slice(-1)] ?? 1);
     const genSeconds = source.path === "synthetic"
-      ? source.generator === "flux" ? 1.5 : 5
+      ? source.generator === "flux" ? 0.3 : 5
       : 0;
     const synthesisMin = (images * genSeconds) / 60;
     const segmentationMin = (images * 0.3) / 60;
-    const criticMin = (images * 0.2) / 60;
+    // Critic VLM over every label: ~5 labels/image at ~14 labels/s.
+    const semanticCheck = "semanticCheck" in body ? body.semanticCheck : undefined;
+    const criticMin =
+      (images * 0.2) / 60 + ((semanticCheck ?? "all") === "all" ? (images * 5) / 14 / 60 : 0);
+    // Scene design: ~30 scenes/s with parallel calls.
+    const scenes = source.path === "synthetic"
+      ? Math.max(1, Math.min(source.randomization.scenarioCount, images))
+      : 0;
     const trainingMin =
-      body.training.epochs * (0.05 + images * 0.0005 * archFactor);
+      body.training.epochs * (0.05 + images * 0.00015 * archFactor);
     const breakdown: CostEstimate["breakdown"] = [
       ...(source.path === "synthetic"
         ? [
-            { stage: "prompt_expansion", minutes: 0.3 },
+            { stage: "prompt_expansion", minutes: +(0.3 + scenes / 30 / 60).toFixed(2) },
             { stage: "synthesis", minutes: +synthesisMin.toFixed(2) },
           ] as CostEstimate["breakdown"]
         : []),
@@ -536,6 +549,7 @@ export const handlers = [
           .map((f) => f.note)
       : [];
     const count = Math.min(body.previewCount ?? 8, 12);
+    const plan = planScenes(body.targetClasses, r, count);
     const scenarios = Array.from({ length: count }, (_, i) => {
       const parts = [
         `Photorealistic scene of ${context || classes}`,
@@ -546,12 +560,13 @@ export const handlers = [
       if (r.occlusionRate > 0.15) parts.push(pick(conditions, i + 4, r.occlusionRate));
       if (i < hardCases.length)
         parts.push(`emphasizing this observed failure: ${hardCases[i]}`);
-      return `${parts.join(", ")}, clearly showing ${classes}, sharp focus`;
+      return `${parts.join(", ")}, clearly showing ${plan[i] ?? classes}, sharp focus`;
     });
 
     const response: ExpandPromptResponse = {
       scenarios,
-      totalScenarios: r.scenarioCount,
+      // Same clamp as the pipeline: at most one scene per image.
+      totalScenarios: Math.max(1, Math.min(r.scenarioCount, r.imageCount)),
       model: "Gemma 4",
       provider: "vLLM · MI300X",
     };

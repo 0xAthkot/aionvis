@@ -124,7 +124,7 @@ app/
 ├── routers.py         # every REST route
 ├── ws.py              # /ws/v1 run-events + telemetry sockets
 ├── events.py          # in-process pub/sub bus feeding the sockets
-├── store.py           # in-memory state + JSON persistence (data/state.json)
+├── store.py           # in-memory state + persistence (state.json, images/, logs/)
 ├── telemetry.py       # real GPU sampling (pynvml / amd-smi)
 ├── byod.py            # multipart .zip upload + extraction
 ├── orchestrator/
@@ -141,8 +141,12 @@ app/
     └── gpu.py              # VRAM flush orchestration
 ```
 
-State lives in `data/` (gitignored): `state.json`, generated datasets under
-`data/files/…` (served at `/files`), run workdirs under `data/runs/…`.
+State lives in `data/` (gitignored): `state.json` (runs, datasets, models:
+small metadata only), each dataset's labeled images in `data/images/{id}.json`
+(plus an append-only `{id}.curation.jsonl` of accept/reject clicks), each
+run's full log in `data/logs/{id}.jsonl`, generated datasets under
+`data/files/…` (served at `/files`), run workdirs under `data/runs/…`. Older
+single-file `state.json` migrates to this layout on the first start.
 For a clean demo slate, stop the backend and run `python reset_demo.py`
 (add `--yes` to skip the prompt) — the next start reseeds the demo org and
 projects.

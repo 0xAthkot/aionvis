@@ -161,12 +161,12 @@ def delete_project(project_id: str) -> None:
 
     for r in doomed:
         store.runs.pop(r.id, None)
-        store.run_logs.pop(r.id, None)
+        store.drop_logs(r.id)
         rm(DATA_DIR / "runs" / r.id)
         rm(DATA_DIR / "files" / "runs" / r.id)
         if r.dataset_id and r.dataset_id not in keep_ds:
             store.datasets.pop(r.dataset_id, None)
-            store.images.pop(r.dataset_id, None)
+            store.drop_images(r.dataset_id)
             rm(DATA_DIR / "files" / "datasets" / r.dataset_id)
             rm(DATA_DIR / "byod" / r.dataset_id)
         if r.model_id and r.model_id not in keep_models:
@@ -312,6 +312,9 @@ def create_run(body: CreateRunRequest) -> PipelineRun:
         source=body.source,
         training=body.training,
         train_model=train_model,
+        # Dataset runs label nothing, so nothing for the VLM to verify.
+        semantic_check=(None if body.source.path == "dataset"
+                        else body.semantic_check),
         target_classes=target_classes,
         progress=RunProgress(
             pct=0,
@@ -334,7 +337,7 @@ def create_run(body: CreateRunRequest) -> PipelineRun:
         dataset_id=body.source.dataset_id if body.source.path == "byod" else None,
     )
     store.runs[run.id] = run
-    store.run_logs[run.id] = []
+    store.start_run_log(run.id)
     store.save()
     pipeline.launch(run.id)
     return run
@@ -356,25 +359,34 @@ def _arch_factor(arch: str) -> float:
 
 def _estimate(body: CreateRunRequest) -> CostEstimate:
     """Heuristic dry-run pricing; mirrors the stage plan the orchestrator
-    runs. Constants calibrated 2026-07-11 against real MI300X streaming
-    runs (flagship 500 img / 60 ep / yolo26m: 37.5 min total, 30.2 min
-    training; 50 img / 30 ep / yolo11n: 2-5 min): FLUX.2-klein ≈ 1.5 s and
-    full SDXL ≈ 5 s per image, and a training epoch costs a fixed ~3 s of
-    validation overhead plus ~0.03 s per image scaled by architecture."""
+    runs. Stages are summed although streaming mode overlaps them, so the
+    quote errs high. Recalibrated 2026-10-28 on the MI300X after the
+    speedups: FLUX.2-klein ≈ 0.3 s per image (0.19 batched), full SDXL ≈ 5 s;
+    a training epoch costs ~3 s of validation overhead plus ~0.009 s per
+    image for a nano YOLO (~155 img/s steady after the DataLoader fix),
+    scaled by architecture. Check: a 400-image FLUX + SAM 3 run with every
+    label VLM-verified took 4.3 min end to end."""
     epochs = min(body.training.epochs, settings.max_epochs)
     factor = _arch_factor(body.training.architecture)
 
     def train_min(images: int) -> float:
-        return epochs * (0.05 + images * 0.0005 * factor)
+        return epochs * (0.05 + images * 0.00015 * factor)
+
+    # Critic VLM over every label: ~5 labels per image at the measured
+    # ~14 labels/s (32 requests in flight on the MI300X).
+    def semantic_min(images: int) -> float:
+        return images * 5 / 14 / 60 if body.semantic_check == "all" else 0.0
 
     if body.source.path == "synthetic":
         images = min(body.source.randomization.image_count, settings.max_images_per_run)
-        gen_s = 1.5 if getattr(body.source, "generator", "sdxl") == "flux" else 5.0
+        scenes = max(1, min(body.source.randomization.scenario_count, images))
+        gen_s = 0.3 if getattr(body.source, "generator", "sdxl") == "flux" else 5.0
         stages: list[tuple[PipelineStage, float]] = [
-            ("prompt_expansion", 0.3),
+            # Scene design: ~30 scenes/s with 16 parallel calls (measured).
+            ("prompt_expansion", 0.3 + scenes / 30 / 60),
             ("synthesis", images * gen_s / 60),
             ("segmentation", images * 0.3 / 60),
-            ("critic_review", images * 0.2 / 60),
+            ("critic_review", images * 0.2 / 60 + semantic_min(images)),
             ("dataset_compile", 0.3),
             ("training", train_min(images)),
         ]
@@ -391,7 +403,7 @@ def _estimate(body: CreateRunRequest) -> CostEstimate:
         images = body.source.image_count
         stages = [
             ("segmentation", images * 0.3 / 60),
-            ("critic_review", images * 0.2 / 60),
+            ("critic_review", images * 0.2 / 60 + semantic_min(images)),
             ("dataset_compile", 0.3),
             ("training", train_min(images)),
         ]
@@ -433,10 +445,11 @@ def run_agents(run_id: str) -> list[AgentInstance]:
 
 
 @router.get("/runs/{run_id}/logs")
-def run_logs(run_id: str) -> list[LogEvent]:
+def run_logs(run_id: str, limit: Optional[int] = None) -> list[LogEvent]:
+    """History, oldest first; ?limit=N returns only the newest N lines."""
     if run_id not in store.runs:
         raise _not_found("Run", run_id)
-    return store.run_logs.get(run_id, [])
+    return store.read_logs(run_id, limit if limit and limit > 0 else None)
 
 
 # Parsed preview manifests keyed by path, reused while the file is unchanged
@@ -505,12 +518,12 @@ def delete_run(run_id: str) -> None:
         shutil.rmtree(path, ignore_errors=True)
 
     store.runs.pop(run_id, None)
-    store.run_logs.pop(run_id, None)
+    store.drop_logs(run_id)
     rm(DATA_DIR / "runs" / run_id)
     rm(DATA_DIR / "files" / "runs" / run_id)
     if run.dataset_id and run.dataset_id not in keep_ds:
         store.datasets.pop(run.dataset_id, None)
-        store.images.pop(run.dataset_id, None)
+        store.drop_images(run.dataset_id)
         rm(DATA_DIR / "files" / "datasets" / run.dataset_id)
         rm(DATA_DIR / "byod" / run.dataset_id)
     if run.model_id and run.model_id not in keep_models:
@@ -537,9 +550,11 @@ async def expand_prompt(body: ExpandPromptRequest) -> ExpandPromptResponse:
         count=preview,
         hard_cases=hard_cases,
     )
+    rand = body.randomization
     return ExpandPromptResponse(
         scenarios=scenarios,
-        total_scenarios=body.randomization.scenario_count,
+        # Same clamp as the pipeline: at most one scene per image.
+        total_scenarios=max(1, min(rand.scenario_count, rand.image_count)),
         model=prompt_agent.model_label,
         provider=prompt_agent.provider_label,
     )
@@ -658,7 +673,8 @@ def curate_image(
     for img in store.images.get(dataset_id, []):
         if img.id == image_id:
             img.curation_state = body.curation_state
-            store.save()
+            # One appended line, not a rewrite of the whole dataset file.
+            store.record_curation(dataset_id, image_id, body.curation_state)
             return img
     raise _not_found("Image", image_id)
 

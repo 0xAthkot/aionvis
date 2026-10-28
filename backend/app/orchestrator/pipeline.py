@@ -248,14 +248,10 @@ class Pipeline:
         ctx.set_agent("prompt", "thinking",
                       "Designing scene prompts from the use case")
         ctx.check_cancelled()
-        # Scene variety scales with the run: one designed scene per ~10
-        # images, floor 16 (the old fixed cap), ceiling 256 — past that,
-        # diffusion sampling noise carries the intra-scene variety. The
-        # prompt agent designs large sets in batches, so big counts stay
-        # reliable.
-        scale_cap = max(16, min(256, (run.progress.images_total + 9) // 10))
-        n_scenarios = min(rand.scenario_count, run.progress.images_total,
-                          scale_cap)
+        # As many distinct scenes as the run asks for (scenarioCount), up to
+        # one per image. Large sets are designed by parallel batches, each
+        # steered to a different facet, so there is no ceiling to protect.
+        n_scenarios = max(1, min(rand.scenario_count, run.progress.images_total))
         # Active learning: hard cases flagged in the playground steer this
         # expansion, then are marked consumed.
         pending = [f for f in store.feedback.values()
@@ -266,6 +262,23 @@ class Pipeline:
                     "inference playground into scenario expansion", agent="prompt")
             for f in pending:
                 f.consumed_by_run_id = run.id
+        from collections import Counter
+
+        from ..agents.prompt_agent import plan_scenes
+
+        plan = plan_scenes(run.target_classes, rand, n_scenarios)
+        if plan and plan[0].primary is not None:
+            shares = Counter(s.primary for s in plan)
+            ctx.log("info", f"Designing {n_scenarios:,} scenes; main subject "
+                            "per scene: " + ", ".join(
+                                f"{c} {n / n_scenarios:.0%}"
+                                for c, n in shares.most_common())
+                    + ". Every image is labeled for all target classes.",
+                    agent="prompt")
+        else:
+            ctx.log("info", f"Designing {n_scenarios:,} scenes, each showing "
+                            f"all {len(run.target_classes)} target classes",
+                    agent="prompt")
         scenarios = prompt_agent.expand(
             source.use_case, run.target_classes, rand, n_scenarios,
             hard_cases=[f.note for f in pending],
@@ -341,16 +354,28 @@ class Pipeline:
             ctx, annotated,
             on_progress=lambda done: self._pct(ctx, done / max(len(annotated), 1)),
         )
-        try:
-            from ..agents.semantic_critic import spot_check
+        verifier = self._semantic_verifier(ctx)
+        for img in reviewed:
+            verifier.submit(img)
+        self._semantic_finish(ctx, verifier, reviewed)
+        ctx.set_agent("critic", "done")
+        return reviewed
 
-            spot_check(ctx, reviewed, ctx.run.target_classes)
+    @staticmethod
+    def _semantic_verifier(ctx: RunContext):
+        from ..agents.semantic_critic import SemanticVerifier
+
+        return SemanticVerifier(ctx, ctx.run.target_classes,
+                                mode=ctx.run.semantic_check or "sample")
+
+    @staticmethod
+    def _semantic_finish(ctx: RunContext, verifier, reviewed) -> None:
+        try:
+            verifier.finish(reviewed)
         except RunCancelled:
             raise
         except Exception as exc:  # semantic stage is best-effort by design
             ctx.log("warn", f"Semantic Critic skipped: {exc}", agent="critic")
-        ctx.set_agent("critic", "done")
-        return reviewed
 
     def _streaming_stages(self, ctx: RunContext, workdir: Path):
         """PIPELINE_MODE=streaming: synthesis → vision → critic overlap as
@@ -489,6 +514,9 @@ class Pipeline:
                     session.close()
                 q_put(q_critic, None)
 
+        # VLM checks start while images are still being generated.
+        verifier = self._semantic_verifier(ctx)
+
         def critic_worker() -> None:
             try:
                 ctx.set_agent("critic", "working",
@@ -498,7 +526,9 @@ class Pipeline:
                     if item is None or item is _ABORT:
                         return
                     ctx.check_cancelled()
-                    reviewed.append(critic_agent.review_one(ctx, item))
+                    done = critic_agent.review_one(ctx, item)
+                    reviewed.append(done)
+                    verifier.submit(done)
                     publish_pct()
             except BaseException as exc:  # noqa: BLE001 — poison the stream
                 fail(exc)
@@ -533,19 +563,16 @@ class Pipeline:
                 stop.set()  # unblock queue waits; workers exit via _ABORT
             for t in workers:
                 t.join(timeout=0.25)
-        if failures:
-            raise failures[0]
-        ctx.check_cancelled()
+        try:
+            if failures:
+                raise failures[0]
+            ctx.check_cancelled()
+        except BaseException:
+            verifier.close()  # stop VLM checks queued by the critic stream
+            raise
 
         critic_agent.log_summary(ctx, reviewed)
-        try:
-            from ..agents.semantic_critic import spot_check
-
-            spot_check(ctx, reviewed, run.target_classes)
-        except RunCancelled:
-            raise
-        except Exception as exc:  # semantic stage is best-effort by design
-            ctx.log("warn", f"Semantic Critic skipped: {exc}", agent="critic")
+        self._semantic_finish(ctx, verifier, reviewed)
         ctx.set_agent("critic", "done")
         return reviewed
 
@@ -567,14 +594,10 @@ class Pipeline:
             ctx, dataset, image_paths,
             on_progress=lambda done: self._pct(ctx, done / max(len(image_paths), 1)),
         )
-        try:
-            from ..agents.semantic_critic import spot_check
-
-            spot_check(ctx, reviewed, ctx.run.target_classes)
-        except RunCancelled:
-            raise
-        except Exception as exc:  # semantic stage is best-effort by design
-            ctx.log("warn", f"Semantic Critic skipped: {exc}", agent="critic")
+        verifier = self._semantic_verifier(ctx)
+        for img in reviewed:
+            verifier.submit(img)
+        self._semantic_finish(ctx, verifier, reviewed)
         ctx.set_agent("critic", "done")
         return reviewed
 

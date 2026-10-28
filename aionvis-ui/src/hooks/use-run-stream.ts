@@ -49,6 +49,8 @@ export function useRunStream(runId: string, enabled: boolean) {
             (old) => old && { ...old, status: event.payload.status },
           );
           if (event.payload.status === "succeeded") {
+            const trained =
+              queryClient.getQueryData<PipelineRun>(["run", runId])?.trainModel !== false;
             // Completion mints dataset + model artifacts — refresh everything.
             queryClient.invalidateQueries({ queryKey: ["run", runId] });
             queryClient.invalidateQueries({ queryKey: ["runs"] });
@@ -56,7 +58,9 @@ export function useRunStream(runId: string, enabled: boolean) {
             queryClient.invalidateQueries({ queryKey: ["datasets"] });
             queryClient.invalidateQueries({ queryKey: ["models"] });
             toast.success("Run complete", {
-              description: "Model trained and registered. See the Model Registry.",
+              description: trained
+                ? "Model trained and registered. See the Model Registry."
+                : "Dataset ready. See it on the Datasets page.",
             });
           }
           break;

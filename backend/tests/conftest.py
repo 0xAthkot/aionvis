@@ -15,4 +15,6 @@ from app.store import store
 @pytest.fixture(autouse=True)
 def never_touch_real_state(monkeypatch):
     monkeypatch.setattr(store, "save", lambda: None)
+    # Logs/curation append to their own files; keep those in memory too.
+    monkeypatch.setattr(store, "persist", False)
     yield

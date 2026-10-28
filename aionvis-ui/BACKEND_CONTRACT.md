@@ -74,7 +74,7 @@ NEXT_PUBLIC_WS_BASE_URL=ws://localhost:8000
 | DELETE | `/runs/{id}` | → 204. Removes the run (logs + files) and its dataset/model unless another surviving run references them. 409 while active. |
 | POST | `/runs/{id}/cancel` | → `PipelineRun` (status `cancelled`) |
 | GET | `/runs/{id}/agents` | → `AgentInstance[]` (current states) |
-| GET | `/runs/{id}/logs` | → `LogEvent[]` (history; live tail is on the WebSocket) |
+| GET | `/runs/{id}/logs` | → `LogEvent[]` (history, oldest first; optional `?limit=N` returns only the newest N lines, which the run page uses; live tail is on the WebSocket) |
 | GET | `/runs/{id}/preview` | → `RunPreviewImage[]` (images generated so far, oldest first; optional `?offset=&limit=` return one window, which is how the UI pages a big run; the UI polls only a page still filling up, ~2 s while running) |
 | POST | `/runs/estimate` | `CreateRunRequest` → `CostEstimate` (dry run, no side effects) |
 
@@ -99,6 +99,27 @@ is off with a single dataset (nothing to do); 404 for an unknown id.
 ends any run after `dataset_compile`: no `training` stage, `modelId` stays
 unset, `progress.totalEpochs` is 0, and `/runs/estimate` drops the training
 row. Echoed as `PipelineRun.trainModel`.
+
+**Scenes and class mix.** `randomization.scenarioCount` is how many distinct
+scenes the Prompt Agent designs, clamped to 1..`imageCount` and otherwise
+uncapped (images cycle through the scenes; the UI default is one per image).
+Large sets are designed by parallel batches, each steered to a different
+lighting/distance/setting facet, then de-duplicated. `randomization.classMix`
+(optional, class name → relative weight) sets how often each class is a
+scene's main subject; `randomization.maxClassesPerScene` (default 3) caps
+the classes one scene features. With that many classes or fewer and no mix,
+every scene shows all of them. The labeler always looks for every target
+class in every image. `ExpandPromptResponse.totalScenarios` reports the
+clamped scene count.
+
+**AI label check.** `CreateRunRequest.semanticCheck` (`"all"` default |
+`"sample"`): the Critic's VLM verifies every accepted label (in parallel,
+overlapping generation in streaming mode) or a fixed per-run spot-check. It
+sees each crop with context plus the run's use case; a clear NO removes the
+label, YES and UNSURE keep it and are recorded as `BoundingBox.semantic`
+(`"confirmed"` | `"unsure"`; absent = not checked). Echoed as
+`PipelineRun.semanticCheck` (absent on dataset runs and older runs).
+`/runs/estimate` adds the verification time when `"all"`.
 
 **Starting weights.** `training.pretrained` (default true) fine-tunes the
 architecture's published checkpoint (COCO for most detectors, ImageNet for

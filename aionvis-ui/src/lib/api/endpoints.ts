@@ -46,8 +46,12 @@ export const endpoints = {
     cancel: (id: string) => `${API_BASE}/runs/${id}/cancel`,
     /** GET → AgentInstance[] */
     agents: (id: string) => `${API_BASE}/runs/${id}/agents`,
-    /** GET → LogEvent[] (history; live tail comes over the WebSocket) */
-    logs: (id: string) => `${API_BASE}/runs/${id}/logs`,
+    /**
+     * GET → LogEvent[] (history, oldest first; live tail comes over the
+     * WebSocket). Optional ?limit=N returns only the newest N lines.
+     */
+    logs: (id: string, limit?: number) =>
+      `${API_BASE}/runs/${id}/logs` + (limit ? `?limit=${limit}` : ""),
     /**
      * GET → RunPreviewImage[] (images generated so far, oldest first; poll
      * while running). Optional ?offset=&limit= return one window; without

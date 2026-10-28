@@ -100,9 +100,16 @@ class DomainRandomizationConfig(ApiModel):
     camera_angle_variation: float
     background_diversity: float
     occlusion_rate: float
+    # Distinct scenes to design (clamped to 1..image_count, no other cap).
     scenario_count: int
     image_count: int
     guidance_scale: float
+    # Share of scenes featuring each class as main subject (relative
+    # weights by class name; None = equal). Labeling still covers all.
+    class_mix: Optional[dict[str, float]] = None
+    # Most classes one scene features; with this many classes or fewer and
+    # no class_mix, every scene shows all of them (classic behavior).
+    max_classes_per_scene: Optional[int] = None
 
 
 class SyntheticSourceConfig(ApiModel):
@@ -187,6 +194,10 @@ class RunProgress(ApiModel):
 # a node that can't run the selection rejects the run (no fallback).
 VisionBackend = Literal["sam3", "yoloe"]
 
+# How much labeling the Critic's VLM verifies: every accepted label
+# (default) or a fixed per-run spot-check. Clear NO verdicts remove a label.
+SemanticCheck = Literal["all", "sample"]
+
 
 class PipelineRun(ApiModel):
     id: str
@@ -204,6 +215,8 @@ class PipelineRun(ApiModel):
     training: TrainingConfig
     # False = dataset-only run: stops after the dataset compiles, no model.
     train_model: bool = True
+    # None on runs recorded before the option (they spot-checked).
+    semantic_check: Optional[SemanticCheck] = None
     target_classes: list[str]
     progress: RunProgress
     created_by: str
@@ -321,6 +334,9 @@ class BoundingBox(ApiModel):
     # missing, 2 = visible). Present on pose-run labels (teacher-matched at
     # compile time) and on pose-model predictions.
     keypoints: Optional[list[float]] = None
+    # Critic VLM verdict ("confirmed" | "unsure"); rejected labels are
+    # removed. None = not checked.
+    semantic: Optional[Literal["confirmed", "unsure"]] = None
 
 
 class SplitStat(ApiModel):
@@ -540,6 +556,7 @@ class CreateRunRequest(ApiModel):
     vision_backend: Optional[VisionBackend] = None
     # False = build the labeled dataset only, train nothing.
     train_model: bool = True
+    semantic_check: SemanticCheck = "all"
 
 
 class CurateImageRequest(ApiModel):

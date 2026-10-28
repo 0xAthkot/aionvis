@@ -26,6 +26,7 @@ import type {
 import { db, nextId } from "./db";
 import { datasetClassesFrom, generateAnnotatedImages } from "./fixtures/generators";
 import { trainingCurves } from "./fixtures/seed";
+import { planScenes } from "./scene-plan";
 
 // ---------------------------------------------------------------------------
 // Shared GPU load model (read by MockTelemetryStream)
@@ -354,12 +355,28 @@ export class RunSimulator {
         this.progress({ imagesAnnotated: this.run.progress.imagesAnnotated ?? 0 });
         break;
       }
-      case "prompt_expansion":
+      case "prompt_expansion": {
         this.log("stage", undefined, "━━ STAGE: PROMPT EXPANSION · Prompt Agent taking over ━━");
         this.setAgent("prompt", "thinking", "Designing scene prompts from the use case");
         setGpuLoad(12, 8);
-        this.log("info", "prompt", `Requesting Gemma 4 via vLLM on MI300X · target: ${total} scenarios`);
+        if (this.run.source.path === "synthetic") {
+          const r = this.run.source.randomization;
+          const scenes = Math.max(1, Math.min(r.scenarioCount, total));
+          const plan = planScenes(this.run.targetClasses, r, scenes);
+          if (plan[0] === null) {
+            this.log("info", "prompt", `Designing ${scenes.toLocaleString()} scenes, each showing all ${this.run.targetClasses.length} target classes`);
+          } else {
+            const shares = new Map<string, number>();
+            plan.forEach((c) => shares.set(c!, (shares.get(c!) ?? 0) + 1));
+            const summary = [...shares.entries()]
+              .sort((a, b) => b[1] - a[1])
+              .map(([c, n]) => `${c} ${Math.round((n / scenes) * 100)}%`)
+              .join(", ");
+            this.log("info", "prompt", `Designing ${scenes.toLocaleString()} scenes; main subject per scene: ${summary}. Every image is labeled for all target classes.`);
+          }
+        }
         break;
+      }
       case "synthesis": {
         const flux = this.generator() === "flux";
         this.log("stage", undefined, "━━ STAGE: SYNTHESIS · Synthesis Agent taking over ━━");
@@ -559,10 +576,33 @@ export class RunSimulator {
     }
   }
 
+  /**
+   * The Critic VLM pass, as the backend logs it: every accepted label
+   * (semanticCheck "all", the default) or a 32-label spot-check. Rates match
+   * what was measured on the MI300X: ~1.7% removed, ~5% unsure (kept).
+   */
+  private semanticPass() {
+    const p = this.run.progress;
+    const all = (this.run.semanticCheck ?? "sample") === "all";
+    const checked = all ? p.masksAccepted : Math.min(32, p.masksAccepted);
+    if (!checked) return;
+    const removed = Math.round(checked * 0.017);
+    const unsure = Math.round(checked * 0.05);
+    this.log("info", "critic", `Semantic Critic verifying ${checked.toLocaleString()} labels (${all ? "every accepted label" : "spot-check"}) with gemma-4-26B-A4B-it via vLLM · MI300X`);
+    if (removed)
+      this.log("critic", "critic", `SEMANTIC REJECT img_${String(randInt(0, Math.max(0, p.imagesTotal - 1))).padStart(4, "0")}.jpg: VLM says the crop is not a ${this.run.targetClasses[0]?.replace(/_/g, " ")}; label removed`);
+    this.log("info", "critic", `Semantic Critic done: ${checked.toLocaleString()} of ${checked.toLocaleString()} labels verified: ${(checked - removed - unsure).toLocaleString()} confirmed, ${unsure.toLocaleString()} unsure (kept), ${removed.toLocaleString()} removed`);
+    this.progress({
+      masksAccepted: p.masksAccepted - removed,
+      masksRejected: p.masksRejected + removed,
+    });
+  }
+
   private exitStage(stage: SimStage) {
     const total = this.run.progress.imagesTotal;
     switch (stage) {
       case "overlap": {
+        this.semanticPass();
         this.setAgent("critic", "done");
         this.progress({ imagesAnnotated: total });
         const rate = ((this.run.progress.masksRejected / Math.max(1, this.run.progress.masksAccepted + this.run.progress.masksRejected)) * 100).toFixed(1);
@@ -581,6 +621,7 @@ export class RunSimulator {
         this.log("info", "vision", `Segmentation complete: masks proposed for ${total} images`);
         break;
       case "critic_review": {
+        this.semanticPass();
         const rate = ((this.run.progress.masksRejected / Math.max(1, this.run.progress.masksAccepted + this.run.progress.masksRejected)) * 100).toFixed(1);
         this.log("critic", "critic", `Quality gate PASSED: reject rate ${rate}% < 20% threshold`);
         break;

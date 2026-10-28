@@ -427,7 +427,7 @@ def compile_dataset(ctx: RunContext, reviewed: list[ReviewedImage],
     dataset.labeled_count = len(usable)
     dataset.size_mb = round(total_bytes / 1024**2, 1)
     dataset.status = "ready"
-    store.images[dataset.id] = records
+    store.set_images(dataset.id, records)
     store.save()
 
     ctx.log("info",

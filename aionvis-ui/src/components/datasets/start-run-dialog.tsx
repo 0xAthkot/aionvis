@@ -29,6 +29,7 @@ import type {
   CreateByodRunRequest,
   Dataset,
   Project,
+  SemanticCheck,
   TrainingConfig,
 } from "@/lib/api/types";
 import { Switch } from "@/components/ui/switch";
@@ -52,6 +53,7 @@ export function StartRunDialog({ dataset }: { dataset: Dataset }) {
   const [epochs, setEpochs] = useState(50);
   const [trainModel, setTrainModel] = useState(true);
   const [pretrained, setPretrained] = useState(true);
+  const [semanticCheck, setSemanticCheck] = useState<SemanticCheck>("all");
 
   const { data: projects } = useQuery({
     queryKey: ["projects"],
@@ -80,6 +82,7 @@ export function StartRunDialog({ dataset }: { dataset: Dataset }) {
       pretrained,
     },
     trainModel,
+    semanticCheck,
   };
 
   const isValid =
@@ -140,6 +143,21 @@ export function StartRunDialog({ dataset }: { dataset: Dataset }) {
               onChange={audit ? () => {} : setTargetClasses}
               disabled={!!audit}
             />
+          </div>
+          <div className="space-y-2">
+            <Label>AI label check</Label>
+            <Select
+              value={semanticCheck}
+              onValueChange={(v) => setSemanticCheck(v as SemanticCheck)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Every label (recommended)</SelectItem>
+                <SelectItem value="sample">Spot-check (faster on huge sets)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex items-center gap-2">
             <Switch

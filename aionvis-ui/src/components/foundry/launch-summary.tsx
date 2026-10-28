@@ -65,10 +65,34 @@ export function LaunchSummary({
               <dd className="font-medium">{images.toLocaleString()}</dd>
             </div>
           )}
+          {request.source.path === "synthetic" && (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Distinct scenes</dt>
+              <dd className="font-medium">
+                {Math.max(
+                  1,
+                  Math.min(
+                    request.source.randomization.scenarioCount,
+                    request.source.randomization.imageCount,
+                  ),
+                ).toLocaleString()}
+              </dd>
+            </div>
+          )}
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Target classes</dt>
             <dd className="font-medium">{request.targetClasses?.length ?? 0}</dd>
           </div>
+          {"semanticCheck" in request && (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">AI label check</dt>
+              <dd className="font-medium">
+                {(request.semanticCheck ?? "all") === "all"
+                  ? "Every label"
+                  : "Spot-check"}
+              </dd>
+            </div>
+          )}
           {trainModel ? (
             <>
               <div className="flex justify-between">

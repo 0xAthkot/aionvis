@@ -46,7 +46,13 @@ import {
   supportsTask,
   TASKS,
 } from "@/lib/architectures";
-import type { Architecture, TrainingTask, VisionBackend } from "@/lib/api/types";
+import type {
+  Architecture,
+  SemanticCheck,
+  TrainingTask,
+  VisionBackend,
+} from "@/lib/api/types";
+import { ClassMixEditor } from "@/components/foundry/class-mix-editor";
 import { useReportUnsaved } from "@/lib/stores/unsaved";
 import { cn } from "@/lib/utils";
 
@@ -108,6 +114,14 @@ export function SimpleFoundry() {
   // false = photos + labels only, no model (train one later from Datasets).
   const [trainModel, setTrainModel] = useState(true);
   const [pretrained, setPretrained] = useState(true);
+  const [classMix, setClassMix] = useState<Record<string, number> | undefined>();
+  const [maxClassesPerScene, setMaxClassesPerScene] = useState(3);
+  const [semanticCheck, setSemanticCheck] = useState<SemanticCheck>("all");
+
+  function selectProject(id: string) {
+    setProjectId(id);
+    setClassMix(undefined); // a new class list starts from equal shares
+  }
 
   function selectTask(next: TrainingTask) {
     setTask(next);
@@ -153,9 +167,12 @@ export function SimpleFoundry() {
         cameraAngleVariation: 0.4,
         backgroundDiversity: 0.5,
         occlusionRate: 0.2,
+        // One distinct scene per image.
         scenarioCount: sizeCfg.images,
         imageCount: sizeCfg.images,
         guidanceScale: 7.5,
+        classMix,
+        maxClassesPerScene,
       },
     },
     training: {
@@ -169,6 +186,7 @@ export function SimpleFoundry() {
     },
     visionBackend: labeler,
     trainModel,
+    semanticCheck,
   };
 
   const { data: feedback } = useQuery({
@@ -229,7 +247,7 @@ export function SimpleFoundry() {
           <div className="space-y-2">
             <Label>Project</Label>
             <div className="flex gap-2">
-              <Select value={projectId} onValueChange={setProjectId}>
+              <Select value={projectId} onValueChange={selectProject}>
                 <SelectTrigger className="w-full flex-1">
                   <SelectValue placeholder="Select a project" />
                 </SelectTrigger>
@@ -244,10 +262,10 @@ export function SimpleFoundry() {
                   ))}
                 </SelectContent>
               </Select>
-              <NewProjectDialog onCreated={(p) => setProjectId(p.id)} />
+              <NewProjectDialog onCreated={(p) => selectProject(p.id)} />
               <DeleteProjectDialog
                 project={project ?? null}
-                onDeleted={() => setProjectId("")}
+                onDeleted={() => selectProject("")}
               />
             </div>
           </div>
@@ -511,6 +529,46 @@ export function SimpleFoundry() {
                   most jobs. Everything else (image size, batch, randomization)
                   is tuned automatically.
                 </p>
+                {project && (
+                  <ClassMixEditor
+                    classes={project.targetClasses}
+                    mix={classMix}
+                    onMix={setClassMix}
+                    maxPerScene={maxClassesPerScene}
+                    onMaxPerScene={setMaxClassesPerScene}
+                  />
+                )}
+                <div className="space-y-2">
+                  <Label className="gap-1.5">
+                    AI label check
+                    <HelpTip>
+                      An AI looks at every label and removes the ones that
+                      clearly don&apos;t show the object. Spot-check looks at
+                      a sample instead, which is faster on very big builds.
+                    </HelpTip>
+                  </Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([
+                      { id: "all", label: "Every label", hint: "Recommended" },
+                      { id: "sample", label: "Spot-check", hint: "Faster on huge builds" },
+                    ] as const).map((o) => (
+                      <button
+                        key={o.id}
+                        type="button"
+                        onClick={() => setSemanticCheck(o.id)}
+                        className={cn(
+                          "rounded-lg border p-2.5 text-left transition-all duration-200",
+                          semanticCheck === o.id
+                            ? "border-primary bg-primary/10 shadow-sm shadow-primary/20"
+                            : "hover:border-muted-foreground/40 hover:bg-accent/40",
+                        )}
+                      >
+                        <p className="text-sm font-medium">{o.label}</p>
+                        <p className="text-xs text-muted-foreground">{o.hint}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </div>

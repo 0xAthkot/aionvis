@@ -86,7 +86,7 @@ class RunContext:
             agent=agent,
             message=message,
         )
-        store.run_logs.setdefault(self.run.id, []).append(event)
+        store.append_log(event)
         bus.publish_run_threadsafe(
             self.run.id, "log", event.model_dump(by_alias=True)
         )
