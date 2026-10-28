@@ -8,6 +8,7 @@ import { HelpTip } from "@/components/shared/help-tip";
 import { NewProjectDialog } from "@/components/shared/new-project-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -67,7 +68,19 @@ const SIZES = [
   { id: "medium", label: "Medium", images: 1000, epochs: 50 },
   { id: "large", label: "Large", images: 5000, epochs: 40 },
 ] as const;
-type SizeId = (typeof SIZES)[number]["id"];
+type SizeId = (typeof SIZES)[number]["id"] | "custom";
+
+/** A custom size trains like the preset closest to it in scale. */
+function epochsForImages(images: number): number {
+  const distance = (n: number) => Math.abs(Math.log(n / images));
+  return SIZES.reduce<(typeof SIZES)[number]>(
+    (best, s) => (distance(s.images) < distance(best.images) ? s : best),
+    SIZES[0],
+  ).epochs;
+}
+
+const compactCount = (n: number) =>
+  n >= 1000 ? `${Math.round(n / 100) / 10}k` : String(n);
 
 /** The generator is the user's explicit choice — the backend honors it
  * verbatim (a node that can't run FLUX rejects the run, no fallback). */
@@ -107,6 +120,8 @@ export function SimpleFoundry() {
   const [projectId, setProjectId] = useState("");
   const [useCase, setUseCase] = useState("");
   const [size, setSize] = useState<SizeId>("medium");
+  // Any image count, for datasets bigger (or smaller) than the presets.
+  const [customImages, setCustomImages] = useState(10000);
   const [generator, setGenerator] = useState<"sdxl" | "flux">("flux");
   const [labeler, setLabeler] = useState<VisionBackend>("sam3");
   const [architecture, setArchitecture] = useState<Architecture>(RECOMMENDED_ARCH);
@@ -137,14 +152,23 @@ export function SimpleFoundry() {
   }
 
   const project = projects?.find((p) => p.id === projectId);
-  const sizeCfg = SIZES.find((s) => s.id === size) ?? SIZES[1];
+  const custom = size === "custom";
+  const sizeCfg = custom
+    ? {
+        id: "custom",
+        images: Math.max(customImages, 1),
+        epochs: epochsForImages(Math.max(customImages, 1)),
+      }
+    : (SIZES.find((s) => s.id === size) ?? SIZES[1]);
   const epochsFor = (base: number) =>
     pretrained ? base : base * SCRATCH_EPOCH_FACTOR;
   const scenes = Math.min(sceneCount ?? sizeCfg.images, sizeCfg.images);
-  const isValid = !!project && useCase.trim().length > 15;
+  const isValid =
+    !!project && useCase.trim().length > 15 && (!custom || customImages >= 1);
   // Why the launch button is disabled — surfaced as its hover tooltip.
   const blockers = [
     !project && "pick a project",
+    custom && customImages < 1 && "enter how many images to create",
     useCase.trim().length <= 15 &&
       (useCase.trim().length === 0
         ? "describe what the model is for"
@@ -158,7 +182,9 @@ export function SimpleFoundry() {
   const request: CreateSyntheticRunRequest = {
     projectId,
     name: project
-      ? `${project.name.toLowerCase().replace(/\s+/g, "-")} · ${sizeCfg.id}`
+      ? `${project.name.toLowerCase().replace(/\s+/g, "-")} · ${
+          custom ? `${sizeCfg.images.toLocaleString("en-US")} images` : sizeCfg.id
+        }`
       : "",
     targetClasses: project?.targetClasses ?? [],
     source: {
@@ -330,7 +356,7 @@ export function SimpleFoundry() {
                 build.
               </HelpTip>
             </Label>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
               {SIZES.map((s) => (
                 <button
                   key={s.id}
@@ -345,13 +371,50 @@ export function SimpleFoundry() {
                 >
                   <p className="text-sm font-medium">{s.label}</p>
                   <p className="text-xs text-muted-foreground">
-                    {s.images >= 1000 ? `${s.images / 1000}k` : s.images}{" "}
-                    images
+                    {compactCount(s.images)} images
                     {trainModel && ` · ${epochsFor(s.epochs)} epochs`}
                   </p>
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={() => setSize("custom")}
+                className={cn(
+                  "rounded-lg border p-3 text-left transition-all duration-200",
+                  custom
+                    ? "border-primary bg-primary/10 shadow-sm shadow-primary/20"
+                    : "hover:border-muted-foreground/40 hover:bg-accent/40",
+                )}
+              >
+                <p className="text-sm font-medium">Custom</p>
+                <p className="text-xs text-muted-foreground">
+                  {custom ? `${compactCount(sizeCfg.images)} images` : "Any number"}
+                  {custom && trainModel && ` · ${epochsFor(sizeCfg.epochs)} epochs`}
+                </p>
+              </button>
             </div>
+            {custom && (
+              <div className="flex items-center gap-2">
+                <Input
+                  id="simple-image-count"
+                  aria-label="Number of images"
+                  type="number"
+                  min={1}
+                  className="w-32"
+                  value={customImages || ""}
+                  onChange={(e) => {
+                    const v = Math.round(Number(e.target.value));
+                    setCustomImages(Number.isFinite(v) && v > 0 ? v : 0);
+                  }}
+                  onBlur={() => {
+                    if (customImages < 1) setCustomImages(1);
+                  }}
+                />
+                <span className="text-xs text-muted-foreground">
+                  images, any number
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
