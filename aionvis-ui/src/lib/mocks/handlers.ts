@@ -147,8 +147,7 @@ export const handlers = [
       description: (body.description ?? "").trim().slice(0, 300),
       targetClasses: body.targetClasses
         .map((c) => c.trim().toLowerCase().replace(/\s+/g, "_"))
-        .filter(Boolean)
-        .slice(0, 8),
+        .filter(Boolean),
       createdAt: new Date().toISOString(),
     };
     db.projects.push(project);

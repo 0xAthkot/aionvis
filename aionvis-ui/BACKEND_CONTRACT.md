@@ -59,7 +59,7 @@ NEXT_PUBLIC_WS_BASE_URL=ws://localhost:8000
 | GET | `/organizations` | → `Organization[]` |
 | GET | `/organizations/{orgId}/members` | → `Member[]` |
 | GET | `/projects` | → `Project[]` |
-| POST | `/projects` | `CreateProjectRequest` → `Project` (201; classes slugified, e.g. "solder bridge" → "solder_bridge") |
+| POST | `/projects` | `CreateProjectRequest` → `Project` (201; classes slugified, e.g. "solder bridge" → "solder_bridge"; every class kept, in order, no count cap) |
 | GET | `/projects/{id}` | → `Project` |
 | DELETE | `/projects/{id}` | → 204. Cascade: the project's runs (logs + files), the datasets/models those runs produced (kept if another surviving run references them), and its feedback. 409 while a run is active. |
 | GET | `/projects/{id}/feedback` | → `FoundryFeedback[]` (playground hard cases, newest first) |

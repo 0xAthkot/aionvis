@@ -226,6 +226,18 @@ def test_compile_in_place_leaves_dataset_untouched(data_dir, tmp_path):
     assert (yolo / "data.yaml").exists()
 
 
+def test_project_keeps_every_class_in_order():
+    """Simple builds take their classes from the project: no silent cap."""
+    names = [f"class {i}" for i in range(20)]
+    r = client.post("/api/v1/projects", json={"name": "Twenty", "targetClasses": names})
+    assert r.status_code == 201
+    project = r.json()
+    try:
+        assert project["targetClasses"] == [f"class_{i}" for i in range(20)]
+    finally:
+        store.projects[:] = [p for p in store.projects if p.id != project["id"]]
+
+
 def test_yolo_export_trains_from_any_directory(data_dir, tmp_path, monkeypatch):
     """The exported data.yaml must resolve its splits next to itself, not in
     whatever directory the user's shell happens to be in."""

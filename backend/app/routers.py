@@ -126,7 +126,9 @@ def create_project(body: CreateProjectRequest) -> Project:
     project = Project(
         id=store.next_id("proj"), org_id=store.organizations[0].id,
         name=name[:80], description=body.description.strip()[:300],
-        target_classes=classes[:8], created_at=now_iso(),
+        # Every class, in order: Simple builds take their classes from the
+        # project, so a cap here would cap Simple below Pro.
+        target_classes=classes, created_at=now_iso(),
     )
     store.projects.append(project)
     store.save()
